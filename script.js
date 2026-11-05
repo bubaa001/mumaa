@@ -195,10 +195,14 @@ import posterFrameMaskUrl from './assets/graduation-poster-frame-mask.png';
   const openLetter = document.getElementById('openLetter');
   const letterClosed = document.getElementById('letterClosed');
   const letterContent = document.getElementById('letterContent');
+  const letterPs = document.getElementById('letterPs');
   openLetter.addEventListener('click', () => {
     letterClosed.hidden = true;
     letterContent.hidden = false;
     letterContent.scrollIntoView({behavior: reducedMotion ? 'auto' : 'smooth', block:'nearest'});
+    window.setTimeout(() => {
+      letterPs.hidden = false;
+    }, reducedMotion ? 0 : 800);
   });
 
   const cameraPreview = document.getElementById('cameraPreview');
@@ -218,6 +222,16 @@ import posterFrameMaskUrl from './assets/graduation-poster-frame-mask.png';
   const graduationCard = document.getElementById('graduationCard');
   const saveCard = document.getElementById('saveCard');
   const cardSaveNote = document.getElementById('cardSaveNote');
+  const cardLoveNote = document.getElementById('cardLoveNote');
+  const openFinalSurprise = document.getElementById('openFinalSurprise');
+  const finalSurpriseMessage = document.getElementById('finalSurpriseMessage');
+
+  openFinalSurprise.addEventListener('click', () => {
+    const expanded = openFinalSurprise.getAttribute('aria-expanded') === 'true';
+    openFinalSurprise.setAttribute('aria-expanded', String(!expanded));
+    finalSurpriseMessage.hidden = expanded;
+  });
+
   let cameraStream = null;
   let photoUrl = null;
   let cardArtworkUrl = null;
@@ -260,6 +274,7 @@ import posterFrameMaskUrl from './assets/graduation-poster-frame-mask.png';
     graduationCard.setAttribute('aria-hidden', 'true');
     saveCard.hidden = true;
     cardSaveNote.textContent = '';
+    cardLoveNote.hidden = true;
   }
 
   async function setPhoto(blob) {
@@ -562,6 +577,7 @@ import posterFrameMaskUrl from './assets/graduation-poster-frame-mask.png';
         try {
           await navigator.share({files: [file], title: 'Anna’s graduation card'});
           cardSaveNote.textContent = 'Your graduation card is ready to keep.';
+          cardLoveNote.hidden = false;
         } catch (error) {
           if (error.name === 'AbortError') {
             cardSaveNote.textContent = 'Your card is ready whenever you are.';
@@ -577,6 +593,7 @@ import posterFrameMaskUrl from './assets/graduation-poster-frame-mask.png';
         link.click();
         window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
         cardSaveNote.textContent = 'Your graduation card has been downloaded.';
+        cardLoveNote.hidden = false;
       }
     } catch (error) {
       cardSaveNote.textContent = 'We could not save the card. Please try again.';
