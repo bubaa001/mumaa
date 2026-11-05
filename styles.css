@@ -192,6 +192,10 @@ h1 em,h2 em{font-weight:500;color:#b9d9f1}
 .photo-fallback{color:#70569a;font-size:10px;font-weight:600;letter-spacing:.06em;text-decoration:underline;text-underline-offset:4px;cursor:pointer}
 .photo-fallback input{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .photo-fallback:focus-within{outline:2px solid #70569a;outline-offset:5px}
+.private-photo-controls{margin-top:24px;padding-top:21px;border-top:1px solid #d6d0df;text-align:left}
+.private-photo-controls>p{margin:9px 0 0;color:#6b778a;font-size:11px;line-height:1.55}
+.private-photo-controls .camera-actions{justify-content:flex-start}
+.private-photo-status{min-height:18px}
 .gift-reveal{margin:64px auto 0}
 .gift-prompt{position:relative;z-index:2;width:max-content;max-width:100%;margin:0 auto 20px;border-radius:20px;padding:6px 12px;background:rgba(242,239,248,.92)}
 .gift-layout{position:relative;width:min(440px,100%);min-height:545px;margin:0 auto;perspective:1100px}

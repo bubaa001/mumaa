@@ -164,7 +164,7 @@
           <div class="camera-frame-glint" aria-hidden="true"></div>
         </div>
 
-        <p class="camera-status" id="cameraStatus" aria-live="polite">Your photo stays on this device.</p>
+        <p class="camera-status" id="cameraStatus" aria-live="polite">Your picture will be ready for the keepsake.</p>
         <p class="camera-error" id="cameraError" role="alert" hidden></p>
 
         <div class="camera-actions">
@@ -174,6 +174,13 @@
           <label class="photo-fallback">Choose a saved photo
             <input id="photoUpload" type="file" accept="image/*" capture="user">
           </label>
+        </div>
+        <div class="private-photo-controls">
+          <p>Your picture saves here automatically so you can download it whenever you like.</p>
+          <div class="camera-actions">
+            <button class="keepsake-button keepsake-button--quiet" id="downloadPrivatePhoto" type="button">Download saved photo</button>
+          </div>
+          <p class="private-photo-status" id="privatePhotoStatus" aria-live="polite">Your picture will be saved when it's ready.</p>
         </div>
         </div>
 

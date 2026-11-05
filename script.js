@@ -216,6 +216,8 @@ import posterFrameMaskUrl from './assets/graduation-poster-frame-mask.png';
   const capturePhoto = document.getElementById('capturePhoto');
   const retakePhoto = document.getElementById('retakePhoto');
   const photoUpload = document.getElementById('photoUpload');
+  const downloadPrivatePhoto = document.getElementById('downloadPrivatePhoto');
+  const privatePhotoStatus = document.getElementById('privatePhotoStatus');
   const giftReveal = document.getElementById('giftReveal');
   const giftLayout = document.getElementById('giftLayout');
   const openGift = document.getElementById('openGift');
@@ -234,6 +236,7 @@ import posterFrameMaskUrl from './assets/graduation-poster-frame-mask.png';
 
   let cameraStream = null;
   let photoUrl = null;
+  let photoBlob = null;
   let cardArtworkUrl = null;
   let cardImageBlob = null;
 
@@ -263,6 +266,7 @@ import posterFrameMaskUrl from './assets/graduation-poster-frame-mask.png';
       cardArtworkUrl = null;
     }
     cardImageBlob = null;
+    photoBlob = null;
     photoPreview.removeAttribute('src');
     cardPortrait.removeAttribute('src');
     photoPreview.hidden = true;
@@ -275,6 +279,24 @@ import posterFrameMaskUrl from './assets/graduation-poster-frame-mask.png';
     saveCard.hidden = true;
     cardSaveNote.textContent = '';
     cardLoveNote.hidden = true;
+  }
+
+  async function preparePrivatePhoto(blob, image) {
+    const supportedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    const maxBytes = 4 * 1024 * 1024;
+    if (supportedTypes.includes(blob.type) && blob.size <= maxBytes) return blob;
+
+    const scale = Math.min(1, 1600 / Math.max(image.naturalWidth, image.naturalHeight));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(image.naturalWidth * scale);
+    canvas.height = Math.round(image.naturalHeight * scale);
+    const context = canvas.getContext('2d');
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    const compressed = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.86));
+    if (!compressed || compressed.size > maxBytes) {
+      throw new Error('This picture is too large to save. Try choosing a smaller one.');
+    }
+    return compressed;
   }
 
   async function setPhoto(blob) {
@@ -301,10 +323,18 @@ import posterFrameMaskUrl from './assets/graduation-poster-frame-mask.png';
     } catch (error) {
       URL.revokeObjectURL(nextUrl);
       photoUrl = null;
+      photoBlob = null;
       showCameraError('Your photo opened, but the graduation card could not be prepared. Please try another photo.');
       return;
     }
 
+    try {
+      photoBlob = await preparePrivatePhoto(blob, decodedImage);
+      privatePhotoStatus.textContent = 'Your picture is ready to save for later.';
+    } catch (error) {
+      photoBlob = null;
+      privatePhotoStatus.textContent = error.message;
+    }
     if (cardArtworkUrl) URL.revokeObjectURL(cardArtworkUrl);
     cardArtworkUrl = URL.createObjectURL(cardImageBlob);
     photoPreview.src = photoUrl;
@@ -313,8 +343,9 @@ import posterFrameMaskUrl from './assets/graduation-poster-frame-mask.png';
     cameraPlaceholder.hidden = true;
     cameraFrame.classList.add('has-photo');
     cameraError.hidden = true;
-    cameraStatus.textContent = 'Your photo stays on this device. Your little gift is ready.';
+    cameraStatus.textContent = 'Your picture is ready. Your little gift is waiting.';
     giftReveal.hidden = false;
+    if (photoBlob) savePhotoAutomatically(photoBlob);
     giftReveal.scrollIntoView({behavior: reducedMotion ? 'auto' : 'smooth', block:'center'});
   }
 
@@ -421,6 +452,55 @@ import posterFrameMaskUrl from './assets/graduation-poster-frame-mask.png';
     cameraStatus.textContent = 'Preparing your photo…';
     await setPhoto(file);
     photoUpload.value = '';
+  });
+
+  async function requestPrivatePhoto(method, body) {
+    const headers = {};
+    if (body) headers['Content-Type'] = body.type;
+
+    const response = await fetch('/api/portrait', { method, headers, body });
+    if (!response.ok) {
+      const result = await response.json().catch(() => ({}));
+      throw new Error(result.message || 'Could not reach your keepsake. Please try again.');
+    }
+    const responseType = response.headers.get('content-type')?.split(';')[0];
+    if (method === 'POST' && responseType !== 'application/json') {
+      throw new Error('Could not reach your keepsake. Please try again.');
+    }
+    if (method === 'GET' && !['image/jpeg', 'image/png', 'image/webp'].includes(responseType)) {
+      throw new Error('Your saved photo could not be opened. Please try again.');
+    }
+    return response;
+  }
+
+  async function savePhotoAutomatically(blob) {
+    privatePhotoStatus.textContent = 'Saving your picture for later…';
+    try {
+      await requestPrivatePhoto('POST', blob);
+      privatePhotoStatus.textContent = 'Your picture is saved. You can download it here anytime.';
+    } catch (error) {
+      privatePhotoStatus.textContent = `Your picture is ready here, but could not be saved for later. ${error.message}`;
+    }
+  }
+
+  downloadPrivatePhoto.addEventListener('click', async () => {
+    downloadPrivatePhoto.disabled = true;
+    privatePhotoStatus.textContent = 'Finding your saved picture…';
+    try {
+      const response = await requestPrivatePhoto('GET');
+      const blob = await response.blob();
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = 'anna-joseph-graduation-portrait';
+      link.click();
+      window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
+      privatePhotoStatus.textContent = 'Your picture is downloaded.';
+    } catch (error) {
+      privatePhotoStatus.textContent = error.message;
+    } finally {
+      downloadPrivatePhoto.disabled = false;
+    }
   });
 
   openGift.addEventListener('click', () => {

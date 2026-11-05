@@ -10,8 +10,9 @@
   },
   "dependencies": {
     "@react-three/fiber": "^9.8.2",
-    "lucide-react": "^0.510.0",
+    "@vercel/blob": "^2.8.2",
     "lottie-web": "^5.13.0",
+    "lucide-react": "^0.510.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "three": "^0.187.0"
