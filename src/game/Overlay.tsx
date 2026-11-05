@@ -206,7 +206,7 @@ export function Overlay({ children }: { children?: ReactNode }) {
               <p className="text-sm text-cream">Swipe anywhere to steer</p>
             ) : (
               <p className="text-xs tracking-wide text-mist">
-                {snap.love < 30 ? "Love is slipping — find a heart" : "Hearts fill it · storms spend it"}
+                {snap.love < 30 ? "Love is slipping · find a heart" : "Steer for hearts · dodge storms and crows"}
               </p>
             )}
           </div>
@@ -236,7 +236,7 @@ export function Overlay({ children }: { children?: ReactNode }) {
             <p className="text-xs tracking-[0.28em] text-horizon uppercase">Dusk flight</p>
             <h1 className="display mt-2 text-5xl text-cream">Lovewing</h1>
             <p className="mx-auto mt-3 max-w-xs text-sm leading-relaxed text-mist sm:text-base">
-              Swipe to fly. Hearts raise your love. Storms and crows spend it. Miss them, and it fades.
+              Hearts and hazards weave through the same lanes. Swipe to chase hearts and dodge storms and crows.
             </p>
             <button type="button" className="btn-primary mt-4 w-full" onClick={() => startRun()}>
               Start

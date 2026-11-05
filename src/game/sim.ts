@@ -85,6 +85,17 @@ export const input = {
 
 export const visualEls: { flash: HTMLDivElement | null } = { flash: null };
 
+const flightRoute: Array<{ kind: Kind; side: number; height: number }> = [
+  { kind: "heart", side: -1.8, height: 12 },
+  { kind: "storm", side: -1.4, height: 12.8 },
+  { kind: "heart", side: 4.8, height: 15.2 },
+  { kind: "crow", side: 1.5, height: 11 },
+  { kind: "heart", side: 0, height: 14.6 },
+  { kind: "storm", side: 4.6, height: 10.5 },
+  { kind: "heart", side: -4.6, height: 16 },
+  { kind: "crow", side: 0, height: 13 },
+];
+
 export const sim = {
   yaw: 0,
   pitch: 0,
@@ -113,6 +124,7 @@ export const sim = {
 
 let steerOverride: number | null = null;
 let reducedMotion = false;
+let routeIndex = 0;
 
 let lastLove = 58;
 let lastHearts = 0;
@@ -195,33 +207,21 @@ function hBasis(yaw: number) {
   };
 }
 
-function pickKind(): Kind {
-  const r = Math.random();
-  if (r < 0.64) return "heart";
-  if (r < 0.84) return "storm";
-  return "crow";
-}
-
-function placeAhead(e: Entity, minA: number, maxA: number, lat: number, forced?: Kind) {
+function placeAhead(e: Entity, minA: number, maxA: number) {
   const ahead = minA + Math.random() * (maxA - minA);
-  const kind = forced ?? pickKind();
-  let side = (Math.random() * 2 - 1) * lat;
-  if (kind === "heart") {
-    if (Math.random() < 0.5) side = (Math.random() * 2 - 1) * 1.6;
-  } else {
-    const sign = side >= 0 ? 1 : -1;
-    side = sign * (8.5 + Math.random() * 8);
-  }
+  const route = flightRoute[routeIndex++ % flightRoute.length]!;
+  const side = route.side + (Math.random() * 2 - 1) * 0.8;
   const b = hBasis(sim.yaw);
   e.x = sim.x + b.fx * ahead + b.rx * side;
   e.z = sim.z + b.fz * ahead + b.rz * side;
-  e.y = kind === "heart" ? 10.2 + Math.random() * 3.2 : 8 + Math.random() * 8;
+  e.y = route.height + (Math.random() * 2 - 1) * 0.8;
   e.phase = Math.random() * Math.PI * 2;
   e.alive = true;
-  e.kind = kind;
+  e.kind = route.kind;
 }
 
 export function layoutMenu() {
+  routeIndex = 0;
   sim.x = 0;
   sim.y = 12;
   sim.z = 0;
@@ -251,18 +251,20 @@ export function layoutMenu() {
 }
 
 function layoutPlay() {
+  routeIndex = 0;
   const b = hBasis(0);
   entities.forEach((e, i) => {
-    const ahead = 20 + i * 7.2;
-    const lane = i % 4 !== 3;
-    const side = lane ? ((i % 3) - 1) * 1.4 : (i % 2 === 0 ? 1 : -1) * (9 + (i % 3) * 2);
-    e.kind = lane ? "heart" : i % 2 === 0 ? "storm" : "crow";
+    const route = flightRoute[i % flightRoute.length]!;
+    const ahead = 20 + i * 9.2;
+    const side = route.side + (Math.random() * 2 - 1) * 0.5;
+    e.kind = route.kind;
     e.x = b.fx * ahead + b.rx * side;
     e.z = b.fz * ahead + b.rz * side;
-    e.y = lane ? 11.2 + (i % 3) * 0.7 : 11 + (i % 2);
+    e.y = route.height + (Math.random() * 2 - 1) * 0.5;
     e.alive = true;
     e.phase = i * 0.6;
   });
+  routeIndex = entities.length % flightRoute.length;
   clouds.forEach((c, i) => {
     const ahead = 16 + ((i * 47) % 130);
     const side = ((i * 29) % 50) - 25;
@@ -356,7 +358,7 @@ function onHeart(e: Entity) {
   burst(e.x, e.y, e.z, true);
   pushPop(`+${gain}`, true);
   sfxHeart(sim.combo);
-  placeAhead(e, 58, 112, 16);
+  placeAhead(e, 58, 112);
 }
 
 function onBad(e: Entity) {
@@ -367,7 +369,7 @@ function onBad(e: Entity) {
   sim.flash = Math.max(sim.flash, 0.72);
   sim.hitstop = 0.08;
   burst(e.x, e.y, e.z, false);
-  placeAhead(e, 64, 120, 17);
+  placeAhead(e, 64, 120);
   if (sim.status !== "play") return;
   pushPop(`−${loss}`, false);
   sfxHit();
@@ -493,7 +495,7 @@ function recycleList(list: Entity[], minA: number, maxA: number, lat: number, de
       e.z = sim.z + basis.fz * ahead + basis.rz * side;
       e.y = Math.random() < 0.45 ? 0.5 + Math.random() * 2 : 22 + Math.random() * 7;
     } else {
-      placeAhead(e, minA, maxA, lat);
+      placeAhead(e, minA, maxA);
     }
   }
 }
