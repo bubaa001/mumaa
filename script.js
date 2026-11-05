@@ -4,6 +4,45 @@ import posterTemplateUrl from './assets/graduation-poster-template.png';
 import posterFrameMaskUrl from './assets/graduation-poster-frame-mask.png';
 
 (() => {
+  const flightDialog = document.getElementById('lovewingDialog');
+  const launchLovewing = document.getElementById('launchLovewing');
+  const closeLovewing = document.getElementById('closeLovewing');
+  const lovewingFrame = document.getElementById('lovewingFrame');
+  const lovewingLoading = document.getElementById('lovewingLoading');
+  let gameLoadTimer = 0;
+
+  lovewingFrame.addEventListener('load', () => {
+    window.clearTimeout(gameLoadTimer);
+    if (flightDialog.open) lovewingLoading.hidden = true;
+  });
+
+  launchLovewing.addEventListener('click', () => {
+    if (!flightDialog.open) flightDialog.showModal();
+    lovewingLoading.textContent = 'Getting your flight ready.';
+    lovewingLoading.hidden = false;
+    lovewingFrame.hidden = false;
+    lovewingFrame.src = '/lovewing/';
+    window.clearTimeout(gameLoadTimer);
+    gameLoadTimer = window.setTimeout(() => {
+      if (flightDialog.open && !lovewingLoading.hidden) {
+        lovewingLoading.textContent = 'The flight is taking a while. Close this screen and try again.';
+      }
+    }, 15000);
+  });
+
+  function closeFlight() {
+    if (flightDialog.open) flightDialog.close();
+    window.clearTimeout(gameLoadTimer);
+    lovewingLoading.hidden = true;
+    lovewingFrame.hidden = true;
+    lovewingFrame.removeAttribute('src');
+    launchLovewing.focus({ preventScroll: true });
+  }
+
+  closeLovewing.addEventListener('click', closeFlight);
+  flightDialog.addEventListener('cancel', () => lovewingFrame.removeAttribute('src'));
+  flightDialog.addEventListener('close', closeFlight);
+
   const plane = document.getElementById('plane');
   lottie.loadAnimation({
     container: plane,

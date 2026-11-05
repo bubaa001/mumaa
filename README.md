@@ -1,6 +1,6 @@
 # For Mumaa — Anna Joseph
 
-A mobile-first graduation surprise for Anna, with a scroll-following plane, personal letter, camera-based keepsake card, and animated gift-box reveal.
+A mobile-first graduation surprise for Anna, with a scroll-following plane, an embedded 3D flight game, a personal letter, and a camera-based keepsake card.
 
 ## Run locally
 Install the dependencies and start Vite:
@@ -39,3 +39,4 @@ vercel
 - The letter opens only when the visitor taps the button.
 - Camera permission is optional; choosing a saved photo is an alternative.
 - The aircraft animation respects the device's reduced-motion accessibility setting.
+- Lovewing opens from the flight invitation after the pilot-dream section. Its 3D game bundle loads only when opened and closes back to the story; swipe controls work inside the game on touch screens.

@@ -61,6 +61,27 @@ h1 em,h2 em{font-weight:500;color:#b9d9f1}
 .flight-stats strong{font-size:11px;letter-spacing:.1em;color:#f2dfb8}
 .dream-footnote{color:#a9c5db;font-size:12px;letter-spacing:.04em}
 .cloud-five{right:5%;top:15%;transform:scale(1.3);opacity:.13}.cloud-six{left:-30px;bottom:12%;transform:scale(1.4);opacity:.1}
+.game-invitation{display:flex;align-items:center;min-height:auto;padding:100px clamp(24px,9vw,130px);background:radial-gradient(ellipse at 18% 0%,#1d4b70 0%,#102d4b 48%,#0b2340 100%);color:#fff}
+.game-invitation-inner{display:grid;grid-template-columns:1.15fr .85fr;align-items:center;gap:clamp(35px,8vw,110px)}
+.game-invitation-copy h2{margin:0 0 22px;color:#fff;font-size:clamp(48px,7vw,78px);line-height:1.05}
+.game-invitation-copy h2 em{color:#91c7ef}
+.game-invitation-copy>p:last-child,.game-launch>p{max-width:540px;color:#d5e7f5;font-family:var(--serif);font-size:clamp(17px,2vw,21px);line-height:1.7}
+.game-launch{border-top:1px solid rgba(217,185,121,.48);border-bottom:1px solid rgba(217,185,121,.48);padding:24px 0}
+.game-launch>p{margin:0 0 20px;font-size:16px}
+.game-launch-button{display:inline-flex;min-height:54px;align-items:center;justify-content:center;gap:15px;border:0;border-radius:2px;background:var(--gold);padding:0 24px;color:var(--navy);font:700 10px var(--sans);letter-spacing:.14em;cursor:pointer;transition:transform .2s ease,background-color .2s ease}
+.game-launch-button:hover{transform:translateY(-2px);background:#e5ca91}
+.game-launch-button:active{transform:translateY(1px)}
+.game-launch-button:focus-visible,.lovewing-close:focus-visible{outline:2px solid #fff;outline-offset:4px}
+.lovewing-dialog{display:grid;width:100%;height:100vh;height:100dvh;max-width:none;max-height:none;grid-template-rows:calc(58px + env(safe-area-inset-top)) minmax(0,1fr);margin:0;border:0;padding:0;overflow:hidden;background:#10182c;color:#f6f1e8}
+.lovewing-dialog::backdrop{background:rgba(7,18,33,.82);backdrop-filter:blur(8px)}
+.lovewing-dialog-bar{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:env(safe-area-inset-top) max(16px,env(safe-area-inset-right)) 0 max(16px,env(safe-area-inset-left));border-bottom:1px solid rgba(217,185,121,.3)}
+.lovewing-dialog-bar h2{margin:0;color:#f6f1e8;font-family:var(--serif);font-size:19px;letter-spacing:.01em}
+.lovewing-close{min-height:44px;border:1px solid rgba(217,185,121,.5);border-radius:2px;background:transparent;padding:0 14px;color:#f6f1e8;font:700 9px var(--sans);letter-spacing:.12em;cursor:pointer}
+.lovewing-stage{position:relative;min-height:0;overflow:hidden;background:#10182c}
+.lovewing-loading{position:absolute;z-index:1;inset:0;display:grid;place-items:center;margin:0;padding:24px;color:#f6f1e8;text-align:center;font-family:var(--serif);font-size:18px;line-height:1.6}
+.lovewing-loading[hidden]{display:none}
+.lovewing-frame{display:block;width:100%;height:100%;min-height:0;border:0;background:#1b2744}
+.lovewing-frame[hidden]{display:none}
 .letter-section{background:#eaf2f8;display:flex;align-items:center;padding:130px clamp(22px,8vw,110px)}
 .letter-wrap{display:grid;grid-template-columns:.8fr 1.2fr;gap:clamp(35px,8vw,100px);align-items:center}
 .letter-heading h2{font-size:clamp(48px,7vw,78px)}
@@ -175,6 +196,15 @@ h1 em,h2 em{font-weight:500;color:#b9d9f1}
 .keepsake-section .reveal{transition-delay:50ms}
 @media(hover:hover) and (pointer:fine){.keepsake-button:hover{transform:translateY(-2px)}}
 @media(max-width:760px){
+ .game-invitation{padding:92px 24px}
+ .game-invitation-inner{grid-template-columns:1fr;gap:25px}
+ .game-invitation-copy h2{font-size:clamp(48px,13vw,68px)}
+ .game-launch{padding:19px 0}
+ .game-launch>p{font-size:16px}
+ .game-launch-button{width:100%}
+ .lovewing-dialog{grid-template-rows:calc(56px + env(safe-area-inset-top)) minmax(0,1fr)}
+ .lovewing-dialog-bar h2{font-size:17px}
+ .lovewing-close{padding:0 11px;font-size:8px}
  .confession-section{min-height:82svh;padding-top:100px;padding-bottom:100px}
  .confession-orbit{width:88vw}
  .keepsake-section{padding-top:100px}

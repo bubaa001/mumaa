@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0b2340">
   <meta name="description" content="A little celebration for Anna Joseph — Mumaa. Today, the world celebrates you.">
   <title>For Mumaa — Anna Joseph</title>
@@ -83,6 +83,22 @@
         <div><span>HER BIG PLAN</span><strong>VERY, VERY BIG</strong></div>
         </div>
         <p class="dream-footnote reveal">A future in the sky, a fortune to build, and the hundred babies you keep promising me. I hope God gives you every good thing your heart is praying for.</p>
+      </div>
+    </section>
+
+    <section class="section game-invitation" id="game">
+      <div class="section-inner game-invitation-inner">
+        <div class="game-invitation-copy reveal">
+          <p class="eyebrow light">JUST FOR US</p>
+          <h2>A little flight,<br><em>for us.</em></h2>
+          <p>Take the controls, Mumaa. Catch the hearts and steer clear of the storms.</p>
+        </div>
+        <div class="game-launch reveal">
+          <p>Swipe anywhere to steer and climb. Your next chapter is waiting just beyond the clouds.</p>
+          <button class="game-launch-button" id="launchLovewing" type="button">
+            TAKE OUR FLIGHT <span aria-hidden="true">↗</span>
+          </button>
+        </div>
       </div>
     </section>
 
@@ -191,6 +207,23 @@
       <div class="footer-note">MADE WITH LOVE, FROM A DISTANCE · ANNA JOSEPH · 2026</div>
     </section>
   </main>
+
+  <dialog class="lovewing-dialog" id="lovewingDialog" aria-labelledby="lovewingDialogTitle">
+    <div class="lovewing-dialog-bar">
+      <h2 id="lovewingDialogTitle">Lovewing</h2>
+      <button class="lovewing-close" id="closeLovewing" type="button">RETURN TO OUR STORY</button>
+    </div>
+    <div class="lovewing-stage">
+      <p class="lovewing-loading" id="lovewingLoading" role="status">Getting your flight ready.</p>
+      <iframe
+        class="lovewing-frame"
+        id="lovewingFrame"
+        title="Lovewing 3D flight game"
+        allow="autoplay"
+        hidden
+      ></iframe>
+    </div>
+  </dialog>
 
   <script type="module" src="script.js"></script>
 </body>

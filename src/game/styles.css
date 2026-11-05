@@ -1,0 +1,212 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #241c22;
+  --color-dusk: #1b2744;
+  --color-horizon: #f3b183;
+  --color-rose: #e23e63;
+  --color-rose-deep: #9d2344;
+  --color-cream: #f6f1e8;
+  --color-mist: #d9cfc3;
+  --color-storm: #3c4a66;
+  --font-display: "Fraunces", Georgia, serif;
+  --font-sans: "Outfit", system-ui, sans-serif;
+  --radius: 1.25rem;
+}
+
+@layer base {
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+    background: var(--color-dusk);
+    color: var(--color-cream);
+    font-family: var(--font-sans);
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  #root {
+    height: 100%;
+  }
+}
+
+@layer components {
+  .game-shell {
+    position: relative;
+    height: 100dvh;
+    width: 100%;
+    overflow: hidden;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    background: var(--color-dusk);
+    color: var(--color-cream);
+  }
+
+  .game-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  .vignette {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse at center, transparent 42%, var(--color-ink) 130%);
+    opacity: 0.38;
+  }
+
+  .hud-safe {
+    padding-top: max(0.75rem, env(safe-area-inset-top));
+    padding-right: max(0.85rem, env(safe-area-inset-right));
+    padding-left: max(0.85rem, env(safe-area-inset-left));
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+
+  .meter-track {
+    height: 0.7rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-cream) 16%, transparent);
+  }
+
+  .meter-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--color-rose-deep), var(--color-rose));
+  }
+
+  .meter-fill-low {
+    animation: lovewing-pulse 0.9s ease-in-out infinite;
+  }
+
+  .panel {
+    width: min(28rem, calc(100% - 2rem));
+    border-radius: 1.5rem;
+    border: 1px solid color-mix(in srgb, var(--color-cream) 18%, transparent);
+    background: color-mix(in srgb, var(--color-ink) 78%, transparent);
+    box-shadow: 0 24px 60px color-mix(in srgb, var(--color-ink) 45%, transparent);
+    backdrop-filter: blur(16px);
+  }
+
+  .display {
+    font-family: var(--font-display);
+    font-weight: 650;
+    letter-spacing: -0.035em;
+    line-height: 0.92;
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    min-height: 3.25rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: var(--color-rose);
+    padding: 0 1.75rem;
+    font-size: 1.125rem;
+    font-weight: 640;
+    color: var(--color-cream);
+  }
+
+  .btn-primary:active {
+    transform: translateY(1px);
+  }
+
+  .btn-quiet {
+    display: inline-flex;
+    min-height: 3rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--color-cream) 28%, transparent);
+    padding: 0 1.25rem;
+    font-weight: 500;
+    color: var(--color-cream);
+    background: transparent;
+  }
+
+  .icon-btn {
+    display: inline-flex;
+    height: 2.75rem;
+    width: 2.75rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-ink) 55%, transparent);
+    color: var(--color-cream);
+    border: 1px solid color-mix(in srgb, var(--color-cream) 16%, transparent);
+  }
+
+  .finger,
+  .finger-origin {
+    position: fixed;
+    border-radius: 999px;
+    pointer-events: none;
+    z-index: 6;
+  }
+
+  .finger {
+    width: 3.5rem;
+    height: 3.5rem;
+    margin-left: -1.75rem;
+    margin-top: -1.75rem;
+    border: 2px solid var(--color-cream);
+    background: color-mix(in srgb, var(--color-rose) 38%, transparent);
+  }
+
+  .finger-origin {
+    width: 0.7rem;
+    height: 0.7rem;
+    margin-left: -0.35rem;
+    margin-top: -0.35rem;
+    background: var(--color-cream);
+  }
+}
+
+@keyframes lovewing-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.86);
+  }
+  16% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-2.6rem) scale(1.05);
+  }
+}
+
+@keyframes lovewing-pulse {
+  0%,
+  100% {
+    filter: saturate(1);
+  }
+  50% {
+    filter: saturate(1.4) brightness(1.15);
+  }
+}
+
+.pop {
+  animation: lovewing-pop 0.95s ease-out forwards;
+  font-family: var(--font-display);
+  font-weight: 650;
+  font-size: 1.75rem;
+  text-shadow: 0 8px 24px color-mix(in srgb, var(--color-ink) 70%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pop,
+  .meter-fill-low {
+    animation: none;
+  }
+}
