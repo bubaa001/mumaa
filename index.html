@@ -140,6 +140,13 @@
           <p class="signoff">I love you, Mumaa. Today, tomorrow, and through every chapter that follows.</p>
           <p class="signature">Forever your Bubaa. <span>♥</span></p>
           <p class="letter-ps" id="letterPs" hidden>P.S. You're still my favourite notification.</p>
+          <form class="reply-note" id="replyNoteForm">
+            <label for="replyNote">A little note for Bubaa</label>
+            <p>Leave me a few words, Mumaa. I'll find them waiting in our keepsake.</p>
+            <textarea id="replyNote" name="message" rows="5" maxlength="5000" required placeholder="Write whatever your heart wants to say…"></textarea>
+            <button class="open-letter" type="submit">SEND YOUR NOTE <span>♥</span></button>
+            <p class="reply-note-status" id="replyNoteStatus" aria-live="polite"></p>
+          </form>
         </div>
         </div>
       </div>
@@ -226,6 +233,17 @@
             <p>You don't have to accomplish anything to deserve my affection. You already have my heart.</p>
             <p>Now go and conquer the world, my beautiful girl. Your Bubaa is ridiculously proud of you. ♥</p>
           </div>
+        </div>
+        <div class="scratch-reveal">
+          <p class="scratch-reveal-kicker">A LITTLE EXTRA FOR YOU</p>
+          <div class="scratch-card">
+            <p class="scratch-prompt" id="scratchPrompt" aria-live="polite" aria-hidden="true">Babe... Scratch with two fingers.</p>
+            <p class="scratch-message" id="scratchMessage" aria-hidden="true">I can't wait to do this to you and to annoy my Anna.</p>
+            <canvas id="scratchCanvas" width="600" height="220" role="button" tabindex="0" aria-label="Scratch with two fingers to reveal your message. Press Enter or Space to reveal it all."></canvas>
+          </div>
+          <p class="scratch-hint">Run two fingers over the card to reveal what's underneath.</p>
+          <button class="scratch-reveal-button" id="scratchRevealButton" type="button">Or tap to reveal</button>
+          <p class="scratch-status" id="scratchStatus" aria-live="polite"></p>
         </div>
         <a href="#top" class="back-top">BACK TO THE BEGINNING ↑</a>
       </div>

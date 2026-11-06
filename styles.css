@@ -106,6 +106,14 @@ h1 em,h2 em{font-weight:500;color:#b9d9f1}
 .signature{font-size:23px;color:#173e63;font-style:italic}
 .signature span{color:#c9a35e;font-size:16px}
 .letter-ps{margin-top:30px!important;padding-top:18px;border-top:1px solid #e6ddcc;color:#70569a;font-size:18px;font-style:italic;animation:letterIn .65s ease both}
+.reply-note{margin-top:34px;padding-top:25px;border-top:1px solid #e6ddcc;font-family:var(--sans)}
+.reply-note label{display:block;color:#173e63;font:italic 22px var(--serif)}
+.reply-note>p{margin:8px 0 14px;font-size:12px;line-height:1.6;color:#6b778a}
+.reply-note textarea{display:block;width:100%;min-height:130px;resize:vertical;border:1px solid #d6ccbb;border-radius:2px;padding:13px;background:#fff;color:#354c68;font:14px/1.6 var(--serif)}
+.reply-note textarea:focus-visible{outline:2px solid #70569a;outline-offset:2px}
+.reply-note button{margin-top:12px}
+.reply-note button:disabled{opacity:.65;cursor:wait}
+.reply-note .reply-note-status{min-height:18px;margin:10px 0 0;color:#536982}
 @keyframes letterIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 .final-section{background:linear-gradient(160deg,#82b9df 0%,#397ba9 43%,#0b2340 100%);color:#fff;display:grid;place-items:center;min-height:900px;text-align:center;padding:130px 22px 100px}
 .final-content{position:relative;z-index:2}
@@ -121,6 +129,20 @@ h1 em,h2 em{font-weight:500;color:#b9d9f1}
 .final-surprise-message{margin-top:20px;padding:20px 24px;border:1px solid rgba(245,228,189,.38);background:rgba(11,35,64,.28);color:#edf5fb;font-family:var(--serif);font-size:17px;line-height:1.75;animation:letterIn .65s ease both}
 .final-surprise-message p{margin:0 0 14px}
 .final-surprise-message p:last-child{margin-bottom:0;color:#f5e4bd;font-style:italic}
+.scratch-reveal{width:min(590px,100%);margin:38px auto 0}
+.scratch-reveal-kicker{margin:0 0 12px;color:#f0d9a9;font-size:9px;letter-spacing:.24em}
+.scratch-card{position:relative;overflow:hidden;border:1px solid rgba(245,228,189,.7);border-radius:3px;background:rgba(11,35,64,.35);box-shadow:0 12px 30px rgba(4,27,49,.16)}
+.scratch-message{display:grid;min-height:145px;place-items:center;margin:0;padding:24px;color:#fff4d8;font:italic clamp(18px,3vw,24px)/1.6 var(--serif)}
+.scratch-prompt{position:absolute;z-index:2;top:12px;left:50%;width:max-content;max-width:calc(100% - 24px);margin:0;padding:8px 13px;border:1px solid rgba(245,228,189,.7);border-radius:24px;background:#102e4c;color:#fff4d8;font:italic 14px var(--serif);opacity:0;pointer-events:none;transform:translate(-50%,6px);transition:opacity .65s var(--ease-out),transform .65s var(--ease-out)}
+.scratch-prompt.is-visible{opacity:1;transform:translate(-50%,0)}
+.scratch-card canvas{position:absolute;inset:0;display:block;width:100%;height:100%;touch-action:none;cursor:crosshair}
+.scratch-card canvas:focus-visible{outline:3px solid #fff;outline-offset:-5px}
+.scratch-card canvas[hidden]{display:none}
+.scratch-hint{margin:12px 0 6px;color:#e2f0fa;font-size:11px}
+.scratch-reveal-button{min-height:36px;border:0;border-bottom:1px solid rgba(255,255,255,.45);background:transparent;padding:4px 8px;color:#f5e4bd;font:italic 15px var(--serif);cursor:pointer}
+.scratch-reveal-button:focus-visible{outline:2px solid #fff;outline-offset:3px}
+.scratch-reveal-button[hidden]{display:none}
+.scratch-status{min-height:18px;margin:9px 0 0;color:#f5e4bd;font-size:12px}
 .back-top{display:inline-block;margin-top:60px;color:#dcebf6;font-size:9px;letter-spacing:.2em;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.45);padding-bottom:8px}
 .footer-note{position:absolute;bottom:25px;left:15px;right:15px;font-size:8px;letter-spacing:.16em;color:#d4e5f1}
 .final-cloud{position:absolute;width:230px;height:60px;background:rgba(255,255,255,.17);border-radius:60px;filter:blur(1px)}

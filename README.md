@@ -25,6 +25,8 @@ Open the local URL printed by Vite. Camera access works on `localhost` and on se
 
 After she takes or chooses a photo, the site automatically uploads it to the private store under `graduation-photos/anna-joseph/`; a new portrait replaces the previous one. The site has no keepsake login, so anyone who can reach its photo API can download or replace that saved portrait. To test locally, use `vercel dev` with the Blob store connected.
 
+After Anna opens the letter, she can leave a reply. Each reply is saved as a separate private text file under `graduation-letters/anna-joseph/` in the same Blob store, where you can find it in the Vercel dashboard.
+
 You can also deploy the folder using the Vercel CLI:
 
 ```bash
@@ -35,6 +37,7 @@ vercel
 ## Personalise before sharing
 - Edit the graduation-story and letter copy in `index.html`.
 - The keepsake section asks for camera permission, or lets Anna choose a saved photo. The photo and card are prepared in her browser. The portrait is automatically saved to the connected private Vercel Blob store.
+- Replies to the letter are saved as private text files in the connected Blob store; they are not emailed.
 - The keepsake uses the supplied navy-and-gold graduation poster in `assets/graduation-poster-template.png`, placing Anna's photo inside its portrait frame.
 - The exported PNG matches the poster's 768 × 960 artwork. On supported phones, the native share sheet can save or share it.
 - The aircraft artwork is the supplied Lottie animation in `assets/plane-ticket.json`. Its scroll path is calculated in `script.js`, and its position changes with the visitor's scroll progress.

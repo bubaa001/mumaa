@@ -196,6 +196,9 @@ import posterFrameMaskUrl from './assets/graduation-poster-frame-mask.png';
   const letterClosed = document.getElementById('letterClosed');
   const letterContent = document.getElementById('letterContent');
   const letterPs = document.getElementById('letterPs');
+  const replyNoteForm = document.getElementById('replyNoteForm');
+  const replyNote = document.getElementById('replyNote');
+  const replyNoteStatus = document.getElementById('replyNoteStatus');
   openLetter.addEventListener('click', () => {
     letterClosed.hidden = true;
     letterContent.hidden = false;
@@ -203,6 +206,37 @@ import posterFrameMaskUrl from './assets/graduation-poster-frame-mask.png';
     window.setTimeout(() => {
       letterPs.hidden = false;
     }, reducedMotion ? 0 : 800);
+  });
+
+  replyNoteForm.addEventListener('submit', async event => {
+    event.preventDefault();
+    const message = replyNote.value.trim();
+    if (!message) {
+      replyNoteStatus.textContent = 'Write a little note before sending it.';
+      replyNote.focus();
+      return;
+    }
+
+    const submitButton = replyNoteForm.querySelector('button[type="submit"]');
+    submitButton.disabled = true;
+    replyNoteStatus.textContent = 'Sending your note…';
+    try {
+      const response = await fetch('/api/letter', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({message})
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(result.message || 'Your note could not be saved. Please try again.');
+      }
+      replyNote.value = '';
+      replyNoteStatus.textContent = 'Your note is tucked away in our keepsake. I’ll find it.';
+    } catch (error) {
+      replyNoteStatus.textContent = error.message || 'Your note could not be saved. Please try again.';
+    } finally {
+      submitButton.disabled = false;
+    }
   });
 
   const cameraPreview = document.getElementById('cameraPreview');
@@ -226,12 +260,160 @@ import posterFrameMaskUrl from './assets/graduation-poster-frame-mask.png';
   const cardLoveNote = document.getElementById('cardLoveNote');
   const openFinalSurprise = document.getElementById('openFinalSurprise');
   const finalSurpriseMessage = document.getElementById('finalSurpriseMessage');
+  const scratchCanvas = document.getElementById('scratchCanvas');
+  const scratchPrompt = document.getElementById('scratchPrompt');
+  const scratchMessage = document.getElementById('scratchMessage');
+  const scratchRevealButton = document.getElementById('scratchRevealButton');
+  const scratchStatus = document.getElementById('scratchStatus');
 
   openFinalSurprise.addEventListener('click', () => {
     const expanded = openFinalSurprise.getAttribute('aria-expanded') === 'true';
     openFinalSurprise.setAttribute('aria-expanded', String(!expanded));
     finalSurpriseMessage.hidden = expanded;
   });
+
+  const scratchContext = scratchCanvas.getContext('2d', {willReadFrequently: true});
+  const scratchPointers = new Map();
+  let scratchRevealed = false;
+  let lastScratchCheck = 0;
+  let scratchPromptTimeout;
+
+  function paintScratchSurface() {
+    const {width, height} = scratchCanvas;
+    const foil = scratchContext.createLinearGradient(0, 0, width, height);
+    foil.addColorStop(0, '#f4e3b4');
+    foil.addColorStop(0.48, '#d6c1e8');
+    foil.addColorStop(1, '#f0d8a2');
+    scratchContext.globalCompositeOperation = 'source-over';
+    scratchContext.fillStyle = foil;
+    scratchContext.fillRect(0, 0, width, height);
+    scratchContext.strokeStyle = 'rgba(255,255,255,.25)';
+    scratchContext.lineWidth = 2;
+    for (let x = -height; x < width; x += 24) {
+      scratchContext.beginPath();
+      scratchContext.moveTo(x, 0);
+      scratchContext.lineTo(x + height, height);
+      scratchContext.stroke();
+    }
+    scratchContext.fillStyle = '#51446a';
+    scratchContext.textAlign = 'center';
+    scratchContext.textBaseline = 'middle';
+    scratchContext.font = '600 20px sans-serif';
+    scratchContext.fillText('FOR MY ANNA  ♥', width / 2, height / 2);
+  }
+
+  function showScratchPrompt() {
+    if (scratchPrompt.classList.contains('is-visible')) return;
+    scratchPrompt.classList.add('is-visible');
+    scratchPrompt.setAttribute('aria-hidden', 'false');
+    scratchPromptTimeout = window.setTimeout(() => {
+      scratchPrompt.classList.remove('is-visible');
+      scratchPrompt.setAttribute('aria-hidden', 'true');
+    }, 1800);
+  }
+
+  function revealScratchMessage() {
+    if (scratchRevealed) return;
+    scratchRevealed = true;
+    window.clearTimeout(scratchPromptTimeout);
+    scratchPrompt.classList.remove('is-visible');
+    scratchPrompt.setAttribute('aria-hidden', 'true');
+    scratchCanvas.hidden = true;
+    scratchMessage.setAttribute('aria-hidden', 'false');
+    scratchRevealButton.hidden = true;
+    scratchStatus.textContent = 'You found it, babe. ♥';
+  }
+
+  function checkScratchProgress(force = false) {
+    if (scratchRevealed) return;
+    const now = performance.now();
+    if (!force && now - lastScratchCheck < 250) return;
+    lastScratchCheck = now;
+
+    const {width, height} = scratchCanvas;
+    const pixels = scratchContext.getImageData(0, 0, width, height).data;
+    let cleared = 0;
+    let sampled = 0;
+    for (let y = 2; y < height; y += 4) {
+      for (let x = 2; x < width; x += 4) {
+        sampled += 1;
+        if (pixels[(y * width + x) * 4 + 3] < 16) cleared += 1;
+      }
+    }
+    if (cleared / sampled >= 0.72) revealScratchMessage();
+  }
+
+  function scratchPosition(event) {
+    const bounds = scratchCanvas.getBoundingClientRect();
+    return {
+      x: (event.clientX - bounds.left) * scratchCanvas.width / bounds.width,
+      y: (event.clientY - bounds.top) * scratchCanvas.height / bounds.height
+    };
+  }
+
+  function scratchAt(position, previous) {
+    const distance = Math.hypot(position.x - previous.x, position.y - previous.y);
+    const steps = Math.max(1, Math.ceil(distance / 14));
+    const radius = 27;
+    scratchContext.globalCompositeOperation = 'destination-out';
+    scratchContext.globalAlpha = 0.18;
+    scratchContext.fillStyle = '#000';
+    for (let step = 0; step <= steps; step += 1) {
+      const progress = step / steps;
+      const x = previous.x + (position.x - previous.x) * progress;
+      const y = previous.y + (position.y - previous.y) * progress;
+      scratchContext.beginPath();
+      scratchContext.arc(x, y, radius, 0, Math.PI * 2);
+      scratchContext.fill();
+    }
+    scratchContext.globalAlpha = 1;
+  }
+
+  function hasTwoTouchPointers() {
+    let activeTouches = 0;
+    for (const pointer of scratchPointers.values()) {
+      if (pointer.pointerType === 'touch') activeTouches += 1;
+    }
+    return activeTouches >= 2;
+  }
+
+  paintScratchSurface();
+  scratchCanvas.addEventListener('pointerdown', event => {
+    if (scratchRevealed || (event.pointerType === 'mouse' && event.button !== 0)) return;
+    event.preventDefault();
+    showScratchPrompt();
+    scratchCanvas.setPointerCapture(event.pointerId);
+    const position = scratchPosition(event);
+    scratchPointers.set(event.pointerId, {position, pointerType: event.pointerType});
+    if (event.pointerType !== 'touch' || hasTwoTouchPointers()) {
+      scratchAt(position, position);
+      checkScratchProgress(true);
+    }
+  });
+  scratchCanvas.addEventListener('pointermove', event => {
+    const pointer = scratchPointers.get(event.pointerId);
+    if (!pointer || scratchRevealed) return;
+    if (pointer.pointerType === 'touch' && !hasTwoTouchPointers()) return;
+    event.preventDefault();
+    const position = scratchPosition(event);
+    scratchAt(position, pointer.position);
+    pointer.position = position;
+    checkScratchProgress();
+  });
+  function finishScratchPointer(event) {
+    scratchPointers.delete(event.pointerId);
+    checkScratchProgress(true);
+  }
+  scratchCanvas.addEventListener('pointerup', finishScratchPointer);
+  scratchCanvas.addEventListener('pointercancel', finishScratchPointer);
+  scratchCanvas.addEventListener('lostpointercapture', finishScratchPointer);
+  scratchCanvas.addEventListener('keydown', event => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      revealScratchMessage();
+    }
+  });
+  scratchRevealButton.addEventListener('click', revealScratchMessage);
 
   let cameraStream = null;
   let photoUrl = null;
