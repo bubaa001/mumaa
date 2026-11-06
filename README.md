@@ -34,7 +34,7 @@ vercel
 
 ## Personalise before sharing
 - Edit the graduation-story and letter copy in `index.html`.
-- The keepsake section asks for camera permission, or lets Anna choose a saved photo. The photo and card are prepared in her browser. The portrait is automatically saved to the connected private Vercel Blob store and can be downloaded again from the site.
+- The keepsake section asks for camera permission, or lets Anna choose a saved photo. The photo and card are prepared in her browser. The portrait is automatically saved to the connected private Vercel Blob store.
 - The keepsake uses the supplied navy-and-gold graduation poster in `assets/graduation-poster-template.png`, placing Anna's photo inside its portrait frame.
 - The exported PNG matches the poster's 768 × 960 artwork. On supported phones, the native share sheet can save or share it.
 - The aircraft artwork is the supplied Lottie animation in `assets/plane-ticket.json`. Its scroll path is calculated in `script.js`, and its position changes with the visitor's scroll progress.

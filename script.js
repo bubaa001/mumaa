@@ -216,7 +216,6 @@ import posterFrameMaskUrl from './assets/graduation-poster-frame-mask.png';
   const capturePhoto = document.getElementById('capturePhoto');
   const retakePhoto = document.getElementById('retakePhoto');
   const photoUpload = document.getElementById('photoUpload');
-  const downloadPrivatePhoto = document.getElementById('downloadPrivatePhoto');
   const privatePhotoStatus = document.getElementById('privatePhotoStatus');
   const giftReveal = document.getElementById('giftReveal');
   const giftLayout = document.getElementById('giftLayout');
@@ -467,9 +466,6 @@ import posterFrameMaskUrl from './assets/graduation-poster-frame-mask.png';
     if (method === 'POST' && responseType !== 'application/json') {
       throw new Error('Could not reach your keepsake. Please try again.');
     }
-    if (method === 'GET' && !['image/jpeg', 'image/png', 'image/webp'].includes(responseType)) {
-      throw new Error('Your saved photo could not be opened. Please try again.');
-    }
     return response;
   }
 
@@ -477,31 +473,11 @@ import posterFrameMaskUrl from './assets/graduation-poster-frame-mask.png';
     privatePhotoStatus.textContent = 'Saving your picture for later…';
     try {
       await requestPrivatePhoto('POST', blob);
-      privatePhotoStatus.textContent = 'Your picture is saved. You can download it here anytime.';
+      privatePhotoStatus.textContent = 'Your picture is saved for you.';
     } catch (error) {
       privatePhotoStatus.textContent = `Your picture is ready here, but could not be saved for later. ${error.message}`;
     }
   }
-
-  downloadPrivatePhoto.addEventListener('click', async () => {
-    downloadPrivatePhoto.disabled = true;
-    privatePhotoStatus.textContent = 'Finding your saved picture…';
-    try {
-      const response = await requestPrivatePhoto('GET');
-      const blob = await response.blob();
-      const downloadUrl = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = 'anna-joseph-graduation-portrait';
-      link.click();
-      window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
-      privatePhotoStatus.textContent = 'Your picture is downloaded.';
-    } catch (error) {
-      privatePhotoStatus.textContent = error.message;
-    } finally {
-      downloadPrivatePhoto.disabled = false;
-    }
-  });
 
   openGift.addEventListener('click', () => {
     const isOpen = giftLayout.classList.toggle('is-open');
