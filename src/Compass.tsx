@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
-type SensorState = "idle" | "requesting" | "active" | "unsupported" | "denied";
+type SensorState = "idle" | "requesting" | "active" | "relative" | "unsupported" | "denied";
 
 const GOLD = "#dcb87b";
 const NAVY = "#0b2340";
@@ -92,6 +92,8 @@ export function Compass() {
   const [sensorState, setSensorState] = useState<SensorState>("idle");
   const headingRef = useRef(0);
   const sensorRef = useRef<{ stop?: () => void } | null>(null);
+  const relativeAlphaRef = useRef<number | null>(null);
+  const relativeOffsetRef = useRef(0);
 
   useEffect(() => {
     if (!open) return;
@@ -99,6 +101,8 @@ export function Compass() {
     let active = true;
     let animationFrame = 0;
     let targetHeading = headingRef.current;
+    let absoluteReadingReceived = false;
+    let relativeFallbackTimer = 0;
 
     const updateHeading = (nextHeading: number) => {
       targetHeading = normalizeHeading(nextHeading);
@@ -119,6 +123,8 @@ export function Compass() {
     const handleDeviceOrientationAbsolute = (
       event: DeviceOrientationEvent & { webkitCompassHeading?: number },
     ) => {
+      absoluteReadingReceived = true;
+      window.clearTimeout(relativeFallbackTimer);
       if (typeof event.webkitCompassHeading === "number") {
         updateHeading(event.webkitCompassHeading + screenOrientationAngle());
       } else if (typeof event.alpha === "number") {
@@ -126,11 +132,24 @@ export function Compass() {
       }
     };
 
+    const handleRelativeOrientation = (event: DeviceOrientationEvent) => {
+      if (absoluteReadingReceived || typeof event.alpha !== "number") return;
+      relativeAlphaRef.current = event.alpha;
+      updateHeading(
+        360 - event.alpha + relativeOffsetRef.current + screenOrientationAngle(),
+      );
+      setSensorState("relative");
+    };
+
     const startAbsoluteOrientationEvent = () => {
       window.addEventListener(
         "deviceorientationabsolute",
         handleDeviceOrientationAbsolute as EventListener,
       );
+      window.addEventListener("deviceorientation", handleRelativeOrientation);
+      relativeFallbackTimer = window.setTimeout(() => {
+        if (!absoluteReadingReceived && active) setSensorState("relative");
+      }, 2000);
       setSensorState("active");
     };
 
@@ -193,6 +212,8 @@ export function Compass() {
         "deviceorientationabsolute",
         handleDeviceOrientationAbsolute as EventListener,
       );
+      window.removeEventListener("deviceorientation", handleRelativeOrientation);
+      window.clearTimeout(relativeFallbackTimer);
       sensorRef.current?.stop?.();
       sensorRef.current = null;
       cancelAnimationFrame(animationFrame);
@@ -201,10 +222,18 @@ export function Compass() {
   }, [open]);
 
   const close = () => setOpen(false);
+  const calibrateRelative = () => {
+    if (relativeAlphaRef.current === null) return;
+    relativeOffsetRef.current = relativeAlphaRef.current - screenOrientationAngle();
+    setHeading(0);
+    headingRef.current = 0;
+  };
   const degrees = Math.round(heading).toString().padStart(3, "0");
   const status =
     sensorState === "requesting"
       ? "Requesting device orientation…"
+      : sensorState === "relative"
+        ? "Relative mode — True North is unavailable on this device"
       : sensorState === "active"
         ? "Point the top of your phone toward your heading"
         : sensorState === "denied"
@@ -230,7 +259,14 @@ export function Compass() {
               <span>{directionForHeading(heading)}</span>
             </div>
             <p className="compass-status" role="status">{status}</p>
-            <p className="compass-calibration">Figure-8 Calibration</p>
+            <button
+              className="compass-calibration"
+              type="button"
+              onClick={calibrateRelative}
+              disabled={sensorState !== "relative" || relativeAlphaRef.current === null}
+            >
+              Figure-8 Calibration
+            </button>
           </div>
         </div>
       )}
