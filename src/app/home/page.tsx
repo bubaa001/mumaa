@@ -33,11 +33,11 @@ function PrivateHomeContent({ displayName }: { displayName: string }) {
             </div>
             <figure className="home-hero-photo">
               <img
-                src="/images/anna/graduation/anna-graduation-bouquet.jpg"
-                alt="Anna holding her graduation bouquet"
+                src="/images/anna/anna-dearest.jpg"
+                alt="Anna smiling in a light sweater and glasses"
               />
               <figcaption>
-                <span>Anna / graduation day</span>
+                <span>Anna / kept close</span>
                 <span>01</span>
               </figcaption>
             </figure>
@@ -53,14 +53,15 @@ function PrivateHomeContent({ displayName }: { displayName: string }) {
               <a href="/diary"><span>Diary</span><strong>02</strong><i aria-hidden="true">↗</i></a>
               <a href="/events"><span>Coming moments</span><strong>03</strong><i aria-hidden="true">↗</i></a>
               <a href="/ideas"><span>Ideas for us</span><strong>04</strong><i aria-hidden="true">↗</i></a>
+              <a href="/memories/graduation-2026/"><span>Graduation archive</span><strong>05</strong><i aria-hidden="true">↗</i></a>
             </nav>
           </section>
 
           <section className="home-memory" aria-labelledby="memory-title">
             <figure className="home-memory-photo">
               <img
-                src="/images/anna/graduation/anna-graduation-family.jpg"
-                alt="Anna celebrating graduation with her family"
+                src="/images/anna/anna-soft.jpg"
+                alt="Anna in a soft indoor portrait"
               />
             </figure>
             <div className="home-memory-copy">
