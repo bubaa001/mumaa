@@ -393,6 +393,10 @@ button {
 }
 
 .login-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   min-height: 50px;
   margin-top: 10px;
   border: 0;
@@ -406,6 +410,20 @@ button {
   letter-spacing: 0.15em;
   text-transform: uppercase;
   transition: transform 180ms ease, background 180ms ease;
+}
+
+.google-mark {
+  display: inline-grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-family: Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .login-submit:hover {

@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { isSupabaseConfigured, getSupabasePublicEnv } from "@/lib/supabase/env";
+import { isAllowedMumaaEmail } from "@/lib/auth/allowed-email";
 
 export async function proxy(request: NextRequest) {
   if (!isSupabaseConfigured()) return NextResponse.next();
@@ -27,6 +28,11 @@ export async function proxy(request: NextRequest) {
   const isPrivateRoute = /^\/(home|diary|memories|events|ideas|time-capsules)(\/|$)/.test(
     request.nextUrl.pathname,
   );
+
+  if (user && !isAllowedMumaaEmail(user.email)) {
+    await supabase.auth.signOut();
+    return NextResponse.redirect(new URL("/login?error=not-allowed", request.url));
+  }
 
   if (!user && isPrivateRoute) {
     return NextResponse.redirect(new URL("/login", request.url));
