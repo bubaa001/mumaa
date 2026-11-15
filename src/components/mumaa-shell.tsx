@@ -26,12 +26,14 @@ export function MummaaShell({ children }: { children: React.ReactNode }) {
           <span className="hidden text-[10px] font-semibold tracking-[0.2em] text-mumaa-blue uppercase sm:block">
             A private world for two
           </span>
-          <Link
-            className="rounded-full border border-mumaa-navy/15 px-3 py-2 text-xs font-semibold text-mumaa-navy"
-            href="/login"
-          >
-            Sign in
-          </Link>
+          <form action="/api/auth/logout" method="post">
+            <button
+              className="rounded-full border border-mumaa-navy/15 px-3 py-2 text-xs font-semibold text-mumaa-navy transition hover:bg-mumaa-navy hover:text-mumaa-ivory"
+              type="submit"
+            >
+              Leave
+            </button>
+          </form>
         </div>
       </header>
       <div className="mx-auto flex max-w-7xl">

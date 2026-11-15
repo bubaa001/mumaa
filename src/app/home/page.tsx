@@ -15,89 +15,63 @@ function PrivateHomeContent({ displayName }: { displayName: string }) {
     <MummaaShell>
       <FadeIn>
         <div className="private-home">
-          <section className="home-welcome">
-            <div>
-              <p className="home-kicker">Welcome back</p>
-              <h1>
-                Good things
+          <section className="home-hero" aria-labelledby="home-title">
+            <div className="home-hero-copy">
+              <p className="home-kicker">MUMAA / private archive</p>
+              <h1 id="home-title">
+                The life
                 <br />
-                <em>live here.</em>
+                <em>we&apos;re keeping.</em>
               </h1>
               <p className="home-intro">
-                A private place for the life you are making together.
+                A quiet place for the days, words, and plans that belong to you both.
               </p>
+              <div className="home-presence">
+                <span className="presence-mark" aria-hidden="true" />
+                <span>{displayName === "MUMAA" ? "Shared space" : `Welcome, ${displayName}`}</span>
+              </div>
             </div>
-            <div className="presence-note">
-              <span className="presence-mark" aria-hidden="true" />
-              <span>{displayName === "MUMAA" ? "Your shared space" : `Welcome, ${displayName}`}</span>
-            </div>
+            <figure className="home-hero-photo">
+              <img
+                src="/images/anna/graduation/anna-graduation-bouquet.jpg"
+                alt="Anna holding her graduation bouquet"
+              />
+              <figcaption>
+                <span>Anna / graduation day</span>
+                <span>01</span>
+              </figcaption>
+            </figure>
           </section>
 
-          <section className="home-feature">
-            <div className="home-feature-image" role="img" aria-label="A calm blue-hour landscape" />
-            <div className="home-feature-copy">
-              <p className="home-kicker">Your archive</p>
-              <h2>The first chapter is waiting.</h2>
+          <section className="home-index" aria-labelledby="index-title">
+            <div className="home-index-heading">
+              <p className="home-kicker">Begin anywhere</p>
+              <h2 id="index-title">What do you want to return to?</h2>
+            </div>
+            <nav className="home-index-links" aria-label="Archive sections">
+              <a href="/memories"><span>Memories</span><strong>01</strong><i aria-hidden="true">↗</i></a>
+              <a href="/diary"><span>Diary</span><strong>02</strong><i aria-hidden="true">↗</i></a>
+              <a href="/events"><span>Coming moments</span><strong>03</strong><i aria-hidden="true">↗</i></a>
+              <a href="/ideas"><span>Ideas for us</span><strong>04</strong><i aria-hidden="true">↗</i></a>
+            </nav>
+          </section>
+
+          <section className="home-memory" aria-labelledby="memory-title">
+            <figure className="home-memory-photo">
+              <img
+                src="/images/anna/graduation/anna-graduation-family.jpg"
+                alt="Anna celebrating graduation with her family"
+              />
+            </figure>
+            <div className="home-memory-copy">
+              <p className="home-kicker">The archive begins here</p>
+              <h2 id="memory-title">Keep the days that changed everything.</h2>
               <p>
-                Begin with a memory, a note, or something you want to remember later.
+                Start with the photographs, then add the details only the two of you
+                would remember.
               </p>
-              <a href="/memories">Open memories <span aria-hidden="true">↗</span></a>
+              <a className="home-text-link" href="/memories">Open the memories <span aria-hidden="true">↗</span></a>
             </div>
-          </section>
-
-          <section className="graduation-story" aria-labelledby="graduation-title">
-            <div className="graduation-story-intro">
-              <p className="home-kicker">A day worth keeping</p>
-              <h2 id="graduation-title">Anna&apos;s graduation.</h2>
-              <p>
-                The flowers, the bright room, the people who showed up, and the moment
-                she stepped into everything she had worked for.
-              </p>
-            </div>
-            <div className="graduation-gallery">
-              <figure className="graduation-photo graduation-photo-feature">
-                <img
-                  src="/images/anna/graduation/anna-graduation-portrait.jpg"
-                  alt="Anna standing in her graduation suit"
-                />
-                <figcaption>Class of 2025</figcaption>
-              </figure>
-              <figure className="graduation-photo graduation-photo-bouquet">
-                <img
-                  src="/images/anna/graduation/anna-graduation-bouquet.jpg"
-                  alt="Anna holding her graduation bouquet"
-                />
-                <figcaption>She did it.</figcaption>
-              </figure>
-              <figure className="graduation-photo graduation-photo-family">
-                <img
-                  src="/images/anna/graduation/anna-graduation-family.jpg"
-                  alt="Anna celebrating graduation with her family"
-                />
-                <figcaption>The people who made the day brighter.</figcaption>
-              </figure>
-            </div>
-          </section>
-
-          <section className="home-grid">
-            <article className="home-journal">
-              <p className="home-kicker">Our diary</p>
-              <h2>Write something worth returning to.</h2>
-              <p>No entries yet. The page is ready for the first one.</p>
-              <a href="/diary">Open diary <span aria-hidden="true">↗</span></a>
-            </article>
-            <article className="home-moment">
-              <p className="home-kicker">Coming moments</p>
-              <div className="empty-date">--</div>
-              <h2>Make room for what comes next.</h2>
-              <a href="/events">Add an event <span aria-hidden="true">↗</span></a>
-            </article>
-            <article className="home-ideas">
-              <p className="home-kicker">Our ideas</p>
-              <h2>Build the future together.</h2>
-              <p>Your shared list is still open.</p>
-              <a href="/ideas">See ideas <span aria-hidden="true">↗</span></a>
-            </article>
           </section>
         </div>
       </FadeIn>
