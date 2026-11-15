@@ -193,6 +193,7 @@ h1 em,h2 em{font-weight:500;color:#b9d9f1}
 .compass-reading strong{font:500 clamp(54px,13vw,78px)/1 var(--serif);letter-spacing:.02em}
 .compass-reading span{color:#dcb87b;font:700 22px var(--sans);letter-spacing:.12em}
 .compass-status{min-height:20px;max-width:330px;margin:17px 0 0;color:#a9c5db;font-size:11px;line-height:1.5}
+.compass-calibration{margin:8px 0 0;color:#dcb87b;font-size:10px;letter-spacing:.12em;text-transform:uppercase}
 @media(max-width:480px){.compass-modal{padding:0}.compass-modal-content{min-height:100svh;border:0;padding:60px 18px 30px}.compass-dial-wrap{width:min(82vw,330px)}.compass-launcher{right:14px;bottom:14px}}
 .eyebrow.blue{color:#70569a}
 .confession-section{min-height:88svh;display:grid;place-items:center;padding:120px 24px;background:radial-gradient(ellipse at 75% 30%,rgba(145,119,189,.25),transparent 40%),linear-gradient(145deg,#172e50,#101b36 75%);color:#fff}

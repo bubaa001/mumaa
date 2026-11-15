@@ -116,19 +116,21 @@ export function Compass() {
       }
     };
 
-    const handleDeviceOrientation = (
+    const handleDeviceOrientationAbsolute = (
       event: DeviceOrientationEvent & { webkitCompassHeading?: number },
     ) => {
       if (typeof event.webkitCompassHeading === "number") {
-        updateHeading(event.webkitCompassHeading);
+        updateHeading(event.webkitCompassHeading + screenOrientationAngle());
       } else if (typeof event.alpha === "number") {
         updateHeading(360 - event.alpha + screenOrientationAngle());
       }
     };
 
-    const startDeviceOrientation = () => {
-      window.addEventListener("deviceorientationabsolute", handleDeviceOrientation);
-      window.addEventListener("deviceorientation", handleDeviceOrientation);
+    const startAbsoluteOrientationEvent = () => {
+      window.addEventListener(
+        "deviceorientationabsolute",
+        handleDeviceOrientationAbsolute as EventListener,
+      );
       setSensorState("active");
     };
 
@@ -148,25 +150,37 @@ export function Compass() {
         ).AbsoluteOrientationSensor;
 
         if (AbsoluteSensor) {
-          const sensor = new AbsoluteSensor({ frequency: 30 });
-          const onReading = () => {
-            if (sensor.quaternion) updateHeading(headingFromQuaternion(sensor.quaternion));
-          };
-          sensor.addEventListener("reading", onReading);
-          sensor.start();
-          sensorRef.current = { stop: () => { sensor.removeEventListener("reading", onReading); sensor.stop(); } };
-          setSensorState("active");
-          return;
+          try {
+            const sensor = new AbsoluteSensor({ frequency: 30 });
+            const onReading = () => {
+              if (sensor.quaternion) updateHeading(headingFromQuaternion(sensor.quaternion));
+            };
+            sensor.addEventListener("reading", onReading);
+            sensor.start();
+            sensorRef.current = { stop: () => { sensor.removeEventListener("reading", onReading); sensor.stop(); } };
+            setSensorState("active");
+            return;
+          } catch {
+            // Fall through to the absolute device-orientation event.
+          }
         }
 
-        const OrientationEvent = DeviceOrientationEvent as typeof DeviceOrientationEvent & {
+        const OrientationEvent = (
+          window as Window & {
+            DeviceOrientationEvent?: typeof DeviceOrientationEvent & {
           requestPermission?: () => Promise<"granted" | "denied">;
-        };
+            };
+          }
+        ).DeviceOrientationEvent;
+        if (!OrientationEvent) {
+          if (active) setSensorState("unsupported");
+          return;
+        }
         if (OrientationEvent.requestPermission) {
           const permission = await OrientationEvent.requestPermission();
           if (permission !== "granted") throw new Error("Motion permission was denied.");
         }
-        if (active) startDeviceOrientation();
+        if (active) startAbsoluteOrientationEvent();
       } catch {
         if (active) setSensorState("denied");
       }
@@ -175,8 +189,10 @@ export function Compass() {
     void startSensor();
     return () => {
       active = false;
-      window.removeEventListener("deviceorientationabsolute", handleDeviceOrientation);
-      window.removeEventListener("deviceorientation", handleDeviceOrientation);
+      window.removeEventListener(
+        "deviceorientationabsolute",
+        handleDeviceOrientationAbsolute as EventListener,
+      );
       sensorRef.current?.stop?.();
       sensorRef.current = null;
       cancelAnimationFrame(animationFrame);
@@ -214,6 +230,7 @@ export function Compass() {
               <span>{directionForHeading(heading)}</span>
             </div>
             <p className="compass-status" role="status">{status}</p>
+            <p className="compass-calibration">Figure-8 Calibration</p>
           </div>
         </div>
       )}
