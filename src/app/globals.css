@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+:root {
+  --mumaa-navy: #0b2340;
+  --mumaa-blue: #1d5276;
+  --mumaa-ivory: #f6f1e8;
+  --mumaa-silver: #9db6c9;
+  --mumaa-gold: #dcb87b;
+  --mumaa-ink: #172e4d;
+}
+
+@theme inline {
+  --color-mumaa-navy: var(--mumaa-navy);
+  --color-mumaa-blue: var(--mumaa-blue);
+  --color-mumaa-ivory: var(--mumaa-ivory);
+  --color-mumaa-silver: var(--mumaa-silver);
+  --color-mumaa-gold: var(--mumaa-gold);
+  --color-mumaa-ink: var(--mumaa-ink);
+  --font-display: "Playfair Display", Georgia, serif;
+  --font-sans: "DM Sans", Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--mumaa-ivory);
+}
+
+body {
+  margin: 0;
+  background: var(--mumaa-ivory);
+  color: var(--mumaa-ink);
+  font-family: "DM Sans", Arial, sans-serif;
+}
+
+a,
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 2px solid var(--mumaa-gold);
+  outline-offset: 4px;
+}
