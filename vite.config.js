@@ -18,6 +18,7 @@ export default defineConfig({
       input: {
         main: resolve(root, "index.html"),
         lovewing: resolve(root, "lovewing/index.html"),
+        graduationMemory: resolve(root, "memories/graduation-2026/index.html"),
       },
     },
   },

@@ -1,5 +1,16 @@
 # For Mumaa — Anna Joseph
 
+The root page is now a memory archive. The original graduation experience is preserved at `/memories/graduation-2026/`.
+
+## Supabase memory archive
+
+1. Copy `.env.example` to `.env.local`.
+2. Add the Supabase anon key for project `xxmilhryzjmuunjqfnus`.
+3. Run `supabase/schema.sql` in the Supabase SQL editor.
+4. Start the app with `npm run dev`.
+
+The landing page falls back to the graduation memory when Supabase environment variables are not configured, so local development still works before the database is connected. The repository also includes the Supabase MCP configuration in `.vscode/mcp.json`.
+
 A mobile-first graduation surprise for Anna, with a scroll-following plane, an embedded 3D flight game, a personal letter, and a camera-based keepsake card.
 
 ## Run locally

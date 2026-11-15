@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b2340">
+  <meta name="description" content="A little celebration for Anna Joseph — Mumaa. Today, the world celebrates you.">
+  <title>For Mumaa — Anna Joseph</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="progress-track" aria-hidden="true"><div class="progress-bar" id="progressBar"></div></div>
+
+  <div class="flight-hud" aria-hidden="true">
+    <span class="hud-label">FOR MY MUMAA</span>
+    <span class="hud-route">FORM FOUR <i>—</i> INFINITE POSSIBILITIES</span>
+  </div>
+  <div id="compass-root"></div>
+
+  <!-- The supplied aircraft animation follows the page's scroll-driven flight path. -->
+  <div class="plane-stage" aria-hidden="true">
+    <div class="plane-glow"></div>
+    <div class="plane" id="plane"></div>
+    <span class="plane-trail"></span>
+  </div>
+
+  <main>
+    <section class="hero section" id="top">
+      <div class="hero-sky">
+        <div class="sun-halo"></div>
+        <div class="cloud cloud-one"></div>
+        <div class="cloud cloud-two"></div>
+        <div class="cloud cloud-three"></div>
+      </div>
+      <div class="hero-content">
+        <p class="eyebrow"><span class="eyebrow-line"></span> A DAY WORTH REMEMBERING <span class="eyebrow-line"></span></p>
+        <p class="edition">THE CLASS OF 2026 · A NEW HORIZON</p>
+        <h1>Anna <em>Joseph.</em></h1>
+        <p class="nickname">To the girl who holds my heart, my greatest blessing, and my favourite reason to smile.</p>
+        <div class="hero-rule"><span></span><small>FORM FOUR GRADUATION</small><span></span></div>
+        <p class="hero-copy">Today, the world celebrates your achievement. And somewhere in this world, there's a boy who couldn't be prouder to call you his girl.</p>
+        <a class="scroll-cue" href="#milestone"><span class="scroll-dot"></span> SCROLL TO BEGIN</a>
+      </div>
+      <div class="hero-bottom-note"><span>01 / THE DEPARTURE</span><span>KEEP YOUR EYES ON THE HORIZON</span></div>
+    </section>
+
+    <section class="section milestone" id="milestone">
+      <div class="section-inner two-column">
+        <div class="section-copy reveal">
+          <p class="eyebrow blue">01 — THE MILESTONE</p>
+          <h2>One chapter<br><em>beautifully completed.</em></h2>
+          <p class="lead">My beautiful Mumaa, look at you. Another chapter conquered, another dream brought closer. I wish I could be standing beside you today, holding your hand and reminding you how extraordinary you are. You've worked for this moment, and sweetheart, you deserve every second of it.</p>
+        </div>
+        <div class="milestone-card reveal">
+          <div class="seal">AJ</div>
+          <p class="card-overline">A MOMENT IN YOUR STORY</p>
+          <p class="card-year">2026</p>
+          <div class="card-divider"></div>
+          <p class="card-name">ANNA JOSEPH</p>
+          <p class="card-sub">FORM FOUR GRADUATION</p>
+          <div class="card-stars">✦ &nbsp; ✧ &nbsp; ✦</div>
+        </div>
+      </div>
+      <div class="cloud cloud-four"></div>
+    </section>
+
+    <section class="section dream" id="dream">
+      <div class="dream-sky">
+        <div class="cloud cloud-five"></div>
+        <div class="cloud cloud-six"></div>
+      </div>
+      <div class="section-inner dream-inner">
+        <p class="eyebrow light reveal">02 — THE DREAM</p>
+        <h2 class="reveal">Some people are<br>made for <em>the sky.</em></h2>
+        <p class="dream-intro reveal">One day, I'll look up at the sky and know that somewhere above those clouds is the girl I fell in love with, chasing the dreams she once whispered to me. I hope I get to witness every beautiful thing you're destined to become. Keep your faith close, my clever girl. I believe in every brave thing you are becoming.</p>
+        <p class="dream-affection reveal">I don't just want to celebrate the woman you are today. I want to fall in love with every version of you that tomorrow brings.</p>
+        <div class="flight-stats reveal">
+        <div><span>HER DREAM</span><strong>PILOT</strong></div>
+        <div><span>HER FAITH</span><strong>ALWAYS FIRST</strong></div>
+        <div><span>HER BIG PLAN</span><strong>VERY, VERY BIG</strong></div>
+        </div>
+        <p class="dream-footnote reveal">A future in the sky, a fortune to build, and the hundred babies you keep promising me. I hope God gives you every good thing your heart is praying for.</p>
+      </div>
+    </section>
+
+    <section class="section game-invitation" id="game">
+      <div class="section-inner game-invitation-inner">
+        <div class="game-invitation-copy reveal">
+          <p class="eyebrow light">JUST FOR US</p>
+          <h2>A little flight,<br><em>for us.</em></h2>
+          <p>Captain Mumaa, your co-pilot is hopelessly in love with you. Catch every heart, chase every dream, and remember that wherever life takes you, you'll always have someone cheering for you.</p>
+        </div>
+        <div class="game-launch reveal">
+          <p>Swipe anywhere to steer and climb. Your next chapter is waiting just beyond the clouds.</p>
+          <button class="game-launch-button" id="launchLovewing" type="button">
+            TAKE OUR FLIGHT <span aria-hidden="true">↗</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section confession-section" id="confession">
+      <div class="confession-orbit" aria-hidden="true"></div>
+      <div class="confession-copy reveal">
+        <p class="confession-label">A quiet moment for us</p>
+        <h2>You make me<br><em>more myself.</em></h2>
+        <p>Loving you has given ordinary days a reason to feel extraordinary. You inspire me to become a better man, dream a little bigger, and believe that beautiful things are worth waiting for.</p>
+        <p>If I could choose one person to share a thousand ordinary mornings and extraordinary adventures with, I'd still choose you. Every single time.</p>
+        <span class="confession-sign">Your Bubaa</span>
+      </div>
+    </section>
+
+    <section class="section letter-section" id="letter">
+      <div class="section-inner letter-wrap">
+        <div class="letter-heading reveal">
+        <p class="eyebrow blue">A NOTE FROM YOUR BUBAA</p>
+        <h2>My happy<br><em>ever after.</em></h2>
+        <p>For the girl who makes the distance feel smaller and my whole life feel bigger.</p>
+        </div>
+        <div class="letter-paper reveal">
+        <div class="paper-top"><span>TO: ANNA JOSEPH</span><span>WITH LOVE</span></div>
+        <div class="letter-closed" id="letterClosed">
+          <div class="letter-mark">A</div>
+          <p class="letter-tease">I have been keeping these words close.</p>
+          <button class="open-letter" id="openLetter" type="button">OPEN YOUR LETTER <span>↗</span></button>
+        </div>
+        <div class="letter-content" id="letterContent" hidden>
+          <p class="salutation">My dearest Mumaa,</p>
+          <p>If I could have one wish today, it would be to stand beside you, hold your hand, look into your eyes, and tell you just how proud I am of you.</p>
+          <p>But since I cannot be there physically, I wanted to create something that would remind you that distance has never made you any less loved.</p>
+          <p>Look at you, sweetheart. You made it. All those school days, all those challenges, all those moments when the future seemed so far away have brought you here. And I hope you take a moment today to appreciate the incredible girl staring back at you in the mirror.</p>
+          <p>I admire your mind, your wisdom, your beautiful heart, and even those little peculiar things that make you unmistakably you. I love the way you dream, the way you think, and the way you make me want to become a better man.</p>
+          <p>I cannot promise that life will always be easy, but I can promise that I will always want to see you win. I want to celebrate your first flight, your biggest achievements, your little victories, and even the dreams that sound impossible to everyone else.</p>
+          <p>And yes, I'm still holding you to that hundred-babies promise. Don't think I've forgotten.</p>
+          <p class="letter-emphasis">You are loved, not because of what you've achieved or what you might become, but simply because you are Anna.</p>
+          <p>Congratulations, my beautiful girl. Today is yours. Wear that smile, take those pictures, and let the world see how wonderfully far you've come.</p>
+          <p class="letter-ending">If I had to begin my story all over again, I would still hope to find my way to you.</p>
+          <p class="signoff">I love you, Mumaa. Today, tomorrow, and through every chapter that follows.</p>
+          <p class="signature">Forever your Bubaa. <span>♥</span></p>
+          <p class="letter-ps" id="letterPs" hidden>P.S. You're still my favourite notification.</p>
+          <form class="reply-note" id="replyNoteForm">
+            <label for="replyNote">A little note for Bubaa</label>
+            <p>Leave me a few words, Mumaa. I'll find them waiting in our keepsake.</p>
+            <textarea id="replyNote" name="message" rows="5" maxlength="5000" required placeholder="Write whatever your heart wants to say…"></textarea>
+            <button class="open-letter" type="submit">SEND YOUR NOTE <span>♥</span></button>
+            <p class="reply-note-status" id="replyNoteStatus" aria-live="polite"></p>
+          </form>
+        </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section keepsake-section" id="keepsake">
+      <div class="keepsake-inner">
+        <div class="keepsake-heading reveal">
+        <p class="eyebrow blue">MADE JUST FOR YOU</p>
+        <h2>A moment I'd keep<br><em>forever.</em></h2>
+        <p>Put on that beautiful smile, Mumaa. I want a little piece of this special day to keep close to my heart. There's something waiting for you.</p>
+        </div>
+
+        <div class="camera-station">
+        <div class="camera-frame" id="cameraFrame">
+          <video id="cameraPreview" playsinline autoplay muted hidden aria-label="Live camera preview"></video>
+          <img id="photoPreview" alt="Your graduation portrait preview" hidden>
+          <div class="camera-placeholder" id="cameraPlaceholder">
+            <span class="camera-monogram">A</span>
+            <span>Your graduation portrait goes here</span>
+          </div>
+          <div class="camera-frame-glint" aria-hidden="true"></div>
+        </div>
+
+        <p class="camera-status" id="cameraStatus" aria-live="polite">Your picture will be ready for the keepsake.</p>
+        <p class="camera-error" id="cameraError" role="alert" hidden></p>
+
+        <div class="camera-actions">
+          <button class="keepsake-button keepsake-button--primary" id="startCamera" type="button">Take your picture</button>
+          <button class="keepsake-button keepsake-button--primary" id="capturePhoto" type="button" hidden>Keep this picture</button>
+          <button class="keepsake-button keepsake-button--quiet" id="retakePhoto" type="button" hidden>Take another</button>
+          <label class="photo-fallback">Choose a saved photo
+            <input id="photoUpload" type="file" accept="image/*">
+          </label>
+        </div>
+        <div class="private-photo-controls">
+          <p>Your picture saves here automatically so you can keep this moment.</p>
+          <p class="private-photo-status" id="privatePhotoStatus" aria-live="polite">Your picture will be saved when it's ready.</p>
+        </div>
+        </div>
+
+        <div class="gift-reveal" id="giftReveal" hidden>
+        <p class="gift-prompt">A little something from Bubaa</p>
+        <div class="gift-layout" id="giftLayout">
+          <button class="gift-box-button" id="openGift" type="button" aria-expanded="false" aria-controls="graduationCard">
+            <span class="gift-box" aria-hidden="true">
+              <span class="gift-box-lid"><span class="gift-ribbon"></span><span class="gift-bow"></span></span>
+              <span class="gift-box-base"><span class="gift-ribbon"></span></span>
+            </span>
+            <span class="gift-box-label">Open your little gift</span>
+          </button>
+
+          <article class="graduation-card" id="graduationCard" aria-hidden="true">
+            <img id="cardPortrait" alt="A blue and gold Form Four graduation poster for Anna, with her portrait, roses and a personal message from Bubaa">
+          </article>
+        </div>
+        <p class="card-save-note" id="cardSaveNote" aria-live="polite"></p>
+        <p class="card-love-note" id="cardLoveNote" hidden>Your graduation is today's achievement. Being loved by you is my favourite privilege.</p>
+        <button class="keepsake-button keepsake-button--primary" id="saveCard" type="button" hidden>Save your graduation card</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section promise-section" id="promise">
+      <div class="promise-sky" aria-hidden="true"></div>
+      <p class="promise-note reveal">One day, we'll look back at this day together and laugh about how far we've come.</p>
+      <span class="promise-sign reveal">Until then, keep dreaming, Mumaa.</span>
+    </section>
+
+    <section class="section final-section" id="destination">
+      <div class="final-cloud cloud-seven"></div>
+      <div class="final-content reveal">
+        <p class="eyebrow light">FOR EVERY CHAPTER AHEAD</p>
+        <p class="final-kicker">KEEP YOUR FAITH. KEEP YOUR DREAMS.</p>
+        <h2>Here's to every<br><em>tomorrow with you.</em></h2>
+        <p class="final-message">Congratulations, my love. Today you graduate from one chapter, and I cannot wait to watch you conquer the rest. Whatever the future holds, I hope I get to be part of your beautiful story.</p>
+        <p class="final-love-line">If I had to begin my story all over again, I would still hope to find my way to you.</p>
+        <div class="final-sign">Your Bubaa, the boy who will always choose you. ♥</div>
+        <div class="final-stars">✦ &nbsp; ✧ &nbsp; ✦</div>
+        <div class="final-surprise">
+          <button class="final-surprise-button" id="openFinalSurprise" type="button" aria-expanded="false" aria-controls="finalSurpriseMessage">Before you leave, Mumaa...</button>
+          <div class="final-surprise-message" id="finalSurpriseMessage" hidden>
+            <p>Today, everyone gets to celebrate your graduation. But I hope you know that I celebrate you even on the days when there is no achievement, no applause and no occasion.</p>
+            <p>You don't have to accomplish anything to deserve my affection. You already have my heart.</p>
+            <p>Now go and conquer the world, my beautiful girl. Your Bubaa is ridiculously proud of you. ♥</p>
+          </div>
+        </div>
+        <div class="scratch-reveal">
+          <p class="scratch-reveal-kicker">A LITTLE EXTRA FOR YOU</p>
+          <div class="scratch-card">
+            <p class="scratch-prompt" id="scratchPrompt" aria-live="polite" aria-hidden="true">Babe... Scratch with two fingers.</p>
+            <p class="scratch-message" id="scratchMessage" aria-hidden="true">I can't wait to do this to you and to annoy my Anna.</p>
+            <canvas id="scratchCanvas" width="600" height="220" role="button" tabindex="0" aria-label="Scratch with two fingers to reveal your message. Press Enter or Space to reveal it all."></canvas>
+          </div>
+          <p class="scratch-hint">Run two fingers over the card to reveal what's underneath.</p>
+          <button class="scratch-reveal-button" id="scratchRevealButton" type="button">Or tap to reveal</button>
+          <p class="scratch-status" id="scratchStatus" aria-live="polite"></p>
+        </div>
+        <a href="#top" class="back-top">BACK TO THE BEGINNING ↑</a>
+      </div>
+      <div class="footer-note">MADE WITH LOVE, FROM A DISTANCE · ANNA JOSEPH · 2026</div>
+    </section>
+  </main>
+
+  <dialog class="lovewing-dialog" id="lovewingDialog" aria-labelledby="lovewingDialogTitle">
+    <div class="lovewing-dialog-bar">
+      <h2 id="lovewingDialogTitle">Lovewing</h2>
+      <button class="lovewing-close" id="closeLovewing" type="button">RETURN TO OUR STORY</button>
+    </div>
+    <div class="lovewing-stage">
+      <p class="lovewing-loading" id="lovewingLoading" role="status">Getting your flight ready.</p>
+      <iframe
+        class="lovewing-frame"
+        id="lovewingFrame"
+        title="Lovewing 3D flight game"
+        allow="autoplay"
+        hidden
+      ></iframe>
+    </div>
+  </dialog>
+
+  <script type="module" src="/script.js"></script>
+  <script type="module" src="/src/compass-main.tsx"></script>
+</body>
+</html>
