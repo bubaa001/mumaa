@@ -68,7 +68,7 @@ async function readRecord(pathname: string): Promise<Memory | null> {
 export async function listMemories(): Promise<Memory[]> {
   if (!hasBlobToken()) return [graduationMemory];
 
-  const result = await list({ prefix: memoryPrefix, mode: "folded" });
+  const result = await list({ prefix: memoryPrefix });
   const records = await Promise.all(
     result.blobs
       .filter((blob) => blob.pathname.endsWith("/memory.json"))
