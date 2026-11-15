@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { motion, useReducedMotion } from "motion/react";
+import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
+import { useRef } from "react";
 
 const reveal = {
   hidden: { opacity: 0, y: 28, filter: "blur(7px)" },
@@ -30,31 +31,53 @@ function Reveal({
 }
 
 export function PublicEntrance() {
+  const heroRef = useRef<HTMLElement>(null);
+  const reduceMotion = useReducedMotion();
+  const { scrollYProgress } = useScroll();
+  const heroTransform = useTransform(
+    scrollYProgress,
+    [0, 0.22],
+    ["translateY(0px) scale(1)", "translateY(-84px) scale(0.94)"],
+  );
+
   return (
     <main className="story-page">
+      <motion.div
+        aria-hidden="true"
+        className="story-progress"
+        style={{ scaleX: reduceMotion ? 1 : scrollYProgress }}
+      />
       <nav className="story-nav" aria-label="MUMAA">
-        <div className="story-nav-inner">
+        <motion.div
+          className="story-nav-inner"
+        >
           <span className="story-live" aria-hidden="true" />
           <span>Anna &amp; Joshua</span>
           <span className="story-nav-separator">/</span>
           <a href="#finale">open</a>
-        </div>
+        </motion.div>
       </nav>
 
-      <section className="story-hero" id="hero">
+      <section className="story-hero" id="hero" ref={heroRef}>
         <div className="story-hero-glow" aria-hidden="true" />
-        <div className="story-hero-names" aria-label="Anna and Joshua">
+        <motion.div
+          aria-label="Anna and Joshua"
+          className="story-hero-names"
+          style={{ transform: reduceMotion ? undefined : heroTransform }}
+        >
           <span>Anna</span>
           <i>&amp;</i>
           <span>Joshua</span>
-        </div>
-        <div className="story-hero-copy">
+        </motion.div>
+        <motion.div
+          className="story-hero-copy"
+        >
           <p>
             An intimate account of Anna and Joshua, told through the conversations
             that made their relationship what it is.
           </p>
           <span className="story-hero-line" aria-hidden="true" />
-        </div>
+        </motion.div>
       </section>
 
       <section className="story-prologue story-container">
