@@ -45,6 +45,40 @@ function PrivateHomeContent({ displayName }: { displayName: string }) {
             </div>
           </section>
 
+          <section className="graduation-story" aria-labelledby="graduation-title">
+            <div className="graduation-story-intro">
+              <p className="home-kicker">A day worth keeping</p>
+              <h2 id="graduation-title">Anna&apos;s graduation.</h2>
+              <p>
+                The flowers, the bright room, the people who showed up, and the moment
+                she stepped into everything she had worked for.
+              </p>
+            </div>
+            <div className="graduation-gallery">
+              <figure className="graduation-photo graduation-photo-feature">
+                <img
+                  src="/images/anna/graduation/anna-graduation-portrait.jpg"
+                  alt="Anna standing in her graduation suit"
+                />
+                <figcaption>Class of 2025</figcaption>
+              </figure>
+              <figure className="graduation-photo graduation-photo-bouquet">
+                <img
+                  src="/images/anna/graduation/anna-graduation-bouquet.jpg"
+                  alt="Anna holding her graduation bouquet"
+                />
+                <figcaption>She did it.</figcaption>
+              </figure>
+              <figure className="graduation-photo graduation-photo-family">
+                <img
+                  src="/images/anna/graduation/anna-graduation-family.jpg"
+                  alt="Anna celebrating graduation with her family"
+                />
+                <figcaption>The people who made the day brighter.</figcaption>
+              </figure>
+            </div>
+          </section>
+
           <section className="home-grid">
             <article className="home-journal">
               <p className="home-kicker">Our diary</p>
