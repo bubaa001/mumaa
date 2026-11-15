@@ -19,7 +19,7 @@ The app expects these local variables in `.env.local`:
 
 The Supabase project is `xxmilhryzjmuunjqfnus`. Only the publishable key belongs in `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`; never expose the service-role key.
 
-The first foundation migration is [supabase/migrations/0001_mumaa_foundation.sql](supabase/migrations/0001_mumaa_foundation.sql). It has not been applied to the remote project yet.
+The foundation migration is [supabase/migrations/0001_mumaa_foundation.sql](supabase/migrations/0001_mumaa_foundation.sql), and it has been applied to the remote project. The additive shared-content and security migration is [supabase/migrations/0002_mumaa_shared_content_security.sql](supabase/migrations/0002_mumaa_shared_content_security.sql); it is reviewed locally but awaits the remote migration confirmation before application.
 
 To verify the preserved historical Vite experience:
 
