@@ -84,13 +84,13 @@
 
 .memory-featured {
   grid-template-columns: minmax(0, 1.65fr) minmax(280px, 0.7fr);
-  min-height: 540px;
+  min-height: 400px;
   margin-top: 42px;
   box-shadow: 0 24px 70px rgba(11, 35, 64, 0.12);
 }
 
 .memory-featured-image {
-  min-height: 420px;
+  min-height: 320px;
 }
 
 .memory-featured-copy {
@@ -98,7 +98,7 @@
 }
 
 .memory-archive {
-  margin-top: clamp(86px, 12vw, 170px);
+  margin-top: clamp(52px, 7vw, 88px);
 }
 
 .memory-filters {
@@ -189,6 +189,18 @@
   .memory-archive-item:nth-child(4n + 1) .memory-card-image {
     aspect-ratio: 1.2;
   }
+}
+
+.memory-featured {
+  min-height: 400px;
+}
+
+.memory-featured-image {
+  min-height: 320px;
+}
+
+.memory-archive {
+  margin-top: clamp(52px, 7vw, 88px);
 }
 
 @theme inline {
@@ -1295,6 +1307,171 @@ button {
   .home-blueprint .home-action-row {
     display: grid;
     gap: 20px;
+  }
+}
+
+/* Final archive composition overrides. Keep these after the shared legacy styles. */
+.memories-intro {
+  align-items: stretch;
+  max-width: 1180px;
+  padding: clamp(30px, 5vw, 64px);
+  border-radius: var(--mumaa-radius-panel);
+  background:
+    radial-gradient(circle at 88% 12%, rgba(220, 184, 123, 0.18), transparent 28%),
+    #0b2340;
+  color: #f3efe6;
+}
+
+.memories-intro .memory-eyebrow {
+  color: #dcb87b;
+}
+
+.memories-intro h1 {
+  max-width: 680px;
+  color: #f3efe6;
+  font-size: clamp(3.2rem, 7vw, 7.2rem);
+}
+
+.memories-intro .memories-lede {
+  color: rgba(243, 239, 230, 0.68);
+}
+
+.memories-intro-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 30px;
+}
+
+.memories-intro-actions .memory-primary-button {
+  background: #dcb87b;
+  color: #0b2340;
+}
+
+.memories-count {
+  display: grid;
+  gap: 4px;
+  text-align: right;
+}
+
+.memories-count strong {
+  color: #dcb87b;
+  font-family: var(--font-mumaa-display), Georgia, serif;
+  font-size: 4rem;
+  font-weight: 400;
+  letter-spacing: -0.07em;
+  line-height: 0.8;
+}
+
+.memories-count span {
+  color: rgba(243, 239, 230, 0.55);
+  font-size: 10px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.memory-featured {
+  grid-template-columns: minmax(0, 1.65fr) minmax(280px, 0.7fr);
+  min-height: 540px;
+  margin-top: 42px;
+  box-shadow: 0 24px 70px rgba(11, 35, 64, 0.12);
+}
+
+.memory-featured-image {
+  min-height: 420px;
+}
+
+.memory-featured-copy {
+  padding: clamp(28px, 4vw, 56px);
+}
+
+.memory-archive {
+  margin-top: clamp(86px, 12vw, 170px);
+}
+
+.memory-filters {
+  align-items: center;
+  margin: 20px 0 44px;
+}
+
+.memory-filters input,
+.memory-filters select {
+  border-radius: 999px;
+  border-color: rgba(11, 35, 64, 0.16);
+  background: rgba(255, 255, 255, 0.46);
+}
+
+.memory-grid {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 42px 22px;
+}
+
+.memory-archive-item {
+  grid-column: span 4;
+}
+
+.memory-archive-item:nth-child(4n + 1),
+.memory-archive-item-legacy {
+  grid-column: span 6;
+}
+
+.memory-archive-item:nth-child(4n + 1) .memory-card-image {
+  aspect-ratio: 1.48;
+}
+
+.memory-archive-item-legacy .memory-card-image {
+  background: #0b2340;
+}
+
+.memory-archive-item-legacy .memory-image-placeholder {
+  color: rgba(243, 239, 230, 0.7);
+}
+
+.memory-card-copy h3 {
+  font-size: clamp(1.7rem, 2.4vw, 2.5rem);
+}
+
+@media (max-width: 720px) {
+  .memories-intro {
+    padding: 28px 22px 24px;
+  }
+
+  .memories-intro h1 {
+    font-size: clamp(3.35rem, 15vw, 5rem);
+  }
+
+  .memories-intro-actions {
+    flex-direction: row;
+    align-items: flex-end;
+    margin-top: 46px;
+  }
+
+  .memories-count {
+    text-align: left;
+  }
+
+  .memories-count strong {
+    font-size: 3.2rem;
+  }
+
+  .memory-featured {
+    margin-top: 20px;
+  }
+
+  .memory-grid {
+    grid-template-columns: 1fr;
+    gap: 38px;
+  }
+
+  .memory-archive-item,
+  .memory-archive-item:nth-child(4n + 1),
+  .memory-archive-item-legacy {
+    grid-column: auto;
+  }
+
+  .memory-archive-item:nth-child(4n + 1) .memory-card-image {
+    aspect-ratio: 1.2;
   }
 }
 
