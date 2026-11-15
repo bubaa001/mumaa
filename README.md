@@ -1,4 +1,33 @@
-# For Mumaa — Anna Joseph
+# MUMAA
+
+MUMAA is a private digital world for two people. The new application shell uses Next.js and the historical graduation experience remains available through the legacy Vite entry at `/memories/graduation-2026/`.
+
+## Next.js foundation
+
+Run the new application:
+
+```sh
+npm run dev
+```
+
+The app expects these local variables in `.env.local`:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- `NEXT_PUBLIC_APP_URL`
+- `SUPABASE_SERVICE_ROLE_KEY` (server-only; not used in browser code)
+
+The Supabase project is `xxmilhryzjmuunjqfnus`. Only the publishable key belongs in `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`; never expose the service-role key.
+
+The first foundation migration is [supabase/migrations/0001_mumaa_foundation.sql](supabase/migrations/0001_mumaa_foundation.sql). It has not been applied to the remote project yet.
+
+To verify the preserved historical Vite experience:
+
+```sh
+npm run dev:vite
+```
+
+## Legacy graduation experience
 
 The root page is now a memory archive. The original graduation experience is preserved at `/memories/graduation-2026/`.
 
