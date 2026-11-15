@@ -1,11 +1,12 @@
-import { ModulePlaceholder } from "@/components/module-placeholder";
+import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import { MummaaShell } from "@/components/mumaa-shell";
+import { SharedModule } from "@/components/shared-module";
+import { listSharedContent } from "@/lib/shared-content";
+import { readAuthSession } from "@/lib/auth/session";
 
-export default function DiaryPage() {
-  return (
-    <ModulePlaceholder
-      description="Your shared writing space will live here once the private MUMAA foundation is connected."
-      eyebrow="DIARY"
-      title="Words worth keeping."
-    />
-  );
+export default async function DiaryPage() {
+  const session = await readAuthSession((await cookies()).get("mumaa_session")?.value);
+  if (!session) redirect("/login");
+  return <MummaaShell><SharedModule type="diary" entries={await listSharedContent("diary")} currentEmail={session.email} /></MummaaShell>;
 }

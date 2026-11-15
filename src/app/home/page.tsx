@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { FadeIn, MummaaShell } from "@/components/mumaa-shell";
 import { listMemories, type Memory } from "@/lib/memories";
+import { listSharedContent, type SharedEntry } from "@/lib/shared-content";
 import { readAuthSession } from "@/lib/auth/session";
 
 export default async function PrivateHomePage() {
@@ -9,23 +10,34 @@ export default async function PrivateHomePage() {
   const session = await readAuthSession(token);
   if (!session) redirect("/login");
 
-  const memories = await listMemories();
+  const [memories, diaryEntries, events, ideas] = await Promise.all([
+    listMemories(),
+    listSharedContent("diary"),
+    listSharedContent("event"),
+    listSharedContent("idea"),
+  ]);
   const currentDate = new Intl.DateTimeFormat("en-GB", {
     day: "2-digit",
     month: "short",
     year: "numeric",
   }).format(new Date());
-  return <PrivateHomeContent currentDate={currentDate} displayName={session.name} memories={memories} />;
+  return <PrivateHomeContent currentDate={currentDate} displayName={session.name} memories={memories} diaryEntry={diaryEntries[0]} event={events[0]} idea={ideas[0]} />;
 }
 
 function PrivateHomeContent({
   currentDate,
   displayName,
   memories,
+  diaryEntry,
+  event,
+  idea,
 }: {
   currentDate: string;
   displayName: string;
   memories: Memory[];
+  diaryEntry?: SharedEntry;
+  event?: SharedEntry;
+  idea?: SharedEntry;
 }) {
   const featuredMemory = memories[0];
 
@@ -88,9 +100,9 @@ function PrivateHomeContent({
             </div>
             <div className="home-diary-content">
               <div>
-                <p className="home-empty-label">The first entry is still unwritten.</p>
+                <p className="home-empty-label">{diaryEntry?.title ?? "The first entry is still unwritten."}</p>
                 <p className="home-empty-copy">
-                  Leave something here for the version of you that comes back later.
+                  {diaryEntry?.body ?? "Leave something here for the version of you that comes back later."}
                 </p>
               </div>
               <div className="home-action-row">
@@ -108,8 +120,8 @@ function PrivateHomeContent({
             <div className="home-empty-timeline">
               <span className="home-timeline-line" aria-hidden="true" />
               <div>
-                <p className="home-empty-label">No moments on the calendar yet.</p>
-                <p className="home-empty-copy">Plan the first one together.</p>
+                <p className="home-empty-label">{event?.title ?? "No moments on the calendar yet."}</p>
+                <p className="home-empty-copy">{event?.body ?? "Plan the first one together."}</p>
               </div>
             </div>
             <a className="home-section-link" href="/events">Add a moment to our calendar <span aria-hidden="true">↗</span></a>
@@ -121,7 +133,7 @@ function PrivateHomeContent({
               <h2 id="ideas-title">Things we might do.</h2>
             </div>
             <div className="home-ideas-layout">
-              <p className="home-empty-copy">The idea board is open for its first possibility.</p>
+              <p className="home-empty-copy">{idea?.title ?? "The idea board is open for its first possibility."}</p>
               <a className="home-section-link" href="/ideas">Create an idea <span aria-hidden="true">↗</span></a>
             </div>
           </section>

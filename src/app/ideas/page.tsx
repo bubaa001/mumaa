@@ -1,11 +1,12 @@
-import { ModulePlaceholder } from "@/components/module-placeholder";
+import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import { MummaaShell } from "@/components/mumaa-shell";
+import { SharedModule } from "@/components/shared-module";
+import { listSharedContent } from "@/lib/shared-content";
+import { readAuthSession } from "@/lib/auth/session";
 
-export default function IdeasPage() {
-  return (
-    <ModulePlaceholder
-      description="A collaborative place for future plans will be available here once shared-space data is live."
-      eyebrow="IDEAS"
-      title="Build the future together."
-    />
-  );
+export default async function IdeasPage() {
+  const session = await readAuthSession((await cookies()).get("mumaa_session")?.value);
+  if (!session) redirect("/login");
+  return <MummaaShell><SharedModule type="idea" entries={await listSharedContent("idea")} currentEmail={session.email} /></MummaaShell>;
 }

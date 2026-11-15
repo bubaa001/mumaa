@@ -1,11 +1,12 @@
-import { ModulePlaceholder } from "@/components/module-placeholder";
+import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import { MummaaShell } from "@/components/mumaa-shell";
+import { SharedModule } from "@/components/shared-module";
+import { listSharedContent } from "@/lib/shared-content";
+import { readAuthSession } from "@/lib/auth/session";
 
-export default function TimeCapsulesPage() {
-  return (
-    <ModulePlaceholder
-      description="Sealed letters and future openings will appear here after the secure capsule system is implemented."
-      eyebrow="TIME CAPSULES"
-      title="For a future version of you."
-    />
-  );
+export default async function TimeCapsulesPage() {
+  const session = await readAuthSession((await cookies()).get("mumaa_session")?.value);
+  if (!session) redirect("/login");
+  return <MummaaShell><SharedModule type="capsule" entries={await listSharedContent("capsule")} currentEmail={session.email} /></MummaaShell>;
 }

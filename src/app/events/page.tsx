@@ -1,11 +1,12 @@
-import { ModulePlaceholder } from "@/components/module-placeholder";
+import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import { MummaaShell } from "@/components/mumaa-shell";
+import { SharedModule } from "@/components/shared-module";
+import { listSharedContent } from "@/lib/shared-content";
+import { readAuthSession } from "@/lib/auth/session";
 
-export default function EventsPage() {
-  return (
-    <ModulePlaceholder
-      description="Shared plans and meaningful dates will appear here after the events foundation is connected."
-      eyebrow="EVENTS"
-      title="Make room for what comes next."
-    />
-  );
+export default async function EventsPage() {
+  const session = await readAuthSession((await cookies()).get("mumaa_session")?.value);
+  if (!session) redirect("/login");
+  return <MummaaShell><SharedModule type="event" entries={await listSharedContent("event")} currentEmail={session.email} /></MummaaShell>;
 }

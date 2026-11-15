@@ -857,6 +857,257 @@ button {
   }
 }
 
+.shared-module {
+  min-height: calc(100dvh - 82px);
+  padding: clamp(42px, 7vw, 104px) clamp(20px, 5vw, 72px);
+  background: #f3efe6;
+  color: #0b2340;
+}
+
+.shared-module-hero,
+.shared-composer,
+.shared-entry-list {
+  max-width: 1180px;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.shared-module-hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 28px;
+}
+
+.shared-module-hero h1 {
+  max-width: 780px;
+  margin: 14px 0 0;
+  font-family: var(--font-mumaa-display), Georgia, serif;
+  font-size: clamp(3.2rem, 8vw, 7.8rem);
+  font-weight: 400;
+  letter-spacing: -0.07em;
+  line-height: 0.9;
+}
+
+.shared-module-hero > div > p:last-child {
+  max-width: 500px;
+  margin: 24px 0 0;
+  color: #536d86;
+  line-height: 1.7;
+}
+
+.shared-composer {
+  margin-top: 52px;
+  border: 1px solid rgba(11, 35, 64, 0.16);
+  padding: clamp(22px, 4vw, 48px);
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.shared-entry-list {
+  margin-top: clamp(76px, 12vw, 160px);
+}
+
+.shared-empty {
+  border-top: 1px solid rgba(11, 35, 64, 0.18);
+  padding: 48px 0;
+}
+
+.shared-empty h2 {
+  max-width: 600px;
+  margin: 0;
+  font-family: var(--font-mumaa-display), Georgia, serif;
+  font-size: clamp(2.4rem, 5vw, 5rem);
+  font-weight: 400;
+  letter-spacing: -0.06em;
+  line-height: 0.95;
+}
+
+.shared-empty p {
+  color: #536d86;
+}
+
+.shared-entry {
+  display: grid;
+  grid-template-columns: minmax(240px, 0.7fr) minmax(0, 1.3fr);
+  gap: 48px;
+  border-top: 1px solid rgba(11, 35, 64, 0.18);
+  padding: 28px 0 40px;
+}
+
+.shared-entry h2 {
+  margin: 10px 0 0;
+  font-family: var(--font-mumaa-display), Georgia, serif;
+  font-size: clamp(2rem, 4vw, 4rem);
+  font-weight: 400;
+  letter-spacing: -0.06em;
+  line-height: 0.95;
+}
+
+.shared-entry-date,
+.shared-entry-place,
+.shared-entry-status {
+  color: #8d6a33;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.shared-entry-place {
+  margin-top: 16px;
+  color: #536d86;
+}
+
+.shared-entry > div:last-child > p {
+  max-width: 62ch;
+  margin: 0;
+  color: #536d86;
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+.shared-entry-status {
+  display: inline-block;
+  margin-top: 18px;
+  padding: 7px 10px;
+  background: rgba(220, 184, 123, 0.28);
+  color: #0b2340;
+}
+
+.shared-entry .memory-delete-button {
+  display: block;
+  margin-top: 22px;
+  padding-left: 0;
+}
+
+@media (max-width: 720px) {
+  .shared-module {
+    padding: 34px 18px 72px;
+  }
+
+  .shared-module-hero {
+    display: block;
+  }
+
+  .shared-module-hero .memory-primary-button {
+    margin-top: 26px;
+  }
+
+  .shared-entry {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .shared-entry-list {
+    margin-top: 84px;
+  }
+}
+
+@media (max-width: 767px) {
+  .home-shell .shell-header-home > div {
+    padding: 16px 18px;
+  }
+
+  .home-shell .shell-header-home .mumaa-logo-shell {
+    width: 92px;
+  }
+
+  .home-blueprint .home-hero {
+    display: flex;
+    min-height: 0;
+    gap: 30px;
+    padding: 38px 18px 58px;
+  }
+
+  .home-blueprint .home-hero-copy {
+    padding-bottom: 0;
+  }
+
+  .home-blueprint .home-hero-copy h1 {
+    max-width: 340px;
+    font-size: clamp(3.55rem, 15.5vw, 5.3rem);
+    letter-spacing: -0.085em;
+    line-height: 0.88;
+  }
+
+  .home-blueprint .home-hero-copy h1 em {
+    display: inline-block;
+    padding-bottom: 3px;
+    line-height: 1.08;
+  }
+
+  .home-blueprint .home-intro {
+    max-width: 31ch;
+    margin-top: 24px;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+
+  .home-blueprint .home-hero-photo {
+    width: 100%;
+    min-height: 0;
+    aspect-ratio: 0.92;
+    margin: 0;
+  }
+
+  .home-blueprint .home-hero-photo img {
+    object-position: center 24%;
+  }
+
+  .home-blueprint .home-story-section,
+  .home-blueprint .home-events-section,
+  .home-blueprint .home-ideas-section {
+    padding-right: 18px;
+    padding-left: 18px;
+  }
+
+  .home-blueprint .home-section-heading h2 {
+    font-size: clamp(2.7rem, 12vw, 4.2rem);
+  }
+
+  .home-blueprint .home-memory-feature {
+    min-height: 0;
+  }
+
+  .home-blueprint .home-memory-visual {
+    min-height: 0;
+    aspect-ratio: 1.05;
+  }
+
+  .home-blueprint .home-memory-caption {
+    gap: 12px;
+    padding: 18px;
+  }
+
+  .home-blueprint .home-memory-caption h3 {
+    font-size: 2rem;
+  }
+
+  .home-blueprint .home-memory-empty {
+    min-height: 210px;
+    padding: 24px;
+  }
+
+  .home-blueprint .home-memory-empty p {
+    font-size: 24px;
+  }
+
+  .home-blueprint .home-diary-section,
+  .home-blueprint .home-closing {
+    padding-right: 18px;
+    padding-left: 18px;
+  }
+
+  .home-blueprint .home-diary-content {
+    margin-top: 56px;
+  }
+
+  .home-blueprint .home-action-row {
+    display: grid;
+    gap: 20px;
+  }
+}
+
 /* Login continuation of the cinematic story */
 .login-page {
   position: relative;
