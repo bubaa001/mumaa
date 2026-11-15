@@ -28,7 +28,10 @@ export function MemoriesArchive({ memories }: { memories: Memory[] }) {
           <h1>Moments worth keeping.</h1>
           <p className="memories-lede">A living collection of the days, photographs, and small details that make this world ours.</p>
         </div>
-        <button className="memory-primary-button" type="button" onClick={() => setComposerOpen(true)}>Add a memory <span aria-hidden="true">+</span></button>
+        <div className="memories-intro-actions">
+          <div className="memories-count"><strong>{memories.length}</strong><span>{memories.length === 1 ? "memory saved" : "memories saved"}</span></div>
+          <button className="memory-primary-button" type="button" onClick={() => setComposerOpen(true)}>Add a memory <span aria-hidden="true">+</span></button>
+        </div>
       </header>
 
       {composerOpen && <MemoryCreateForm onClose={() => setComposerOpen(false)} />}
@@ -38,7 +41,7 @@ export function MemoriesArchive({ memories }: { memories: Memory[] }) {
           {feature.cover_image_url ? <img src={feature.cover_image_url} alt={feature.title} /> : <div className="memory-image-placeholder">The first chapter is waiting for its photograph.</div>}
         </div>
         <div className="memory-featured-copy">
-          <p className="memory-eyebrow">{feature.is_legacy ? "Chapter 01" : "Recently added"}</p>
+          <p className="memory-eyebrow">{feature.is_legacy ? "Chapter 01" : "Latest addition"}</p>
           <h2>{feature.title}</h2>
           <p>{feature.excerpt}</p>
           <Link className="memory-text-link" href={feature.route}>Open this memory <span aria-hidden="true">↗</span></Link>
@@ -48,7 +51,7 @@ export function MemoriesArchive({ memories }: { memories: Memory[] }) {
       <section className="memory-archive" aria-labelledby="archive-heading">
         <div className="memory-archive-heading">
           <div>
-            <p className="memory-eyebrow">Everything we have kept</p>
+            <p className="memory-eyebrow">Browse by feeling, place, or year</p>
             <h2 id="archive-heading">The full archive</h2>
           </div>
           <p>{filtered.length} {filtered.length === 1 ? "memory" : "memories"}</p>
