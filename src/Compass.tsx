@@ -16,7 +16,15 @@ function smoothHeading(current: number, target: number, amount = 0.16) {
 
 function headingFromQuaternion([x, y, z, w]: readonly number[]) {
   const yaw = Math.atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z));
-  return normalizeHeading((yaw * 180) / Math.PI);
+  return normalizeHeading(360 - (yaw * 180) / Math.PI + screenOrientationAngle());
+}
+
+function screenOrientationAngle() {
+  return typeof screen.orientation?.angle === "number"
+    ? screen.orientation.angle
+    : typeof window.orientation === "number"
+      ? window.orientation
+      : 0;
 }
 
 function directionForHeading(heading: number) {
@@ -108,8 +116,14 @@ export function Compass() {
       }
     };
 
-    const handleDeviceOrientation = (event: DeviceOrientationEvent) => {
-      if (typeof event.alpha === "number") updateHeading(event.alpha);
+    const handleDeviceOrientation = (
+      event: DeviceOrientationEvent & { webkitCompassHeading?: number },
+    ) => {
+      if (typeof event.webkitCompassHeading === "number") {
+        updateHeading(event.webkitCompassHeading);
+      } else if (typeof event.alpha === "number") {
+        updateHeading(360 - event.alpha + screenOrientationAngle());
+      }
     };
 
     const startDeviceOrientation = () => {
