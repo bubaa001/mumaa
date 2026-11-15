@@ -1,11 +1,17 @@
-import { ModulePlaceholder } from "@/components/module-placeholder";
+import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import { MummaaShell } from "@/components/mumaa-shell";
+import { MemoriesArchive } from "@/components/memories-archive";
+import { listMemories } from "@/lib/memories";
+import { readAuthSession } from "@/lib/auth/session";
 
-export default function MemoriesPage() {
+export default async function MemoriesPage() {
+  const session = await readAuthSession((await cookies()).get("mumaa_session")?.value);
+  if (!session) redirect("/login");
+
   return (
-    <ModulePlaceholder
-      description="Your shared timeline will collect real memories and the preserved graduation chapter here."
-      eyebrow="MEMORIES"
-      title="The moments that stay."
-    />
+    <MummaaShell>
+      <MemoriesArchive memories={await listMemories()} />
+    </MummaaShell>
   );
 }
