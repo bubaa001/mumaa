@@ -172,11 +172,18 @@ export function Compass() {
           try {
             const sensor = new AbsoluteSensor({ frequency: 30 });
             const onReading = () => {
-              if (sensor.quaternion) updateHeading(headingFromQuaternion(sensor.quaternion));
+              if (!sensor.quaternion) return;
+              absoluteReadingReceived = true;
+              window.clearTimeout(relativeFallbackTimer);
+              updateHeading(headingFromQuaternion(sensor.quaternion));
             };
             sensor.addEventListener("reading", onReading);
             sensor.start();
             sensorRef.current = { stop: () => { sensor.removeEventListener("reading", onReading); sensor.stop(); } };
+            window.addEventListener("deviceorientation", handleRelativeOrientation);
+            relativeFallbackTimer = window.setTimeout(() => {
+              if (!absoluteReadingReceived && active) setSensorState("relative");
+            }, 2000);
             setSensorState("active");
             return;
           } catch {
