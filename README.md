@@ -19,6 +19,13 @@ The app expects these local variables in `.env.local`:
 
 The Supabase project is `xxmilhryzjmuunjqfnus`. Only the publishable key belongs in `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`; never expose the service-role key.
 
+Authentication uses Supabase Google OAuth. In Supabase Authentication settings, enable Google and add these redirect URLs:
+
+- `http://localhost:3000/auth/callback`
+- `https://mumaa-drab.vercel.app/auth/callback`
+
+Only `joshuajohnr1@gmail.com` and `annacelestial001@gmail.com` are accepted after the OAuth callback.
+
 The foundation migration is [supabase/migrations/0001_mumaa_foundation.sql](supabase/migrations/0001_mumaa_foundation.sql), and it has been applied to the remote project. The additive shared-content and security migration is [supabase/migrations/0002_mumaa_shared_content_security.sql](supabase/migrations/0002_mumaa_shared_content_security.sql); it is reviewed locally but awaits the remote migration confirmation before application.
 
 To verify the preserved historical Vite experience:
@@ -55,8 +62,8 @@ Open the local URL printed by Vite. Camera access works on `localhost` and on se
 ## Deploy to Vercel
 1. Create a GitHub repository and upload the contents of this folder.
 2. In Vercel, choose **Add New → Project** and import that repository.
-3. Keep the framework preset as **Other**.
-4. Leave the build command blank and set the output directory to `.`.
+3. Use the **Next.js** framework preset.
+4. Keep the build command as `npm run build`.
 5. Deploy. Vercel will provide a shareable HTTPS URL.
 
 ### Save the graduation portrait privately
