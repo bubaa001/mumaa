@@ -1,20 +1,13 @@
 import { redirect } from "next/navigation";
 import { FadeIn, MummaaShell } from "@/components/mumaa-shell";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { cookies } from "next/headers";
+import { readAuthSession } from "@/lib/auth/session";
 
 export default async function PrivateHomePage() {
-  if (!isSupabaseConfigured()) {
-    return <PrivateHomeContent displayName="MUMAA" />;
-  }
-
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) redirect("/login");
-  return <PrivateHomeContent displayName={user.user_metadata?.full_name ?? "MUMAA"} />;
+  const token = (await cookies()).get("mumaa_session")?.value;
+  const session = await readAuthSession(token);
+  if (!session) redirect("/login");
+  return <PrivateHomeContent displayName={session.name} />;
 }
 
 function PrivateHomeContent({ displayName }: { displayName: string }) {

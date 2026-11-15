@@ -19,12 +19,11 @@ The app expects these local variables in `.env.local`:
 
 The Supabase project is `xxmilhryzjmuunjqfnus`. Only the publishable key belongs in `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`; never expose the service-role key.
 
-Authentication uses Supabase Google OAuth. In Supabase Authentication settings, enable Google and add these redirect URLs:
+Authentication uses direct Google OAuth through a Vercel-hosted Next.js callback. Configure this exact authorized redirect URI in Google Cloud:
 
-- `http://localhost:3000/auth/callback`
 - `https://mumaa-drab.vercel.app/auth/callback`
 
-Only `joshuajohnr1@gmail.com` and `annacelestial001@gmail.com` are accepted after the OAuth callback.
+Set the authorized JavaScript origin to `https://mumaa-drab.vercel.app`. Only `joshuajohnr1@gmail.com` and `annacelestial001@gmail.com` are accepted after the OAuth callback.
 
 The foundation migration is [supabase/migrations/0001_mumaa_foundation.sql](supabase/migrations/0001_mumaa_foundation.sql), and it has been applied to the remote project. The additive shared-content and security migration is [supabase/migrations/0002_mumaa_shared_content_security.sql](supabase/migrations/0002_mumaa_shared_content_security.sql); it is reviewed locally but awaits the remote migration confirmation before application.
 

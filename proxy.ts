@@ -1,44 +1,28 @@
-import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { isSupabaseConfigured, getSupabasePublicEnv } from "@/lib/supabase/env";
 import { isAllowedMumaaEmail } from "@/lib/auth/allowed-email";
+import { readAuthSession } from "@/lib/auth/session";
 
 export async function proxy(request: NextRequest) {
-  if (!isSupabaseConfigured()) return NextResponse.next();
-
-  const response = NextResponse.next({ request });
-  const { url, publishableKey } = getSupabasePublicEnv();
-  const supabase = createServerClient(url, publishableKey, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll();
-      },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value, options }) => {
-          request.cookies.set(name, value);
-          response.cookies.set(name, value, options);
-        });
-      },
-    },
-  });
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
   const isPrivateRoute = /^\/(home|diary|memories|events|ideas|time-capsules)(\/|$)/.test(
     request.nextUrl.pathname,
   );
+  const session = await readAuthSession(request.cookies.get("mumaa_session")?.value);
 
-  if (user && !isAllowedMumaaEmail(user.email)) {
-    await supabase.auth.signOut();
-    return NextResponse.redirect(new URL("/login?error=not-allowed", request.url));
+  if (session && !isAllowedMumaaEmail(session.email)) {
+    const response = NextResponse.redirect(new URL("/login?error=not-allowed", request.url));
+    response.cookies.delete("mumaa_session");
+    return response;
   }
 
-  if (!user && isPrivateRoute) {
+  if (!session && isPrivateRoute) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  return response;
+  if (session && request.nextUrl.pathname === "/login") {
+    return NextResponse.redirect(new URL("/home", request.url));
+  }
+
+  return NextResponse.next();
 }
 
 export const config = {

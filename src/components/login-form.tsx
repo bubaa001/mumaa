@@ -2,8 +2,6 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
-import { isSupabaseConfigured } from "@/lib/supabase/env";
 
 export function LoginForm() {
   const [error, setError] = useState("");
@@ -12,27 +10,8 @@ export function LoginForm() {
   async function signInWithGoogle() {
     setError("");
 
-    if (!isSupabaseConfigured()) {
-      setError("Google sign in is not configured yet. Add the Supabase public variables to continue.");
-      return;
-    }
-
     setBusy(true);
-    const { error: signInError } = await createSupabaseBrowserClient().auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-        queryParams: {
-          access_type: "offline",
-          prompt: "select_account",
-        },
-      },
-    });
-
-    if (signInError) {
-      setError("We could not open Google sign in. Try again.");
-      setBusy(false);
-    }
+    window.location.assign("/api/auth/google");
   }
 
   return (
