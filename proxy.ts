@@ -21,7 +21,17 @@ export async function proxy(request: NextRequest) {
     },
   });
 
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const isPrivateRoute = /^\/(home|diary|memories|events|ideas|time-capsules)(\/|$)/.test(
+    request.nextUrl.pathname,
+  );
+
+  if (!user && isPrivateRoute) {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
   return response;
 }
 

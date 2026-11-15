@@ -21,7 +21,7 @@ export function ModulePlaceholder({
             Nothing here yet
           </p>
         </div>
-        <Link className="mt-8 inline-block text-sm font-semibold text-mumaa-blue underline underline-offset-4" href="/">
+        <Link className="mt-8 inline-block text-sm font-semibold text-mumaa-blue underline underline-offset-4" href="/home">
           Return home
         </Link>
       </section>
