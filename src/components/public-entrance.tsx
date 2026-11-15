@@ -51,7 +51,7 @@ export function PublicEntrance() {
         <motion.div
           className="story-nav-inner"
         >
-          <span className="story-live" aria-hidden="true" />
+          <img className="mumaa-logo mumaa-logo-story-nav" src="/images/mumaa-logo.png" alt="Mumaa" />
           <span>Anna &amp; Joshua</span>
           <span className="story-nav-separator">/</span>
           <a href="#finale">open</a>

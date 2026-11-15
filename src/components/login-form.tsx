@@ -41,7 +41,8 @@ export function LoginPage() {
       <div className="login-grain" aria-hidden="true" />
       <header className="login-nav">
         <Link className="login-wordmark" href="/">
-          <span>M</span> Anna &amp; Joshua
+          <img className="mumaa-logo mumaa-logo-login-nav" src="/images/mumaa-logo.png" alt="Mumaa" />
+          <span className="login-wordmark-name">Anna &amp; Joshua</span>
         </Link>
         <span className="login-nav-note">Private archive</span>
       </header>
@@ -60,7 +61,7 @@ export function LoginPage() {
             <p className="login-signature">for Anna &amp; Joshua</p>
           </div>
           <div className="login-access">
-            <div className="login-mark">M</div>
+            <img className="mumaa-logo mumaa-logo-login-access" src="/images/mumaa-logo.png" alt="Mumaa" />
             <p className="login-access-label">Private access</p>
             <h2>Enter the archive.</h2>
             <LoginForm />

@@ -122,6 +122,34 @@ button {
   font-style: italic;
 }
 
+.mumaa-logo {
+  display: block;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.mumaa-logo-shell {
+  width: 76px;
+  height: 48px;
+}
+
+.mumaa-logo-login-nav {
+  width: 54px;
+  height: 36px;
+}
+
+.mumaa-logo-login-access {
+  width: 94px;
+  height: 78px;
+  margin-bottom: 20px;
+}
+
+.mumaa-logo-story-nav {
+  width: 42px;
+  height: 29px;
+}
+
 .entrance-kicker,
 .login-kicker,
 .home-kicker {
@@ -892,20 +920,6 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-}
-
-.login-wordmark span {
-  display: grid;
-  width: 26px;
-  height: 26px;
-  place-items: center;
-  border: 1px solid var(--story-ember, #f5c97b);
-  border-radius: 50%;
-  color: var(--story-ember, #f5c97b);
-  font-family: Georgia, serif;
-  font-size: 16px;
-  font-style: italic;
-  letter-spacing: 0;
 }
 
 .login-nav-note {

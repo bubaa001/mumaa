@@ -21,7 +21,7 @@ export function MummaaShell({ children }: { children: React.ReactNode }) {
       <header className="border-b border-mumaa-navy/10 bg-mumaa-ivory/90 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5 sm:px-8">
           <Link className="font-display text-2xl italic tracking-tight text-mumaa-navy" href="/home">
-            MUMAA
+            <img className="mumaa-logo mumaa-logo-shell" src="/images/mumaa-logo.png" alt="Mumaa" />
           </Link>
           <span className="hidden text-[10px] font-semibold tracking-[0.2em] text-mumaa-blue uppercase sm:block">
             A private world for two
