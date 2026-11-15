@@ -38,17 +38,34 @@ export function LoginPage() {
   return (
     <main className="login-page">
       <div className="login-atmosphere" aria-hidden="true" />
+      <div className="login-grain" aria-hidden="true" />
+      <header className="login-nav">
+        <Link className="login-wordmark" href="/">
+          <span>M</span> Anna &amp; Joshua
+        </Link>
+        <span className="login-nav-note">Private archive</span>
+      </header>
       <section className="login-card">
         <Link className="login-back" href="/">
-          <span aria-hidden="true">←</span> Back to entrance
+          <span aria-hidden="true">↖</span> Return to the story
         </Link>
-        <div className="login-mark">M</div>
-        <p className="login-kicker">Welcome back</p>
-        <h1>Enter your shared world.</h1>
-        <p className="login-intro">
-          Continue with the Google account invited to your private archive.
-        </p>
-        <LoginForm />
+        <div className="login-layout">
+          <div className="login-story-copy">
+            <p className="login-kicker">The next page</p>
+            <h1>Come back to what is <em>ours.</em></h1>
+            <p className="login-intro">
+              Your private archive is waiting. The letters, plans, little moments,
+              and everything still being written.
+            </p>
+            <p className="login-signature">for Anna &amp; Joshua</p>
+          </div>
+          <div className="login-access">
+            <div className="login-mark">M</div>
+            <p className="login-access-label">Private access</p>
+            <h2>Enter the archive.</h2>
+            <LoginForm />
+          </div>
+        </div>
       </section>
     </main>
   );
