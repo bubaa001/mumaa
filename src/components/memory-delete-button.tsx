@@ -9,10 +9,10 @@ export function MemoryDeleteButton({ memoryId }: { memoryId: string }) {
   const [error, setError] = useState("");
 
   async function remove() {
-    if (!window.confirm("Delete this memory and its photographs? This cannot be undone.")) return;
+    if (!window.confirm("Delete this memory and its photographs? This can’t be undone.")) return;
     setDeleting(true);
     const response = await fetch(`/api/memories/${memoryId}`, { method: "DELETE" });
-    const result = await response.json();
+    const result = await response.json().catch(() => ({}));
     if (!response.ok) {
       setError(result.error ?? "The memory could not be deleted.");
       setDeleting(false);
@@ -23,11 +23,11 @@ export function MemoryDeleteButton({ memoryId }: { memoryId: string }) {
   }
 
   return (
-    <div>
-      <button className="memory-delete-button" type="button" onClick={remove} disabled={deleting}>
-        {deleting ? "Deleting..." : "Delete this memory"}
+    <div style={{ display: "grid", justifyItems: "center", gap: 8 }}>
+      <button className="danger-link" type="button" onClick={remove} disabled={deleting}>
+        {deleting ? "Deleting…" : "Delete this memory"}
       </button>
-      {error && <p className="memory-form-error" role="alert">{error}</p>}
+      {error && <p className="form-error" role="alert">{error}</p>}
     </div>
   );
 }
