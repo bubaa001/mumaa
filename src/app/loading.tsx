@@ -1,7 +1,12 @@
+import { Heart } from "lucide-react";
+
 export default function Loading() {
   return (
-    <main className="grid min-h-screen place-items-center bg-mumaa-ivory px-6">
-      <p className="font-display text-xl italic text-mumaa-blue">Opening MUMAA…</p>
+    <main className="system" aria-busy="true">
+      <div>
+        <Heart className="loader-heart" fill="currentColor" strokeWidth={0} aria-hidden="true" />
+        <p className="eyebrow" style={{ marginTop: 18 }}>Opening mumaa</p>
+      </div>
     </main>
   );
 }

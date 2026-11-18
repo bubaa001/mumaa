@@ -1,28 +1,39 @@
-import type { Metadata } from "next";
-import { DM_Sans, Playfair_Display } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 
-const display = Playfair_Display({
+const serif = Instrument_Serif({
   subsets: ["latin"],
-  variable: "--font-mumaa-display",
+  weight: "400",
+  style: ["normal", "italic"],
+  variable: "--font-serif",
 });
 
-const sans = DM_Sans({
+const sans = Geist({
   subsets: ["latin"],
-  variable: "--font-mumaa-sans",
+  variable: "--font-sans",
+});
+
+const mono = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
 });
 
 export const metadata: Metadata = {
-  title: "MUMAA | A private world for two",
-  description: "A private digital world shared between two people.",
+  title: "MUMAA · Anna & Joshua",
+  description: "A private world for two.",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#f5efe6",
 };
 
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
-      <body className={`${display.variable} ${sans.variable}`}>{children}</body>
+    <html lang="en" className={`${serif.variable} ${sans.variable} ${mono.variable}`}>
+      <body>{children}</body>
     </html>
   );
 }

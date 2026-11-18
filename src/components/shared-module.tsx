@@ -1,23 +1,88 @@
 "use client";
 
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { BookOpen, CalendarDays, Hourglass, Lightbulb, MapPin, Plus } from "lucide-react";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import type { SharedContentType, SharedEntry } from "@/lib/shared-content";
+import { PageHead } from "./mumaa-shell";
+import { ease } from "./motion";
+import { Sheet } from "./sheet";
 
-const config: Record<SharedContentType, { eyebrow: string; title: string; description: string; action: string; empty: string; bodyLabel: string }> = {
-  diary: { eyebrow: "Between the lines", title: "Words worth keeping.", description: "A place for the things we say, the things we mean, and the things we want to remember.", action: "Write an entry", empty: "The first entry is still unwritten.", bodyLabel: "What do you want to say?" },
-  event: { eyebrow: "The days ahead", title: "Make room for what comes next.", description: "Keep the plans that deserve more than a passing mention.", action: "Add a moment", empty: "No moments on the calendar yet.", bodyLabel: "What is happening?" },
-  idea: { eyebrow: "Little plans, big possibilities", title: "Things we might do.", description: "A shared shelf for the possibilities we want to come back to.", action: "Create an idea", empty: "The idea board is waiting for its first possibility.", bodyLabel: "Tell us a little more" },
-  capsule: { eyebrow: "For later", title: "For a future version of you.", description: "Seal a thought, a letter, or a promise until the date you choose.", action: "Seal a capsule", empty: "Nothing has been sealed for later.", bodyLabel: "What should future us read?" },
+const config: Record<
+  SharedContentType,
+  {
+    eyebrow: string;
+    title: React.ReactNode;
+    description: string;
+    action: string;
+    empty: string;
+    emptyHint: string;
+    bodyLabel: string;
+    placeholder: string;
+    icon: typeof BookOpen;
+  }
+> = {
+  diary: {
+    eyebrow: "Diary",
+    title: <>Words worth <em>keeping.</em></>,
+    description: "The things we say, the things we mean, and the things we want to remember saying.",
+    action: "Write an entry",
+    empty: "The first page is still blank.",
+    emptyHint: "Leave something here for the version of you that comes back later.",
+    bodyLabel: "What do you want to say?",
+    placeholder: "A note for us",
+    icon: BookOpen,
+  },
+  event: {
+    eyebrow: "Events",
+    title: <>The days <em>ahead.</em></>,
+    description: "The plans that deserve more than a passing mention.",
+    action: "Add a moment",
+    empty: "Nothing on the calendar yet.",
+    emptyHint: "Plan the first one together.",
+    bodyLabel: "What’s happening?",
+    placeholder: "A Sunday worth planning",
+    icon: CalendarDays,
+  },
+  idea: {
+    eyebrow: "Ideas",
+    title: <>Things we <em>might</em> do.</>,
+    description: "A shared shelf for the possibilities we want to come back to.",
+    action: "Add an idea",
+    empty: "The shelf is waiting for its first idea.",
+    emptyHint: "A place to visit, a thing to try, a someday.",
+    bodyLabel: "Tell us a little more",
+    placeholder: "A place we should visit",
+    icon: Lightbulb,
+  },
+  capsule: {
+    eyebrow: "Time capsules",
+    title: <>For a future <em>us.</em></>,
+    description: "Seal a thought, a letter, or a promise until the date you choose. It appears here once it opens.",
+    action: "Seal a capsule",
+    empty: "No capsules have opened yet.",
+    emptyHint: "Sealed capsules stay hidden until their date arrives.",
+    bodyLabel: "What should future us read?",
+    placeholder: "Open this on our anniversary",
+    icon: Hourglass,
+  },
 };
 
+function formatDate(value: string | null) {
+  if (!value) return null;
+  const date = new Date(value.length === 10 ? `${value}T12:00:00` : value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+}
+
 export function SharedModule({ type, entries, currentEmail }: { type: SharedContentType; entries: SharedEntry[]; currentEmail: string }) {
-  const [composerOpen, setComposerOpen] = useState(false);
+  const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [visible, setVisible] = useState(entries);
   const copy = config[type];
   const isCapsule = type === "capsule";
+  const Icon = copy.icon;
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -25,61 +90,144 @@ export function SharedModule({ type, entries, currentEmail }: { type: SharedCont
     setError("");
     const form = new FormData(event.currentTarget);
     form.set("type", type);
-    const response = await fetch("/api/content", { method: "POST", body: form });
-    const result = await response.json();
-    if (!response.ok) {
-      setError(result.error ?? "This could not be saved.");
+    try {
+      const response = await fetch("/api/content", { method: "POST", body: form });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error ?? "This could not be saved.");
+      const entry = result.entry as SharedEntry;
+      const sealed = isCapsule && entry.unlockAt && Date.parse(entry.unlockAt) > Date.now();
+      if (!sealed) setVisible((current) => [entry, ...current]);
+      setOpen(false);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "This could not be saved.");
+    } finally {
       setSaving(false);
-      return;
     }
-    setVisible((current) => [result.entry, ...current]);
-    setComposerOpen(false);
-    setSaving(false);
   }
 
   return (
-    <div className="shared-module">
-      <header className="shared-module-hero">
-        <div>
-          <p className="memory-eyebrow">{copy.eyebrow}</p>
-          <h1>{copy.title}</h1>
-          <p>{copy.description}</p>
+    <>
+      <PageHead eyebrow={copy.eyebrow} title={copy.title} description={copy.description}>
+        <div className="count">
+          <strong>{visible.length}</strong>
+          <span>{visible.length === 1 ? "entry" : "entries"}</span>
         </div>
-        <button className="memory-primary-button" type="button" onClick={() => setComposerOpen(true)}>{copy.action} <span aria-hidden="true">+</span></button>
-      </header>
-      {composerOpen && (
-        <section className="shared-composer">
-          <div className="memory-composer-heading">
-            <div><p className="memory-eyebrow">Add to our world</p><h2>Make it real.</h2></div>
-            <button className="memory-close-button" type="button" onClick={() => setComposerOpen(false)} aria-label="Close form">×</button>
+        <button className="btn btn-primary" type="button" onClick={() => setOpen(true)}>
+          <Plus aria-hidden="true" /> {copy.action}
+        </button>
+      </PageHead>
+
+      <Sheet open={open} onClose={() => setOpen(false)} eyebrow={copy.eyebrow} title={<>Make it <em>real.</em></>}>
+        <form className="form" onSubmit={submit}>
+          <label className="field">
+            <span>Title <b aria-hidden="true">*</b></span>
+            <input className="field-input" name="title" required maxLength={120} placeholder={copy.placeholder} autoFocus />
+          </label>
+          <div className="form-grid">
+            <label className="field">
+              <span>{isCapsule ? "Opens on" : "Date"}</span>
+              <input className="field-input" name={isCapsule ? "unlockAt" : "date"} type={isCapsule ? "datetime-local" : "date"} />
+            </label>
+            {type === "event" && (
+              <label className="field">
+                <span>Place</span>
+                <input className="field-input" name="location" placeholder="Where it happens" />
+              </label>
+            )}
+            {type === "idea" && (
+              <label className="field">
+                <span>Status</span>
+                <select className="field-input" name="status" defaultValue="open">
+                  <option value="open">Open possibility</option>
+                  <option value="planned">Planned</option>
+                  <option value="done">Done</option>
+                </select>
+              </label>
+            )}
           </div>
-          <form className="memory-form" onSubmit={submit}>
-            <label><span>Title <b aria-hidden="true">*</b></span><input name="title" required placeholder={type === "event" ? "A Sunday worth planning" : type === "idea" ? "A place we should visit" : "A note for us"} /></label>
-            <div className="memory-form-grid">
-              <label><span>{isCapsule ? "Unlock date" : type === "event" ? "Date" : "Date"}</span><input name={isCapsule ? "unlockAt" : "date"} type={isCapsule ? "datetime-local" : "date"} /></label>
-              {(type === "event" || type === "idea") && <label><span>{type === "event" ? "Place" : "Status"}</span>{type === "event" ? <input name="location" placeholder="Where it happens" /> : <select name="status" defaultValue="open"><option value="open">Open possibility</option><option value="planned">Planned</option><option value="done">Done</option></select>}</label>}
-            </div>
-            <label><span>{copy.bodyLabel}</span><textarea name="body" rows={6} placeholder="Write it in your own words." /></label>
-            {error && <p className="memory-form-error" role="alert">{error}</p>}
-            <div className="memory-form-actions"><button className="memory-secondary-button" type="button" onClick={() => setComposerOpen(false)}>Cancel</button><button className="memory-primary-button" type="submit" disabled={saving}>{saving ? "Saving..." : "Save it"}</button></div>
-          </form>
-        </section>
+          <label className="field">
+            <span>{copy.bodyLabel}</span>
+            <textarea className="field-input" name="body" rows={6} placeholder="Write it in your own words." />
+          </label>
+          {error && <p className="form-error" role="alert">{error}</p>}
+          <div className="form-actions">
+            <button className="btn btn-ghost" type="button" onClick={() => setOpen(false)}>Cancel</button>
+            <button className="btn btn-cherry" type="submit" disabled={saving}>{saving ? "Saving…" : isCapsule ? "Seal it" : "Save it"}</button>
+          </div>
+        </form>
+      </Sheet>
+
+      {visible.length === 0 ? (
+        <div className="empty">
+          <span className="empty-mark"><Icon aria-hidden="true" /></span>
+          <h2>{copy.empty}</h2>
+          <p>{copy.emptyHint}</p>
+          <button className="btn btn-ghost" type="button" onClick={() => setOpen(true)} style={{ marginTop: 12 }}>
+            <Plus aria-hidden="true" /> {copy.action}
+          </button>
+        </div>
+      ) : (
+        <motion.section className="entries" aria-label={copy.eyebrow} layout>
+          <AnimatePresence initial={false}>
+            {visible.map((entry, index) => (
+              <EntryCard
+                key={entry.id}
+                entry={entry}
+                index={index}
+                canDelete={entry.authorEmail === currentEmail}
+                onDeleted={() => setVisible((current) => current.filter((item) => item.id !== entry.id))}
+              />
+            ))}
+          </AnimatePresence>
+        </motion.section>
       )}
-      <section className="shared-entry-list" aria-label={copy.eyebrow}>
-        {visible.length === 0 ? <div className="shared-empty"><h2>{copy.empty}</h2><p>Start with something small. It can grow from there.</p></div> : visible.map((entry) => <SharedEntryCard key={entry.id} entry={entry} canDelete={entry.authorEmail === currentEmail} />)}
-      </section>
-    </div>
+    </>
   );
 }
 
-function SharedEntryCard({ entry, canDelete }: { entry: SharedEntry; canDelete: boolean }) {
-  const router = useRouter();
+function EntryCard({ entry, index, canDelete, onDeleted }: { entry: SharedEntry; index: number; canDelete: boolean; onDeleted: () => void }) {
+  const reduce = useReducedMotion();
   const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const date = formatDate(entry.date ?? entry.unlockAt);
+
   async function remove() {
-    if (!window.confirm("Delete this entry?")) return;
+    if (!window.confirm("Delete this entry? This can’t be undone.")) return;
+    setBusy(true);
     const response = await fetch(`/api/content/${entry.type}/${entry.id}`, { method: "DELETE" });
-    if (!response.ok) { setError((await response.json()).error ?? "Could not delete."); return; }
-    router.refresh();
+    if (!response.ok) {
+      setError((await response.json().catch(() => ({}))).error ?? "Could not delete.");
+      setBusy(false);
+      return;
+    }
+    onDeleted();
   }
-  return <article className="shared-entry"><div><p className="shared-entry-date">{entry.date ?? entry.unlockAt ?? "No date"}</p><h2>{entry.title}</h2>{entry.location && <p className="shared-entry-place">{entry.location}</p>}</div><div><p>{entry.body || "A moment saved for us."}</p>{entry.status && <span className="shared-entry-status">{entry.status}</span>}{canDelete && <button className="memory-delete-button" type="button" onClick={remove}>Delete</button>}{error && <small className="memory-form-error">{error}</small>}</div></article>;
+
+  return (
+    <motion.article
+      className="entry"
+      layout
+      initial={reduce ? false : { opacity: 0, y: 24 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.96 }}
+      transition={{ duration: 0.6, ease, delay: Math.min(index, 6) * 0.05 }}
+    >
+      <div className="entry-meta">
+        {date && <span><CalendarDays aria-hidden="true" /> {date}</span>}
+        {entry.location && <span><MapPin aria-hidden="true" /> {entry.location}</span>}
+        {entry.status && <span className={`chip chip-${entry.status}`}>{entry.status}</span>}
+      </div>
+      <h2>{entry.title}</h2>
+      {entry.body && <p>{entry.body}</p>}
+      <div className="entry-foot">
+        <span>by <em>{entry.authorName}</em></span>
+        {canDelete && (
+          <button className="danger-link" type="button" onClick={remove} disabled={busy}>
+            {busy ? "Deleting…" : "Delete"}
+          </button>
+        )}
+      </div>
+      {error && <p className="form-error">{error}</p>}
+    </motion.article>
+  );
 }
