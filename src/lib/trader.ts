@@ -25,8 +25,14 @@ export type TraderMarket = {
   overlay: Record<string, (number | null)[]>;
   atr: number; would_sl: number; would_tp: number;
   verdict: "in_trade" | "stopped" | "paused" | "signal" | "watching"; why: string;
-  position: TraderPosition | null; record?: TraderRecord;
+  position: TraderPosition | null; record?: TraderRecord; tf?: string;
 };
+/** Display names for each bot (each runs as its own agent with its own magic number). */
+export const BOT_NAMES: Record<string, string> = {
+  forex: "Forex bot", gold: "Gold bot", h4candle: "4H candle bot", orbgold: "Gold NY-open bot",
+};
+export const botName = (b: string) => BOT_NAMES[b] ?? b;
+export const TF_NAME: Record<string, string> = { M5: "5-minute", H1: "hourly", H4: "4-hour" };
 export type TraderBot = {
   running: boolean; markets: Record<string, string>; last_seen: string | null; log_age_s?: number;
   lines: string[];

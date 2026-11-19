@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { PageHead } from "./mumaa-shell";
 import { MarketCard } from "./trading-market";
 import { TradeHistory } from "./trading-history";
-import type { TraderPosition, TraderPull, TraderResult, TraderTrade } from "@/lib/trader";
+import { botName, type TraderPosition, type TraderPull, type TraderResult, type TraderTrade } from "@/lib/trader";
 
 const POLL_MS = 5_000;
 const STALE_S = 120;
@@ -194,10 +194,10 @@ export function TradingDashboard({ initial }: { initial: TraderResult }) {
         <section aria-label="Markets">
           <div className="trade-section-head">
             <h2 className="trade-h">Markets</h2>
-            <p className="trade-muted">Hourly candles, live. The bot decides on each closed candle.</p>
+            <p className="trade-muted">Live candles. Each bot decides on its own closed candle: 5-minute, hourly or 4-hour.</p>
           </div>
           <div className="market-grid">
-            {markets.map((m) => <MarketCard key={m.pair} m={m} trades={s.trades} currency={ccy} />)}
+            {markets.map((m) => <MarketCard key={`${m.bot}-${m.pair}`} m={m} trades={s.trades} currency={ccy} />)}
           </div>
         </section>
       )}
@@ -277,14 +277,14 @@ export function TradingDashboard({ initial }: { initial: TraderResult }) {
             <li key={i}><time>{when(e.time)}</time><span className="chip">{e.currency}</span><span>{e.title}</span></li>
           ))}</ul>
         )}
-        <p className="trade-muted">Bots skip new trades from 30 min before to 30 min after each event on the affected pairs.</p>
+        <p className="trade-muted">Bots skip new trades from 30 min before to 30 min after each event on the affected pairs (2 hours for the Gold NY-open bot).</p>
       </section>
 
       <section className="trade-grid">
         {Object.entries(s.bots).map(([name, bot]) => (
           <article className="trade-card" key={name}>
             <div className="trade-card-top">
-              <h2 className="trade-h">{name === "gold" ? "Gold bot" : "Forex bot"}</h2>
+              <h2 className="trade-h">{botName(name)}</h2>
               <span className={`chip ${bot.running ? "chip-done" : ""}`}>{bot.running ? "Running" : "Stopped"}</span>
             </div>
             <p className="trade-muted">{Object.keys(bot.markets).join(" · ")}</p>
