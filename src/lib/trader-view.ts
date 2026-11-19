@@ -63,7 +63,20 @@ export type Agent = {
   openPnl: number;
   trades: TraderTrade[];
   record: Tally;
+  /** Backtest confidence across this agent's markets; a range when they differ. Null when unrated. */
+  confidence: { grade: Grade; label: string } | null;
 };
+
+type Grade = "High" | "Medium" | "Low";
+const GRADES: Grade[] = ["Low", "Medium", "High"];
+
+function confidenceOf(ms: TraderMarket[]): Agent["confidence"] {
+  const ranks = ms.map((m) => m.record?.confidence).filter((g): g is Grade => !!g).map((g) => GRADES.indexOf(g));
+  if (!ranks.length) return null;
+  const lo = Math.min(...ranks), hi = Math.max(...ranks);
+  const avg = Math.round(ranks.reduce((a, b) => a + b, 0) / ranks.length);
+  return { grade: GRADES[avg], label: lo === hi ? GRADES[lo] : `${GRADES[lo]}–${GRADES[hi]}` };
+}
 
 /** Every bot the reporter knows about, from its process list or its markets, with its rolled-up state. */
 export function agentsFrom(s: TraderState): Agent[] {
@@ -84,7 +97,7 @@ export function agentsFrom(s: TraderState): Agent[] {
       id, name: botName(id), bot, running, state, markets: sortMarkets(mine), pairs,
       strategies: Array.from(new Set(mine.map((m) => m.name).filter(Boolean))),
       positions, openPnl: positions.reduce((sum, p) => sum + p.profit, 0),
-      trades, record: tally(trades),
+      trades, record: tally(trades), confidence: confidenceOf(mine),
     };
   });
   return agents.sort((a, b) => STATE_ORDER.indexOf(a.state) - STATE_ORDER.indexOf(b.state));
@@ -143,3 +156,91 @@ export function when(iso: string, mounted: boolean, withDay = true) {
 }
 
 export const REASON: Record<string, string> = { target: "Hit target", stop: "Hit stop", closed: "Time / manual" };
+
+/* ─── Trading sessions ───────────────────────────────────────── */
+
+export type Session = {
+  key: string;
+  name: string;
+  /** Minutes after midnight in `tz`. */
+  start: number;
+  end: number;
+  tz: "UTC" | "America/New_York";
+  source: string;
+  agents: string[];
+};
+
+const WINDOW = /\((\d{1,2})(?::(\d\d))?\s*[–-]\s*(\d{1,2})(?::(\d\d))?\s*(UTC|NY)\)/i;
+
+/**
+ * The time windows the bots trade in, read from their own checklists
+ * ("Asian session (00–06 UTC)", "Inside the trade window (9:45-11:45 NY)"), so new bots appear here on their own.
+ */
+export function sessionsFrom(agents: Agent[]): Session[] {
+  const found = new Map<string, Session>();
+  for (const a of agents) {
+    for (const m of a.markets) {
+      for (const c of m.checks) {
+        if (!/session|window/i.test(c.label)) continue;
+        const x = c.label.match(WINDOW);
+        if (!x) continue;
+        const start = Number(x[1]) * 60 + Number(x[2] ?? 0);
+        const end = Number(x[3]) * 60 + Number(x[4] ?? 0);
+        const tz = x[5].toUpperCase() === "NY" ? "America/New_York" : "UTC";
+        const key = `${tz}-${start}-${end}`;
+        const raw = c.label.slice(0, c.label.indexOf("(")).replace(/^inside the\s+/i, "").trim();
+        const named = raw.charAt(0).toUpperCase() + raw.slice(1);
+        const name = tz === "UTC" || /new york|ny/i.test(named) ? named : `New York ${raw}`;
+        const s = found.get(key) ?? { key, name, start, end, tz, source: x[0].slice(1, -1), agents: [] };
+        if (!s.agents.includes(a.name)) s.agents.push(a.name);
+        found.set(key, s);
+      }
+    }
+  }
+  return [...found.values()];
+}
+
+function tzOffset(t: number, tz: string) {
+  if (tz === "UTC") return 0;
+  const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", {
+    timeZone: tz, hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit",
+  }).formatToParts(t).map((x) => [x.type, x.value]));
+  return Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute, +p.second) - Math.floor(t / 1000) * 1000;
+}
+
+/** The instant a wall-clock minute happens in `tz` on the calendar day of `t` (shifted by `days`). */
+function zoned(t: number, tz: string, days: number, minutes: number) {
+  const local = new Date(t + tzOffset(t, tz));
+  const guess = Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate() + days, 0, minutes);
+  const first = guess - tzOffset(guess, tz);
+  return guess - tzOffset(first, tz);
+}
+
+export type SessionNow = { open: boolean; start: number; end: number; next: number; progress: number };
+
+/** Whether a session is open at `now`, and when it next starts or ends (epoch ms). */
+export function sessionAt(s: Session, now: number): SessionNow {
+  const length = ((s.end - s.start + 1440) % 1440 || 1440) * 60_000;
+  let upcoming = Infinity;
+  for (let d = -1; d <= 8; d++) {
+    const start = zoned(now, s.tz, d, s.start);
+    if (weekend(start)) continue;
+    const end = start + length;
+    if (start <= now && now < end) return { open: true, start, end, next: end, progress: (now - start) / length };
+    if (start > now && start < upcoming) upcoming = start;
+  }
+  return { open: false, start: upcoming, end: upcoming + length, next: upcoming, progress: 0 };
+}
+
+/** Forex and gold close from Friday 21:00 to Sunday 21:00 UTC; a window starting then never trades. */
+function weekend(t: number) {
+  const d = new Date(t), day = d.getUTCDay(), h = d.getUTCHours();
+  return day === 6 || (day === 5 && h >= 21) || (day === 0 && h < 21);
+}
+
+export function countdown(ms: number) {
+  const m = Math.max(0, Math.round(ms / 60_000));
+  const h = Math.floor(m / 60);
+  if (h >= 24) return `${Math.floor(h / 24)} d ${h % 24} h`;
+  return h ? `${h} h ${String(m % 60).padStart(2, "0")} min` : `${m} min`;
+}
