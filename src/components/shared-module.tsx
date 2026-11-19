@@ -341,13 +341,15 @@ function EntryCard({
 
   return (
     <motion.article
-      className={`entry ${entry.sealed ? "entry-sealed" : ""} ${isPast ? "entry-past" : ""}`}
+      className={`entry ${entry.type === "diary" ? "entry-letter" : ""} ${entry.sealed ? "entry-sealed" : ""} ${isPast ? "entry-past" : ""}`}
       layout
       initial={reduce ? false : { opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.96 }}
       transition={{ duration: 0.6, ease }}
     >
+      {entry.sealed && <WaxSeal />}
+      {entry.type === "capsule" && !entry.sealed && <SealBreak id={entry.id} author={entry.authorName} />}
       <div className="entry-meta">
         {entry.sealed && <span className="chip chip-sealed"><Lock aria-hidden="true" /> Sealed</span>}
         {date && <span><CalendarDays aria-hidden="true" /> {entry.type === "capsule" && entry.sealed ? `Opens ${date}` : date}</span>}
@@ -361,7 +363,7 @@ function EntryCard({
         entry.body && <p>{entry.body}</p>
       )}
       <div className="entry-foot">
-        <span>by <em>{entry.authorName}</em></span>
+        <span>{entry.type === "diary" ? <em className="letter-sign">— {entry.authorName}</em> : <>by <em>{entry.authorName}</em></>}</span>
         {canChange && (
           <span className="entry-actions">
             {!entry.sealed && (
@@ -377,5 +379,81 @@ function EntryCard({
       </div>
       {error && <p className="form-error">{error}</p>}
     </motion.article>
+  );
+}
+
+/** A pressed wax seal with the MUMAA monogram. */
+function WaxSeal({ className = "" }: { className?: string }) {
+  return (
+    <span className={`wax ${className}`} aria-hidden="true">
+      <span className="wax-letter">M</span>
+    </span>
+  );
+}
+
+/**
+ * The first time each person sees an opened capsule, it arrives still sealed.
+ * Breaking the seal plays once; after that the capsule simply reads as a letter.
+ */
+function SealBreak({ id, author }: { id: string; author: string }) {
+  const key = `mumaa-opened-${id}`;
+  const reduce = useReducedMotion();
+  const [state, setState] = useState<"sealed" | "breaking" | "open">("sealed");
+
+  useEffect(() => {
+    try {
+      if (window.localStorage.getItem(key)) setState("open");
+    } catch {
+      setState("open");
+    }
+  }, [key]);
+
+  function breakSeal() {
+    try {
+      window.localStorage.setItem(key, new Date().toISOString());
+    } catch {
+      /* private mode: it simply opens */
+    }
+    setState(reduce ? "open" : "breaking");
+  }
+
+  if (state === "open") return null;
+
+  return (
+    <motion.div
+      className="envelope"
+      initial={false}
+      animate={state === "breaking" ? { opacity: 0, y: 30 } : { opacity: 1, y: 0 }}
+      transition={{ duration: 0.7, ease, delay: state === "breaking" ? 0.75 : 0 }}
+      onAnimationComplete={() => state === "breaking" && setState("open")}
+    >
+      <motion.span
+        className="envelope-flap"
+        aria-hidden="true"
+        animate={state === "breaking" ? { rotateX: 180 } : { rotateX: 0 }}
+        transition={{ duration: 0.6, ease, delay: 0.35 }}
+      />
+      <div className="envelope-body">
+        <span className="eyebrow">It’s time · from {author}</span>
+        <p className="envelope-note">This capsule has opened. Break the seal to read it.</p>
+        <button className="seal-button" type="button" onClick={breakSeal} disabled={state === "breaking"} aria-label="Break the seal and read">
+          <motion.span
+            className="wax-half wax-half-left"
+            animate={state === "breaking" ? { x: -26, rotate: -24, opacity: 0 } : { x: 0, rotate: 0, opacity: 1 }}
+            transition={{ duration: 0.55, ease }}
+          >
+            <WaxSeal />
+          </motion.span>
+          <motion.span
+            className="wax-half wax-half-right"
+            animate={state === "breaking" ? { x: 26, rotate: 24, opacity: 0 } : { x: 0, rotate: 0, opacity: 1 }}
+            transition={{ duration: 0.55, ease }}
+          >
+            <WaxSeal />
+          </motion.span>
+        </button>
+        <span className="seal-hint">Tap the seal</span>
+      </div>
+    </motion.div>
   );
 }

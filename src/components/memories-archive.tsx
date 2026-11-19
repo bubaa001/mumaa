@@ -101,11 +101,19 @@ export function MemoriesArchive({ memories }: { memories: Memory[] }) {
         </div>
 
         {visible.length ? (
-          <motion.div className="grid-cards" layout>
-            <AnimatePresence mode="popLayout" initial={false}>
-              {visible.map((memory, index) => <MemoryCard key={memory.id} memory={memory} index={index} />)}
-            </AnimatePresence>
-          </motion.div>
+          byYear(visible).map(([label, items]) => (
+            <section className="year-block" key={label} aria-label={label}>
+              <header className="year-mark">
+                <span className="year-numeral">{label}</span>
+                <span className="year-count">{items.length} {items.length === 1 ? "memory" : "memories"}</span>
+              </header>
+              <motion.div className="grid-cards" layout>
+                <AnimatePresence mode="popLayout" initial={false}>
+                  {items.map((memory, index) => <MemoryCard key={memory.id} memory={memory} index={index} />)}
+                </AnimatePresence>
+              </motion.div>
+            </section>
+          ))
         ) : (
           <div className="empty">
             <span className="empty-mark"><ImagePlus aria-hidden="true" /></span>
@@ -124,6 +132,16 @@ export function MemoriesArchive({ memories }: { memories: Memory[] }) {
       </section>
     </>
   );
+}
+
+/** Groups memories under the year they happened, newest year first, like chapters of a photo book. */
+function byYear(memories: Memory[]) {
+  const groups = new Map<string, Memory[]>();
+  for (const memory of memories) {
+    const year = memory.date?.slice(0, 4) ?? "Undated";
+    groups.set(year, [...(groups.get(year) ?? []), memory]);
+  }
+  return [...groups.entries()].sort(([a], [b]) => (a === "Undated" ? 1 : b === "Undated" ? -1 : b.localeCompare(a)));
 }
 
 function MemoryCard({ memory, index }: { memory: Memory; index: number }) {

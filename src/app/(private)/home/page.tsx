@@ -25,6 +25,7 @@ export default async function PrivateHomePage() {
   // Events arrive upcoming-first; only show one that hasn't already happened.
   const nextEvent = events.find((event) => !event.date || event.date >= todayKey());
   const latestCapsule = capsules.find((capsule) => !capsule.sealed) ?? capsules[0];
+  const recalled = recall(memories, new Date());
   const featured = memories.find((memory) => !memory.is_legacy && memory.cover_image_url) ?? memories.find((memory) => !memory.is_legacy);
 
   return (
@@ -61,6 +62,8 @@ export default async function PrivateHomePage() {
           </figure>
         </Reveal>
       </section>
+
+      {recalled && <OnThisDay memory={recalled.memory} kind={recalled.kind} />}
 
       <RevealGroup className="bento">
         <RevealItem className="span-feature">
@@ -167,4 +170,39 @@ function describe(entry: SharedEntry) {
     return [when, entry.location].filter(Boolean).join(" · ");
   }
   return entry.body || "Open to read.";
+}
+
+/**
+ * A memory from this exact date in an earlier year; failing that, one from this
+ * month. Returns nothing when the archive has no such memory, so the card stays hidden.
+ */
+function recall(memories: Memory[], now: Date) {
+  const year = now.getFullYear();
+  const monthDay = now.toISOString().slice(5, 10);
+  const month = monthDay.slice(0, 2);
+  const past = memories.filter((memory) => !memory.is_legacy && memory.date && Number(memory.date.slice(0, 4)) < year);
+  const sameDay = past.find((memory) => memory.date!.slice(5, 10) === monthDay);
+  if (sameDay) return { memory: sameDay, kind: "day" as const };
+  const sameMonth = past.find((memory) => memory.date!.slice(5, 7) === month);
+  return sameMonth ? { memory: sameMonth, kind: "month" as const } : null;
+}
+
+function OnThisDay({ memory, kind }: { memory: Memory; kind: "day" | "month" }) {
+  const yearsAgo = new Date().getFullYear() - Number(memory.date!.slice(0, 4));
+  const when = yearsAgo === 1 ? "One year ago" : `${yearsAgo} years ago`;
+  return (
+    <Reveal className="recall">
+      <Link className="recall-card" href={memory.route}>
+        <div className="recall-media">
+          {memory.cover_image_url ? <img src={memory.cover_image_url} alt="" /> : <div className="placeholder-art">{memory.title}</div>}
+        </div>
+        <div className="recall-copy">
+          <span className="eyebrow">{kind === "day" ? `On this day · ${when}` : `This month · ${when}`}</span>
+          <h2 className="display">{memory.title}</h2>
+          {memory.excerpt && <p>{memory.excerpt}</p>}
+          <span className="text-link">Revisit it <ArrowUpRight aria-hidden="true" /></span>
+        </div>
+      </Link>
+    </Reveal>
+  );
 }
