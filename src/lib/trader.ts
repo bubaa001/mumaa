@@ -3,6 +3,7 @@
 export type TraderPosition = {
   bot: string; symbol: string; side: "BUY" | "SELL"; lots: number;
   open: number; now: number; sl: number; tp: number; profit: number; opened: string;
+  risk?: number | null; r_now?: number | null;
 };
 export type TraderTrade = {
   bot: string; symbol: string; side: "BUY" | "SELL"; lots: number; open: number; close: number;
