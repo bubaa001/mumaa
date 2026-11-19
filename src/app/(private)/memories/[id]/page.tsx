@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowUpRight, CalendarDays, MapPin, User } from "lucide-reac
 import { MemoryDeleteButton } from "@/components/memory-delete-button";
 import { MemoryEditButton } from "@/components/memory-edit-button";
 import { Reveal } from "@/components/motion";
+import { PhotoGallery } from "@/components/photo-gallery";
 import { getMemory } from "@/lib/memories";
 import { formatMemoryDate } from "@/lib/format";
 import { readAuthSession } from "@/lib/auth/session";
@@ -41,15 +42,10 @@ export default async function MemoryDetailPage({ params }: { params: Promise<{ i
       ) : (
         <>
           {memory.images.length > 0 && (
-            <div className="gallery">
-              {memory.images.map((image, index) => (
-                <Reveal as="div" key={image.filename} delay={Math.min(index, 4) * 0.06}>
-                  <figure>
-                    <img src={`/api/memories/media/${memory.id}/${image.filename}`} alt={image.alt} />
-                  </figure>
-                </Reveal>
-              ))}
-            </div>
+            <PhotoGallery
+              caption={[memory.title, memory.date && formatMemoryDate(memory.date, "long"), memory.location].filter(Boolean).join(" · ")}
+              photos={memory.images.map((image) => ({ src: `/api/memories/media/${memory.id}/${image.filename}`, alt: image.alt }))}
+            />
           )}
           {memory.body && <Reveal><p className="detail-body">{memory.body}</p></Reveal>}
           {memory.author_email === session.email && (
