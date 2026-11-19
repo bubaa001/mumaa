@@ -6,7 +6,25 @@ export type TraderPosition = {
 };
 export type TraderTrade = {
   bot: string; symbol: string; side: "BUY" | "SELL"; lots: number; open: number; close: number;
-  profit: number; opened: string; closed: string; reason: string;
+  profit: number; opened: string; closed: string; reason: string; r?: number | null; strategy?: string;
+};
+export type TraderCheck = { label: string; ok: boolean; detail: string };
+export type TraderRecord = {
+  trades: number; per_month: number; win_rate: number; avg_r: number; profit_factor: number; max_dd: number;
+  oos_win_rate: number; oos_avg_r: number; best_r: number; worst_r: number; robust_pct: number;
+  confidence: "High" | "Medium" | "Low"; score: number; period: string;
+};
+export type TraderMarket = {
+  pair: string; bot: string; error?: string;
+  strategy: string; name: string; how: string; params: Record<string, unknown>;
+  candle_time: string; price: number; signal: number;
+  checks: TraderCheck[]; gates: TraderCheck[]; setup_ok: boolean;
+  meter: { label: string; value: number | null; target: number; unit: string };
+  candles: [number, number, number, number, number][];
+  overlay: Record<string, (number | null)[]>;
+  atr: number; would_sl: number; would_tp: number;
+  verdict: "in_trade" | "stopped" | "paused" | "signal" | "watching"; why: string;
+  position: TraderPosition | null; record?: TraderRecord;
 };
 export type TraderBot = {
   running: boolean; markets: Record<string, string>; last_seen: string | null; log_age_s?: number;
@@ -21,6 +39,7 @@ export type TraderState = {
   bots: Record<string, TraderBot>;
   positions: TraderPosition[];
   trades: TraderTrade[];
+  markets?: TraderMarket[];
   news: { ok: boolean; error?: string; upcoming: { time: string; currency: string; title: string }[]; blocked: Record<string, string> };
 };
 export type TraderPull = {
