@@ -3,7 +3,7 @@ import { isAllowedMumaaEmail } from "@/lib/auth/allowed-email";
 import { readAuthSession } from "@/lib/auth/session";
 
 export async function proxy(request: NextRequest) {
-  const isPrivateRoute = /^\/(home|diary|memories|events|ideas|time-capsules)(\/|$)/.test(
+  const isPrivateRoute = /^\/(home|diary|memories|events|ideas|time-capsules|trading)(\/|$)/.test(
     request.nextUrl.pathname,
   );
   const session = await readAuthSession(request.cookies.get("mumaa_session")?.value);
