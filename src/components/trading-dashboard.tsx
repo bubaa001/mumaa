@@ -185,7 +185,7 @@ export function TradingDashboard({ initial }: { initial: TraderResult }) {
         <div className="trade-stat"><span>Open P/L</span><b className={s.account.profit >= 0 ? "pos" : "neg"}>{signed(s.account.profit)}</b><small>{s.positions.length} open</small></div>
         <div className="trade-stat"><span>Closed today</span><b className={today >= 0 ? "pos" : "neg"}>{signed(today)}</b><small>{ccy}</small></div>
         <div className="trade-stat"><span>Net P/L</span><b className={all.net >= 0 ? "pos" : "neg"}>{signed(all.net)}</b><small>made {signed(all.won)} · lost {signed(all.lost)}</small></div>
-        <div className="trade-stat"><span>Live win rate</span><b>{all.winRate === null ? "—" : `${all.winRate.toFixed(0)}%`}</b><small>{all.wins} won · {all.losses} lost · backtest 72%</small></div>
+        <div className="trade-stat"><span>Live win rate</span><b>{all.winRate === null ? "—" : `${all.winRate.toFixed(0)}%`}</b><small>{all.wins} won · {all.losses} lost · backtest 72–82% per bot</small></div>
       </section>
 
       <OpenTrades positions={s.positions} currency={ccy} now={now} />
