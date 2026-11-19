@@ -277,7 +277,7 @@ export function TradingDashboard({ initial }: { initial: TraderResult }) {
             <li key={i}><time>{when(e.time)}</time><span className="chip">{e.currency}</span><span>{e.title}</span></li>
           ))}</ul>
         )}
-        <p className="trade-muted">Bots skip new trades from 30 min before to 30 min after each event on the affected pairs (2 hours for the Gold NY-open bot).</p>
+        <p className="trade-muted">Bots skip new trades from 30 min before to 30 min after each event on the affected pairs (2 hours for the Gold NY-open and J-Dub gold bots).</p>
       </section>
 
       <section className="trade-grid">
