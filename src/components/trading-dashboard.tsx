@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { PageHead } from "./mumaa-shell";
 import { MarketCard } from "./trading-market";
+import { TradeHistory } from "./trading-history";
 import type { TraderPosition, TraderPull, TraderResult, TraderTrade } from "@/lib/trader";
 
 const POLL_MS = 5_000;
@@ -243,6 +244,8 @@ export function TradingDashboard({ initial }: { initial: TraderResult }) {
           </div>
         )}
       </section>
+
+      <TradeHistory history={data!.history ?? []} currency={ccy} />
 
       <section className="trade-card">
         <h2 className="trade-h">Every closed trade</h2>

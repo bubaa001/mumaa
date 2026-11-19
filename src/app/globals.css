@@ -3089,3 +3089,39 @@ textarea {
 .live-bar-labels { display: flex; justify-content: space-between; gap: 8px; margin-top: 8px; font-family: var(--font-meta); font-size: 11px; color: var(--muted); }
 @media (prefers-reduced-motion: reduce) { .live-now { transition: none; } }
 .live-card h3 .chip { font-family: var(--font-ui); font-size: 12px; }
+
+/* ─── Trading desk: trade history replays ──────────────────── */
+
+.history { display: grid; gap: 8px; margin-top: 12px; }
+.history-item { border: 1px solid var(--line); border-left: 4px solid var(--line-strong); border-radius: var(--r-sm); background: var(--paper); }
+.history-item.won { border-left-color: #2f7d4f; }
+.history-item.lost { border-left-color: var(--cherry); }
+.history-item summary {
+  display: grid;
+  grid-template-columns: minmax(90px, 1fr) minmax(90px, 1fr) auto auto;
+  align-items: baseline;
+  gap: 4px 14px;
+  padding: 10px 14px;
+  cursor: pointer;
+  list-style: none;
+  font-variant-numeric: tabular-nums;
+}
+.history-item summary::-webkit-details-marker { display: none; }
+.history-item[open] summary { border-bottom: 1px solid var(--line); }
+.h-when { font-family: var(--font-meta); font-size: 12px; color: var(--muted); }
+.h-pair { font-weight: 500; }
+.h-pair small, .h-pl small { font-family: var(--font-meta); font-size: 11px; color: var(--muted); font-weight: 400; }
+.h-pl { font-weight: 600; }
+.h-r { font-family: var(--font-meta); font-size: 12px; color: var(--ink-2); }
+.history-item .replay, .history-item .trade-dl { padding: 0 14px; }
+.history-item .trade-dl { margin: 10px 0 14px; }
+.replay .in-trade { fill: rgba(26, 20, 17, 0.05); }
+.replay .mark-open { fill: var(--ink); stroke: var(--card); stroke-width: 2; }
+.replay .mark-close { stroke: var(--card); stroke-width: 2; }
+.replay .mark-close.won { fill: #2f7d4f; }
+.replay .mark-close.lost { fill: var(--cherry); }
+.legend .lg-zone { width: 12px; height: 10px; border: 0; background: rgba(26, 20, 17, 0.1); }
+@media (max-width: 560px) {
+  .history-item summary { grid-template-columns: 1fr auto; }
+  .h-when { grid-column: 1 / -1; }
+}
