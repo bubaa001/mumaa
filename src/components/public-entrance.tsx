@@ -1,10 +1,16 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { AnimatePresence, motion, useInView, useReducedMotion, useScroll, useSpring, useTransform } from "motion/react";
 import { ArrowRight, ArrowUpRight, Heart } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Reveal, RevealGroup, RevealItem, ScrollWords } from "./motion";
+import { gsap, ScrollTrigger, SplitText, useGSAP } from "./premium/gsap";
+import { Magnetic } from "./premium/magnetic";
+
+// The 3D hearts load after the page, only where motion is welcome.
+const Petals = dynamic(() => import("./premium/petals"), { ssr: false });
 
 const messages = [
   { from: "her", time: "01:30", text: "Joshua I love u mimi eeeiiii" },
@@ -32,17 +38,21 @@ export function PublicEntrance() {
   const reduce = useReducedMotion();
   const { scrollYProgress } = useScroll();
   const progress = useSpring(scrollYProgress, { stiffness: 140, damping: 30, mass: 0.3 });
+  const root = useRef<HTMLElement>(null);
+  useStoryChoreography(root);
 
   return (
-    <main className="story">
+    <main className="story" ref={root}>
       <motion.div aria-hidden="true" className="story-progress" style={{ scaleX: reduce ? 0 : progress }} />
 
       <nav className="story-nav" aria-label="MUMAA">
         <Link className="wordmark" href="/">mumaa<b>.</b></Link>
         <span className="story-nav-meta">Anna &amp; Joshua — a story in messages</span>
-        <Link className="story-nav-enter" href="/login">
-          Enter <ArrowUpRight aria-hidden="true" />
-        </Link>
+        <Magnetic>
+          <Link className="story-nav-enter" href="/login">
+            Enter <ArrowUpRight aria-hidden="true" />
+          </Link>
+        </Magnetic>
       </nav>
 
       <Hero />
@@ -80,6 +90,7 @@ function Hero() {
       >
         <img src="/images/anna/anna-profile.jpg" alt="" />
       </motion.div>
+      <HeroPetals />
 
       <motion.div className="hero-inner" style={reduce ? undefined : { y: textY, opacity: fade }}>
         <h1 className="hero-names" aria-label="Anna and Joshua">
@@ -146,10 +157,10 @@ function Thread() {
     <section className="section" style={{ background: "var(--paper-2)" }}>
       <div className="section-inner thread-layout">
         <div>
-          <Reveal className="section-head" >
+          <div className="section-head" data-head>
             <span className="chapter-no">Chapter 01 — Favourite person</span>
-            <h2 className="display">How we became each other’s <em>favourite person.</em></h2>
-          </Reveal>
+            <h2 className="display" data-split>How we became each other’s <em>favourite person.</em></h2>
+          </div>
           <Reveal delay={0.1}>
             <p className="thread-note">
               Short messages are easy to overlook in a long chat history. These are the
@@ -220,10 +231,10 @@ function Language() {
   return (
     <section className="section" style={{ paddingInline: 0 }}>
       <div className="section-inner" style={{ paddingInline: "var(--gutter)" }}>
-        <Reveal className="section-head">
+        <div className="section-head" data-head>
           <span className="chapter-no">Chapter 02 — Our language</span>
-          <h2 className="display">A language only <em>we</em> speak.</h2>
-        </Reveal>
+          <h2 className="display" data-split>A language only <em>we</em> speak.</h2>
+        </div>
       </div>
       {row()}
       {row(true)}
@@ -246,21 +257,32 @@ function Language() {
 }
 
 function Letters() {
-  const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
-
   return (
-    <section className="section">
+    <section className="section letters-section">
       <div className="section-inner">
-        <Reveal className="section-head">
+        <div className="section-head" data-head>
           <span className="chapter-no">Chapter 03 — September</span>
-          <h2 className="display">The goodbye that was only <em>“till then.”</em></h2>
-        </Reveal>
-        <div className="letters" ref={ref}>
+          <h2 className="display" data-split>The goodbye that was only <em>“till then.”</em></h2>
+        </div>
+      </div>
+      <div className="letters-pin" data-letters>
+        <div className="letters-stage">
           {letters.map(([date, quote, note], index) => (
-            <Letter key={date} index={index} total={letters.length} progress={scrollYProgress} date={date} quote={quote} note={note} />
+            <article className="letter" key={date}>
+              <div className="letter-head">
+                <span>{date}</span>
+                <span className="letter-stamp" aria-hidden="true">{index + 15}</span>
+              </div>
+              <blockquote>{quote}</blockquote>
+              <div className="letter-foot">
+                <p>{note}</p>
+                <span>always, bubaa.</span>
+              </div>
+            </article>
           ))}
         </div>
+      </div>
+      <div className="section-inner">
         <Reveal>
           <p className="letters-close">
             I’m not beside you right now, but I want you to know that <em className="serif-em">I am still here.</em>
@@ -268,41 +290,6 @@ function Letters() {
         </Reveal>
       </div>
     </section>
-  );
-}
-
-function Letter({
-  index,
-  total,
-  progress,
-  date,
-  quote,
-  note,
-}: {
-  index: number;
-  total: number;
-  progress: ReturnType<typeof useScroll>["scrollYProgress"];
-  date: string;
-  quote: string;
-  note: string;
-}) {
-  const reduce = useReducedMotion();
-  const scale = useTransform(progress, [index / total, 1], [1, 1 - (total - index - 1) * 0.04]);
-  return (
-    <motion.article
-      className="letter"
-      style={{ ["--i" as string]: index, scale: reduce ? 1 : scale }}
-    >
-      <div className="letter-head">
-        <span>{date}</span>
-        <span className="letter-stamp" aria-hidden="true">{index + 15}</span>
-      </div>
-      <blockquote>{quote}</blockquote>
-      <div className="letter-foot">
-        <p>{note}</p>
-        <span>always, bubaa.</span>
-      </div>
-    </motion.article>
   );
 }
 
@@ -335,14 +322,14 @@ function Song() {
 
 function Declaration() {
   return (
-    <section className="section section-night declaration" style={{ borderTop: "1px solid var(--night-line)" }}>
-      <Reveal>
+    <section className="section section-night declaration" data-declaration style={{ borderTop: "1px solid var(--night-line)" }}>
+      <div>
         <span className="declaration-time">04:13 AM</span>
-        <blockquote>
+        <blockquote data-declaration-quote>
           “So you’re my own heavenly piece, and my home too. <em>I love you, Anna.</em>”
         </blockquote>
         <cite>— Joshua</cite>
-      </Reveal>
+      </div>
     </section>
   );
 }
@@ -369,9 +356,11 @@ function Finale() {
             </motion.span>
             <p className="finale-sign">Joshua</p>
             <p className="finale-sub">for Anna. always.</p>
-            <Link className="btn btn-primary btn-lg" href="/login">
-              Enter our private world <ArrowRight aria-hidden="true" />
-            </Link>
+            <Magnetic>
+              <Link className="btn btn-primary btn-lg" href="/login">
+                Enter our private world <ArrowRight aria-hidden="true" />
+              </Link>
+            </Magnetic>
           </Reveal>
         </div>
       </section>
@@ -380,5 +369,122 @@ function Finale() {
         <span>Made for Anna</span>
       </footer>
     </>
+  );
+}
+
+function HeroPetals() {
+  const reduce = useReducedMotion();
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    if (reduce) return;
+    // Wait until the page has settled so the 3D scene never competes with first paint.
+    const start = () => setReady(true);
+    if ("requestIdleCallback" in window) {
+      const idle = window.requestIdleCallback(start, { timeout: 1500 });
+      return () => window.cancelIdleCallback(idle);
+    }
+    const timer = setTimeout(start, 600);
+    return () => clearTimeout(timer);
+  }, [reduce]);
+
+  return ready ? <Petals /> : null;
+}
+
+/**
+ * Scroll choreography for the story, built with GSAP ScrollTrigger:
+ * chapter headings rise line by line, the September letters are dealt one by one
+ * while the section is pinned, the 04:13 declaration is written in as you scroll,
+ * and the word marquee leans with scroll speed. With reduced motion nothing runs
+ * and the plain, readable layout stays.
+ */
+function useStoryChoreography(root: React.RefObject<HTMLElement | null>) {
+  useGSAP(
+    () => {
+      const media = gsap.matchMedia();
+
+      media.add("(prefers-reduced-motion: no-preference)", () => {
+        const q = gsap.utils.selector(root);
+
+        // Chapter headings: masked lines rise into place.
+        (q("[data-head]") as HTMLElement[]).forEach((head) => {
+          const heading = head.querySelector<HTMLElement>("[data-split]");
+          const label = head.querySelector<HTMLElement>(".chapter-no");
+          const trigger = { trigger: head, start: "top 88%", once: true };
+          if (label) gsap.from(label, { opacity: 0, x: -16, duration: 0.9, ease: "power3.out", scrollTrigger: trigger });
+          if (heading) {
+            SplitText.create(heading, {
+              type: "lines",
+              mask: "lines",
+              autoSplit: true,
+              onSplit: (split) =>
+                gsap.from(split.lines, { yPercent: 110, duration: 1.25, ease: "expo.out", stagger: 0.09, scrollTrigger: trigger }),
+            });
+          }
+        });
+
+        // The word marquee leans with scroll speed, then settles.
+        const marquees = q(".marquee") as HTMLElement[];
+        if (marquees.length) {
+          const skew = gsap.quickTo(marquees, "skewX", { duration: 0.6, ease: "power3.out" });
+          const settle = gsap.delayedCall(0.15, () => skew(0)).pause();
+          ScrollTrigger.create({
+            onUpdate: (self) => {
+              skew(gsap.utils.clamp(-9, 9, self.getVelocity() / -260));
+              settle.restart(true);
+            },
+          });
+        }
+
+        // September letters: the section pins and each letter is dealt on top of the last.
+        const pin = (q("[data-letters]") as HTMLElement[])[0];
+        const cards = pin ? gsap.utils.toArray<HTMLElement>(".letter", pin) : [];
+        if (pin && cards.length) {
+          pin.classList.add("is-live");
+          const tilts = [-2.5, 2, -1];
+          gsap.set(cards, {
+            yPercent: (index: number) => (index === 0 ? 0 : 135),
+            rotation: (index: number) => (index === 0 ? tilts[0] : index % 2 ? 9 : -7),
+          });
+          const deal = gsap.timeline({
+            defaults: { ease: "power3.out", duration: 1 },
+            scrollTrigger: { trigger: pin, start: "top top", end: () => `+=${cards.length * 75}%`, pin: true, scrub: 0.8 },
+          });
+          cards.slice(1).forEach((card, index) => {
+            const beneath = cards.slice(0, index + 1);
+            deal
+              .to(card, { yPercent: 0, rotation: tilts[index + 1] ?? 0 })
+              .to(
+                beneath,
+                {
+                  scale: (j: number) => 1 - (beneath.length - j) * 0.05,
+                  y: (j: number) => -(beneath.length - j) * 22,
+                  ease: "power2.out",
+                },
+                "<",
+              );
+          });
+          deal.to({}, { duration: 0.35 });
+        }
+
+        // 04:13: the declaration is written in, word by word, while it stays on screen.
+        const declaration = (q("[data-declaration]") as HTMLElement[])[0];
+        const quote = (q("[data-declaration-quote]") as HTMLElement[])[0];
+        if (declaration && quote) {
+          const split = SplitText.create(quote, { type: "words" });
+          gsap
+            .timeline({ scrollTrigger: { trigger: declaration, start: "top top", end: "+=110%", pin: true, scrub: 0.6 } })
+            .fromTo(split.words, { opacity: 0.1, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", stagger: 0.12, ease: "none" })
+            .from(declaration.querySelector("cite"), { opacity: 0, y: 12, ease: "power2.out", duration: 0.6 }, ">-0.2");
+        }
+
+        // Triggers were made in mixed order; sort by page position so pins push later sections correctly.
+        ScrollTrigger.sort();
+        ScrollTrigger.refresh();
+
+        return () => pin?.classList.remove("is-live");
+      });
+    },
+    { scope: root },
   );
 }

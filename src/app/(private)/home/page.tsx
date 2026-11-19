@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { ArrowRight, ArrowUpRight, BookOpen, CalendarDays, GraduationCap, Hourglass, ImagePlus, Lightbulb } from "lucide-react";
 import { Reveal, RevealGroup, RevealItem } from "@/components/motion";
+import { Magnetic } from "@/components/premium/magnetic";
+import { Tilt } from "@/components/premium/tilt";
 import { listMemories, type Memory } from "@/lib/memories";
 import { listSharedContent, todayKey, type SharedEntry } from "@/lib/shared-content";
 import { readAuthSession } from "@/lib/auth/session";
@@ -45,9 +47,11 @@ export default async function PrivateHomePage() {
               <span>{memories.length} {memories.length === 1 ? "memory" : "memories"}</span>
               <span>{diary.length} diary {diary.length === 1 ? "entry" : "entries"}</span>
             </div>
+            <Magnetic>
             <Link className="btn btn-primary btn-lg" href="/memories">
               Explore our memories <ArrowRight aria-hidden="true" />
             </Link>
+            </Magnetic>
           </Reveal>
         </div>
         <Reveal delay={0.1} y={40}>
@@ -67,6 +71,7 @@ export default async function PrivateHomePage() {
         <Tile href="/ideas" icon={<Lightbulb />} label="Ideas" entry={ideas[0]} fallback="The idea shelf is open." hint="A place, a plan, a someday." />
         <Tile href="/time-capsules" icon={<Hourglass />} label="Time capsules" entry={latestCapsule} fallback="Seal something for later." hint="It opens on the date you choose." />
         <RevealItem className="span-wide">
+          <Tilt>
           <Link className="tile" href="/memories/graduation-2026/">
             <div className="tile-top">
               <span className="tile-icon"><GraduationCap aria-hidden="true" /></span>
@@ -76,8 +81,10 @@ export default async function PrivateHomePage() {
             <h3>Anna’s graduation</h3>
             <p>A little celebration, a letter, a flight, and a keepsake made with love.</p>
           </Link>
+          </Tilt>
         </RevealItem>
         <RevealItem className="span-wide">
+          <Tilt>
           <Link className="tile" href="/memories">
             <div className="tile-top">
               <span className="tile-icon"><ImagePlus aria-hidden="true" /></span>
@@ -87,6 +94,7 @@ export default async function PrivateHomePage() {
             <h3>Add the next photograph.</h3>
             <p>Every memory you add becomes part of the story.</p>
           </Link>
+          </Tilt>
         </RevealItem>
       </RevealGroup>
 
@@ -100,6 +108,7 @@ export default async function PrivateHomePage() {
 
 function FeatureTile({ memory }: { memory: Memory | undefined }) {
   return (
+    <Tilt>
     <Link className="tile tile-feature" href={memory?.route ?? "/memories"}>
       <img src={memory?.cover_image_url ?? "/images/anna/anna-soft.jpg"} alt="" />
       <div className="tile-feature-body">
@@ -111,6 +120,7 @@ function FeatureTile({ memory }: { memory: Memory | undefined }) {
         <p>{memory?.excerpt || "Add the first photograph and give this chapter somewhere to begin."}</p>
       </div>
     </Link>
+    </Tilt>
   );
 }
 
@@ -133,6 +143,7 @@ function Tile({
 }) {
   return (
     <RevealItem>
+      <Tilt>
       <Link className={`tile ${cherry ? "tile-cherry" : ""}`} href={href}>
         <div className="tile-top">
           <span className="tile-icon" aria-hidden="true">{icon}</span>
@@ -142,6 +153,7 @@ function Tile({
         <h3>{entry?.title ?? fallback}</h3>
         <p>{entry ? describe(entry) : hint}</p>
       </Link>
+      </Tilt>
     </RevealItem>
   );
 }
