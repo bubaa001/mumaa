@@ -372,14 +372,52 @@ function Finale() {
   );
 }
 
+const heartPath =
+  "M12 21s-7.5-4.6-9.6-9.3C.9 8.3 3 4.5 6.7 4.5c2.1 0 3.6 1.2 4.3 2.6.7-1.4 2.2-2.6 4.3-2.6 3.7 0 5.8 3.8 4.3 7.2C19.5 16.4 12 21 12 21z";
+const heartColors = ["#b4302a", "#d9574b", "#ef9a8f", "#f3dcd5"];
+
+/** Twelve hearts animated purely in CSS: no WebGL, no per-frame JavaScript. */
+function CssHearts() {
+  return (
+    <div className="hero-hearts" aria-hidden="true">
+      {Array.from({ length: 12 }, (_, index) => (
+        <span
+          key={index}
+          style={
+            {
+              "--x": `${(index * 37 + 7) % 96}%`,
+              "--s": `${12 + ((index * 7) % 18)}px`,
+              "--t": `${11 + ((index * 5) % 9)}s`,
+              "--d": `${-((index * 1.7) % 14)}s`,
+              "--sway": `${index % 2 ? 18 : -18}px`,
+              "--c": heartColors[index % heartColors.length],
+            } as React.CSSProperties
+          }
+        >
+          <svg viewBox="0 0 24 24"><path d={heartPath} fill="currentColor" /></svg>
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function HeroPetals() {
   const reduce = useReducedMotion();
-  const [ready, setReady] = useState(false);
+  const [mode, setMode] = useState<"none" | "css" | "webgl">("none");
 
   useEffect(() => {
     if (reduce) return;
+    // The 3D scene is only worth its weight on larger screens with a mouse and a decent CPU.
+    // Phones get CSS hearts, which cost almost nothing and never block a tap.
+    const capable =
+      window.matchMedia("(hover: hover) and (pointer: fine) and (min-width: 900px)").matches &&
+      (navigator.hardwareConcurrency ?? 4) >= 4;
+    if (!capable) {
+      setMode("css");
+      return;
+    }
     // Wait until the page has settled so the 3D scene never competes with first paint.
-    const start = () => setReady(true);
+    const start = () => setMode("webgl");
     if ("requestIdleCallback" in window) {
       const idle = window.requestIdleCallback(start, { timeout: 1500 });
       return () => window.cancelIdleCallback(idle);
@@ -388,7 +426,8 @@ function HeroPetals() {
     return () => clearTimeout(timer);
   }, [reduce]);
 
-  return ready ? <Petals /> : null;
+  if (mode === "css") return <CssHearts />;
+  return mode === "webgl" ? <Petals /> : null;
 }
 
 /**

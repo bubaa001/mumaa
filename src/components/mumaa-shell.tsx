@@ -4,7 +4,7 @@ import { motion, useMotionValueEvent, useScroll } from "motion/react";
 import { BookOpen, CalendarDays, ChartCandlestick, Hourglass, House, Images, Lightbulb } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ToastProvider } from "./toast";
 
 const navigation = [
@@ -23,6 +23,13 @@ function isActive(pathname: string, href: string) {
 
 export function MummaaShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  // The tapped section lights up immediately, before the new page has arrived.
+  const [pending, setPending] = useState<string | null>(null);
+  useEffect(() => setPending(null), [pathname]);
+  const current = pending ?? pathname;
+  const go = (href: string) => () => {
+    if (!isActive(pathname, href)) setPending(href);
+  };
   const { scrollY } = useScroll();
   const [scrolled, setScrolled] = useState(false);
   useMotionValueEvent(scrollY, "change", (value) => setScrolled(value > 8));
@@ -34,9 +41,9 @@ export function MummaaShell({ children }: { children: React.ReactNode }) {
           <Link className="wordmark" href="/home">mumaa<b>.</b></Link>
           <nav className="app-nav" aria-label="Primary">
             {navigation.map((item) => {
-              const active = isActive(pathname, item.href);
+              const active = isActive(current, item.href);
               return (
-                <Link aria-current={active ? "page" : undefined} href={item.href} key={item.href}>
+                <Link aria-current={active ? "page" : undefined} href={item.href} key={item.href} onClick={go(item.href)}>
                   {active && (
                     <motion.span
                       className="app-nav-pill"
@@ -55,6 +62,8 @@ export function MummaaShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
+      <div className="nav-progress" data-active={pending !== null} aria-hidden="true" />
+
       <ToastProvider>
         <main className="app-main page-enter" key={pathname}>
           {children}
@@ -63,10 +72,10 @@ export function MummaaShell({ children }: { children: React.ReactNode }) {
 
       <nav className="tabbar" aria-label="Sections">
         {navigation.map((item) => {
-          const active = isActive(pathname, item.href);
+          const active = isActive(current, item.href);
           const Icon = item.icon;
           return (
-            <Link aria-current={active ? "page" : undefined} href={item.href} key={item.href}>
+            <Link aria-current={active ? "page" : undefined} href={item.href} key={item.href} onClick={go(item.href)}>
               {active && (
                 <motion.span
                   className="tabbar-pill"

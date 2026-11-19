@@ -1,4 +1,5 @@
 import { del, get, list, put } from "@vercel/blob";
+import { revalidateTag, unstable_cache } from "next/cache";
 
 export type SharedContentType = "diary" | "event" | "idea" | "capsule";
 
@@ -83,20 +84,40 @@ function sortEntries(type: SharedContentType, entries: SharedEntry[]) {
   return entries.sort(newest);
 }
 
+const tagFor = (type: SharedContentType) => `mumaa-content-${type}`;
+
+/**
+ * Raw records for one section, cached across requests so a page view doesn't
+ * re-read every file from Blob storage. Every write below clears the tag, so
+ * new or edited entries appear on the very next request.
+ */
+function readAll(type: SharedContentType) {
+  return unstable_cache(
+    async () => {
+      const result = await list({ prefix: `${prefix}${type}/` });
+      const entries = await Promise.all(result.blobs.map((blob) => readRecord(blob.pathname)));
+      return entries.filter((entry): entry is SharedEntry => Boolean(entry));
+    },
+    ["mumaa-content", type],
+    { tags: [tagFor(type)], revalidate: 3600 },
+  )();
+}
+
+function invalidate(type: SharedContentType) {
+  revalidateTag(tagFor(type), { expire: 0 });
+}
+
 export async function listSharedContent(type: SharedContentType, viewerEmail?: string) {
   if (!configured()) return [];
-  const result = await list({ prefix: `${prefix}${type}/` });
-  const entries = await Promise.all(result.blobs.map((blob) => readRecord(blob.pathname)));
-  return sortEntries(
-    type,
-    entries.filter((entry): entry is SharedEntry => Boolean(entry)).map((entry) => present(entry, viewerEmail)),
-  );
+  // Sealing and sorting depend on the viewer and the current time, so they run after the cache.
+  return sortEntries(type, (await readAll(type)).map((entry) => present(entry, viewerEmail)));
 }
 
 export async function createSharedContent(input: Omit<SharedEntry, "id" | "createdAt">) {
   if (!configured()) throw new Error("Shared content storage is not configured.");
   const entry: SharedEntry = { ...input, id: crypto.randomUUID(), createdAt: new Date().toISOString() };
   await writeRecord(entry);
+  invalidate(entry.type);
   return entry;
 }
 
@@ -108,6 +129,7 @@ export async function updateSharedContent(id: string, type: SharedContentType, a
   if (isSealed(entry)) throw new Error("A sealed capsule can’t be edited until it opens.");
   const updated: SharedEntry = { ...entry, ...patch, updatedAt: new Date().toISOString() };
   await writeRecord(updated);
+  invalidate(type);
   return present(updated, authorEmail);
 }
 
@@ -117,4 +139,5 @@ export async function deleteSharedContent(id: string, type: SharedContentType, a
   if (!entry) throw new Error("Entry not found.");
   if (entry.authorEmail !== authorEmail) throw new Error("Only the person who added this entry can delete it.");
   await del(recordPath(type, id));
+  invalidate(type);
 }

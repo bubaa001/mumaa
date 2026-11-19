@@ -8,6 +8,8 @@ import { useGSAP } from "@gsap/react";
 // Registered once, in the browser only; GSAP never runs during server render.
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger, SplitText, useGSAP);
+  // Phones resize the viewport as the address bar slides; don't recalculate every pin for that.
+  ScrollTrigger.config({ ignoreMobileResize: true });
 }
 
 export { gsap, ScrollTrigger, SplitText, useGSAP };

@@ -1,4 +1,5 @@
 import { get, list, put, del } from "@vercel/blob";
+import { revalidateTag, unstable_cache } from "next/cache";
 
 export type MemoryImage = {
   filename: string;
@@ -65,17 +66,30 @@ async function readRecord(pathname: string): Promise<Memory | null> {
   return JSON.parse(text) as Memory;
 }
 
+const memoriesTag = "mumaa-memories";
+
+/** Saved memory records, cached across requests; cleared on every create, edit, or delete. */
+const readAllMemories = unstable_cache(
+  async () => {
+    const result = await list({ prefix: memoryPrefix });
+    const records = await Promise.all(
+      result.blobs
+        .filter((blob) => blob.pathname.endsWith("/memory.json"))
+        .map((blob) => readRecord(blob.pathname)),
+    );
+    return records.filter((memory): memory is Memory => Boolean(memory));
+  },
+  ["mumaa-memories"],
+  { tags: [memoriesTag], revalidate: 3600 },
+);
+
+function invalidateMemories() {
+  revalidateTag(memoriesTag, { expire: 0 });
+}
+
 export async function listMemories(): Promise<Memory[]> {
   if (!hasBlobToken()) return [graduationMemory];
-
-  const result = await list({ prefix: memoryPrefix });
-  const records = await Promise.all(
-    result.blobs
-      .filter((blob) => blob.pathname.endsWith("/memory.json"))
-      .map((blob) => readRecord(blob.pathname)),
-  );
-
-  return [graduationMemory, ...records.filter((memory): memory is Memory => Boolean(memory))]
+  return [graduationMemory, ...(await readAllMemories())]
     .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
 }
 
@@ -147,6 +161,7 @@ export async function createMemory({
       contentType: "application/json",
     });
 
+    invalidateMemories();
     return memory;
   } catch (error) {
     await Promise.all(
@@ -177,6 +192,7 @@ export async function updateMemory(
     allowOverwrite: true,
     contentType: "application/json",
   });
+  invalidateMemories();
   return updated;
 }
 
@@ -190,4 +206,5 @@ export async function deleteMemory(id: string, authorEmail: string) {
     del(recordPath(id)),
     ...memory.images.map((image) => del(`${memoryPrefix}${id}/${image.filename}`)),
   ]);
+  invalidateMemories();
 }
