@@ -43,10 +43,16 @@ export type TraderState = {
   markets?: TraderMarket[];
   news: { ok: boolean; error?: string; upcoming: { time: string; currency: string; title: string }[]; blocked: Record<string, string> };
 };
+export type TraderReplay = TraderTrade & {
+  id: number; sl: number; tp: number; tf: string;
+  candles: [number, number, number, number, number][];
+  best_move: number; worst_move: number; best_r: number | null; worst_r: number | null; risk?: number | null;
+};
 export type TraderPull = {
   state: TraderState | null;
   updated_at: string | null;
   equity: { t: string; e: number; b: number }[];
+  history?: TraderReplay[];
 };
 
 export type TraderResult = { ok: true; data: TraderPull } | { ok: false; error: string };
