@@ -1,5 +1,6 @@
 import { pipeline } from "node:stream/promises";
 import { get, put } from "@vercel/blob";
+import { isSignedIn } from "./_session.js";
 
 const portraitPath = "graduation-photos/anna-joseph/portrait";
 const maxPortraitBytes = 4 * 1024 * 1024;
@@ -98,6 +99,11 @@ export default async function handler(request, response) {
   if (request.method !== "GET" && request.method !== "POST") {
     response.setHeader("Allow", "GET, POST");
     respond(response, 405, "This request is not supported.");
+    return;
+  }
+
+  if (!(await isSignedIn(request))) {
+    respond(response, 401, "Sign in to MUMAA first.");
     return;
   }
 

@@ -7,5 +7,5 @@ import { readAuthSession } from "@/lib/auth/session";
 export default async function TimeCapsulesPage() {
   const session = await readAuthSession((await cookies()).get("mumaa_session")?.value);
   if (!session) redirect("/login");
-  return <SharedModule type="capsule" entries={await listSharedContent("capsule")} currentEmail={session.email} />;
+  return <SharedModule type="capsule" entries={await listSharedContent("capsule", session.email)} currentEmail={session.email} />;
 }

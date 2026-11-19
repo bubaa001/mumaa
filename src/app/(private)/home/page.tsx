@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { ArrowRight, ArrowUpRight, BookOpen, CalendarDays, GraduationCap, Hourglass, ImagePlus, Lightbulb } from "lucide-react";
 import { Reveal, RevealGroup, RevealItem } from "@/components/motion";
 import { listMemories, type Memory } from "@/lib/memories";
-import { listSharedContent, type SharedEntry } from "@/lib/shared-content";
+import { listSharedContent, todayKey, type SharedEntry } from "@/lib/shared-content";
 import { readAuthSession } from "@/lib/auth/session";
 
 export default async function PrivateHomePage() {
@@ -13,13 +13,16 @@ export default async function PrivateHomePage() {
 
   const [memories, diary, events, ideas, capsules] = await Promise.all([
     listMemories(),
-    listSharedContent("diary"),
-    listSharedContent("event"),
-    listSharedContent("idea"),
-    listSharedContent("capsule"),
+    listSharedContent("diary", session.email),
+    listSharedContent("event", session.email),
+    listSharedContent("idea", session.email),
+    listSharedContent("capsule", session.email),
   ]);
   const today = new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long" }).format(new Date());
   const firstName = session.name && session.name !== "MUMAA" ? session.name.split(" ")[0] : null;
+  // Events arrive upcoming-first; only show one that hasn't already happened.
+  const nextEvent = events.find((event) => !event.date || event.date >= todayKey());
+  const latestCapsule = capsules.find((capsule) => !capsule.sealed) ?? capsules[0];
   const featured = memories.find((memory) => !memory.is_legacy && memory.cover_image_url) ?? memories.find((memory) => !memory.is_legacy);
 
   return (
@@ -60,9 +63,9 @@ export default async function PrivateHomePage() {
           <FeatureTile memory={featured} />
         </RevealItem>
         <Tile href="/diary" icon={<BookOpen />} label="Diary" entry={diary[0]} fallback="The first page is still blank." hint="Leave something for later." />
-        <Tile href="/events" icon={<CalendarDays />} label="Next up" entry={events[0]} fallback="Nothing planned yet." hint="Add the next moment together." cherry />
+        <Tile href="/events" icon={<CalendarDays />} label="Next up" entry={nextEvent} fallback="Nothing planned yet." hint="Add the next moment together." cherry />
         <Tile href="/ideas" icon={<Lightbulb />} label="Ideas" entry={ideas[0]} fallback="The idea shelf is open." hint="A place, a plan, a someday." />
-        <Tile href="/time-capsules" icon={<Hourglass />} label="Time capsules" entry={capsules[0]} fallback="Seal something for later." hint="It opens on the date you choose." />
+        <Tile href="/time-capsules" icon={<Hourglass />} label="Time capsules" entry={latestCapsule} fallback="Seal something for later." hint="It opens on the date you choose." />
         <RevealItem className="span-wide">
           <Link className="tile" href="/memories/graduation-2026/">
             <div className="tile-top">
@@ -137,8 +140,19 @@ function Tile({
         </div>
         <span className="tile-label">{label}</span>
         <h3>{entry?.title ?? fallback}</h3>
-        <p>{entry ? entry.body || entry.date || "Open to read." : hint}</p>
+        <p>{entry ? describe(entry) : hint}</p>
       </Link>
     </RevealItem>
   );
+}
+
+function describe(entry: SharedEntry) {
+  if (entry.sealed && entry.unlockAt) {
+    return `Sealed until ${new Date(entry.unlockAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}.`;
+  }
+  if (entry.type === "event" && entry.date) {
+    const when = new Date(`${entry.date}T12:00:00`).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
+    return [when, entry.location].filter(Boolean).join(" · ");
+  }
+  return entry.body || "Open to read.";
 }

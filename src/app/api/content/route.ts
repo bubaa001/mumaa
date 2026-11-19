@@ -13,12 +13,20 @@ function validType(value: string | null): value is SharedContentType {
   return Boolean(value && types.includes(value as SharedContentType));
 }
 
+/** Capsule opening times arrive as ISO instants from the browser; reject anything unparseable. */
+function normaliseInstant(value: FormDataEntryValue | null) {
+  const text = String(value ?? "").trim();
+  if (!text) return null;
+  const time = Date.parse(text);
+  return Number.isNaN(time) ? null : new Date(time).toISOString();
+}
+
 export async function GET(request: Request) {
   const current = await session();
   if (!current) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   const type = new URL(request.url).searchParams.get("type");
   if (!validType(type)) return NextResponse.json({ error: "Unknown content type." }, { status: 400 });
-  return NextResponse.json({ entries: await listSharedContent(type) });
+  return NextResponse.json({ entries: await listSharedContent(type, current.email) });
 }
 
 export async function POST(request: Request) {
@@ -37,7 +45,7 @@ export async function POST(request: Request) {
       date: String(form.get("date") ?? "").trim() || null,
       location: String(form.get("location") ?? "").trim() || null,
       status: String(form.get("status") ?? "").trim() || null,
-      unlockAt: String(form.get("unlockAt") ?? "").trim() || null,
+      unlockAt: normaliseInstant(form.get("unlockAt")),
       authorEmail: current.email,
       authorName: current.name,
     });
