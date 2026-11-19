@@ -1,15 +1,11 @@
 "use client";
 
-import type { TraderReplay } from "@/lib/trader";
+import { useState } from "react";
+import { useDesk } from "./trading-dashboard";
+import type { TraderReplay, TraderTrade } from "@/lib/trader";
+import { duration, REASON, rText, signed, tally, pct, when, type Agent } from "@/lib/trader-view";
 
-function signed(v: number) {
-  return `${v > 0 ? "+" : ""}${v.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
-function duration(a: string, b: string) {
-  const m = Math.max(0, Math.round((Date.parse(b) - Date.parse(a)) / 60000));
-  return m < 60 ? `${m} min` : m < 1440 ? `${Math.floor(m / 60)} h ${m % 60} min` : `${Math.floor(m / 1440)} d ${Math.floor((m % 1440) / 60)} h`;
-}
-const REASON: Record<string, string> = { target: "hit target", stop: "hit stop", closed: "time / manual" };
+const PAGE = 15;
 
 /** Candles around one closed trade, with its entry, stop, target, and where it opened and closed. */
 function ReplayChart({ r }: { r: TraderReplay }) {
@@ -56,36 +52,82 @@ function ReplayChart({ r }: { r: TraderReplay }) {
   );
 }
 
-export function TradeHistory({ history, currency }: { history: TraderReplay[]; currency: string }) {
+type Closed = TraderTrade & { replay?: TraderReplay };
+type Result = "all" | "won" | "lost";
+
+/** Every closed trade, filterable by agent and result, each opening into a replay of how it went. */
+export function TradeHistory({ trades, agents }: { trades: Closed[]; agents: Agent[] }) {
+  const { mounted, ccy } = useDesk();
+  const [agent, setAgent] = useState<string>("all");
+  const [result, setResult] = useState<Result>("all");
+  const [limit, setLimit] = useState(PAGE);
+
+  const byAgent = agent === "all" ? trades : trades.filter((t) => t.bot === agent);
+  const list = byAgent.filter((t) => result === "all" || (result === "won" ? t.profit > 0 : t.profit < 0));
+  const sum = tally(list);
+  const withTrades = agents.filter((a) => trades.some((t) => t.bot === a.id));
+  const name = (id: string) => agents.find((a) => a.id === id)?.name ?? id;
+
   return (
-    <section className="trade-card">
+    <section className="trade-card" aria-labelledby="history-h">
       <div className="trade-card-top">
-        <h2 className="trade-h">Trade history</h2>
-        <span className="trade-muted">{history.length ? `${history.length} trades · tap one to replay it` : ""}</span>
+        <h2 className="trade-h" id="history-h">History</h2>
+        {trades.length > 0 && <span className="trade-muted history-sum">{sum.n} shown · <span className={sum.net >= 0 ? "pos" : "neg"}>{signed(sum.net)} {ccy}</span> · {pct(sum.winRate)} won</span>}
       </div>
-      {history.length === 0 ? (
+
+      {trades.length > 0 && (
+        <div className="history-filters">
+          <div className="filter-scroll" role="group" aria-label="Agent">
+            <button type="button" className="filter" aria-pressed={agent === "all"} onClick={() => { setAgent("all"); setLimit(PAGE); }}>All agents</button>
+            {withTrades.map((a) => (
+              <button type="button" key={a.id} className="filter" aria-pressed={agent === a.id} onClick={() => { setAgent(a.id); setLimit(PAGE); }}>{a.name}</button>
+            ))}
+          </div>
+          <div className="seg" role="group" aria-label="Result">
+            {(["all", "won", "lost"] as Result[]).map((r) => (
+              <button type="button" key={r} aria-pressed={result === r} onClick={() => { setResult(r); setLimit(PAGE); }}>
+                {r === "all" ? "All" : r === "won" ? "Won" : "Lost"}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {trades.length === 0 ? (
         <p className="trade-muted">No closed trades yet. Each trade is saved here once it closes, with a chart of how it went.</p>
+      ) : list.length === 0 ? (
+        <p className="trade-muted">Nothing matches these filters.</p>
       ) : (
         <div className="history">
-          {history.map((r) => (
-            <details key={r.id} className={`history-item ${r.profit >= 0 ? "won" : "lost"}`}>
-              <summary>
-                <span className="h-when">{new Date(r.closed).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
-                <span className="h-pair">{r.symbol} <small>{r.side}</small></span>
-                <span className={`h-pl ${r.profit >= 0 ? "pos" : "neg"}`}>{signed(r.profit)} <small>{currency}</small></span>
-                <span className="h-r">{r.r === null || r.r === undefined ? "" : `${r.r > 0 ? "+" : ""}${r.r}R`}</span>
-              </summary>
-              <ReplayChart r={r} />
-              <dl className="trade-dl">
-                <div><dt>Entry → exit</dt><dd>{r.open} → {r.close}</dd></div>
-                <div><dt>Why it closed</dt><dd>{REASON[r.reason] ?? r.reason}</dd></div>
-                <div><dt>Lasted</dt><dd>{duration(r.opened, r.closed)}</dd></div>
-                <div><dt>Best it got</dt><dd className="pos">{r.best_r === null || r.best_r === undefined ? r.best_move : `+${r.best_r}R`}</dd></div>
-                <div><dt>Worst it got</dt><dd className="neg">{r.worst_r === null || r.worst_r === undefined ? r.worst_move : `${r.worst_r}R`}</dd></div>
-                <div><dt>Stop / target</dt><dd>{r.sl || "—"} / {r.tp || "—"}</dd></div>
-              </dl>
-            </details>
-          ))}
+          {list.slice(0, limit).map((t, i) => {
+            const r = t.replay;
+            return (
+              <details key={r?.id ?? `${t.closed}-${i}`} className={`history-item ${t.profit >= 0 ? "won" : "lost"}`}>
+                <summary>
+                  <span className="h-pair">{t.symbol} <small>{t.side}</small></span>
+                  <span className="h-agent">{name(t.bot)}</span>
+                  <span className={`h-pl ${t.profit >= 0 ? "pos" : "neg"}`}>{signed(t.profit)}</span>
+                  <span className="h-when">{when(t.closed, mounted)}</span>
+                  <span className="h-r">{rText(t.r)}</span>
+                </summary>
+                {r && <ReplayChart r={r} />}
+                <dl className="trade-dl">
+                  <div><dt>Entry → exit</dt><dd>{t.open} → {t.close}</dd></div>
+                  <div><dt>Why it closed</dt><dd>{REASON[t.reason] ?? t.reason}</dd></div>
+                  <div><dt>Lasted</dt><dd>{duration(t.opened, t.closed)}</dd></div>
+                  {r && <div><dt>Best it got</dt><dd className="pos">{r.best_r == null ? r.best_move : rText(r.best_r)}</dd></div>}
+                  {r && <div><dt>Worst it got</dt><dd className="neg">{r.worst_r == null ? r.worst_move : rText(r.worst_r)}</dd></div>}
+                  {r && <div><dt>Stop / target</dt><dd>{r.sl || "—"} / {r.tp || "—"}</dd></div>}
+                  {!r && <div><dt>Lots</dt><dd>{t.lots}</dd></div>}
+                </dl>
+              </details>
+            );
+          })}
+          {list.length > limit && (
+            <button type="button" className="btn btn-ghost history-more" onClick={() => setLimit((n) => n + PAGE)}>
+              Show {Math.min(PAGE, list.length - limit)} more
+            </button>
+          )}
         </div>
       )}
     </section>

@@ -129,7 +129,7 @@ export function MarketCard({ m, trades, currency }: { m: TraderMarket; trades: T
       <header className="market-head">
         <div>
           <h3 className="market-pair">{m.pair}</h3>
-          <p className="market-strat">{botName(m.bot)} · {m.name}</p>
+          <p className="market-strat">{m.name} · {TF_NAME[m.tf ?? "H1"] ?? m.tf} candles · {botName(m.bot)}</p>
         </div>
         <div className="market-badges">
           {rec && <Confidence grade={rec.confidence} />}
