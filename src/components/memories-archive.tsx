@@ -102,7 +102,7 @@ export function MemoriesArchive({ memories }: { memories: Memory[] }) {
 
         {visible.length ? (
           <motion.div className="grid-cards" layout>
-            <AnimatePresence mode="popLayout">
+            <AnimatePresence mode="popLayout" initial={false}>
               {visible.map((memory, index) => <MemoryCard key={memory.id} memory={memory} index={index} />)}
             </AnimatePresence>
           </motion.div>

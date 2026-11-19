@@ -158,6 +158,28 @@ export async function createMemory({
   }
 }
 
+export async function updateMemory(
+  id: string,
+  authorEmail: string,
+  patch: { title?: string; date?: string | null; location?: string | null; body?: string },
+) {
+  if (!hasBlobToken()) throw new Error("Memory storage is not configured.");
+  const memory = await getMemory(id);
+  if (!memory) throw new Error("Memory not found.");
+  if (memory.is_legacy) throw new Error("The graduation chapter is preserved and cannot be edited.");
+  if (memory.author_email !== authorEmail) throw new Error("Only the person who added this memory can edit it.");
+
+  const updated: Memory = { ...memory, ...patch };
+  updated.excerpt = updated.body.slice(0, 180);
+  await put(recordPath(id), JSON.stringify(updated), {
+    access: "private",
+    addRandomSuffix: false,
+    allowOverwrite: true,
+    contentType: "application/json",
+  });
+  return updated;
+}
+
 export async function deleteMemory(id: string, authorEmail: string) {
   const memory = await getMemory(id);
   if (!memory) throw new Error("Memory not found.");

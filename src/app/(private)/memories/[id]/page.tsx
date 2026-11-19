@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import { ArrowLeft, ArrowUpRight, CalendarDays, MapPin, User } from "lucide-react";
 import { MemoryDeleteButton } from "@/components/memory-delete-button";
+import { MemoryEditButton } from "@/components/memory-edit-button";
 import { Reveal } from "@/components/motion";
 import { getMemory } from "@/lib/memories";
 import { formatMemoryDate } from "@/lib/format";
@@ -53,7 +54,12 @@ export default async function MemoryDetailPage({ params }: { params: Promise<{ i
           {memory.body && <Reveal><p className="detail-body">{memory.body}</p></Reveal>}
           {memory.author_email === session.email && (
             <div className="detail-actions">
-              <MemoryDeleteButton memoryId={memory.id} />
+              <div className="detail-owner-actions">
+                <MemoryEditButton
+                  memory={{ id: memory.id, title: memory.title, date: memory.date, location: memory.location, body: memory.body }}
+                />
+                <MemoryDeleteButton memoryId={memory.id} />
+              </div>
             </div>
           )}
         </>

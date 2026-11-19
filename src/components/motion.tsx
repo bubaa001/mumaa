@@ -1,9 +1,35 @@
 "use client";
 
 import { motion, useReducedMotion, useScroll, useTransform, type MotionValue } from "motion/react";
-import { useRef } from "react";
+import { createElement, useLayoutEffect, useRef } from "react";
 
 export const ease = [0.16, 1, 0.3, 1] as const;
+
+/**
+ * Content is always rendered visible on the server, so nothing is hidden while
+ * JavaScript loads. After hydration, anything still below the fold is tucked
+ * away and eased in as it scrolls into view.
+ */
+function useScrollReveal<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
+  useLayoutEffect(() => {
+    const element = ref.current;
+    if (!element || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (element.getBoundingClientRect().top < window.innerHeight * 0.92) return;
+    element.dataset.reveal = "hidden";
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        element.dataset.reveal = "shown";
+        observer.disconnect();
+      },
+      { threshold: 0.15 },
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+  return ref;
+}
 
 /** Fades and lifts content into place the first time it enters the viewport. */
 export function Reveal({
@@ -19,56 +45,30 @@ export function Reveal({
   y?: number;
   as?: "div" | "section" | "article" | "li" | "header";
 }) {
-  const reduce = useReducedMotion();
-  const Tag = motion[as];
-  return (
-    <Tag
-      className={className}
-      initial={reduce ? false : { opacity: 0, y }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.2 }}
-      transition={{ duration: 0.9, ease, delay }}
-    >
-      {children}
-    </Tag>
+  const ref = useScrollReveal<HTMLElement>();
+  return createElement(
+    as,
+    {
+      ref,
+      className: `reveal ${className ?? ""}`,
+      style: { "--d": `${delay}s`, "--y": `${y}px` } as React.CSSProperties,
+    },
+    children,
   );
 }
 
-/** Staggers its direct `RevealItem` children as the group scrolls into view. */
-export function RevealGroup({
-  children,
-  className,
-  stagger = 0.08,
-}: {
-  children: React.ReactNode;
-  className?: string;
-  stagger?: number;
-}) {
-  const reduce = useReducedMotion();
+/** Staggers its direct children as the group scrolls into view. */
+export function RevealGroup({ children, className }: { children: React.ReactNode; className?: string }) {
+  const ref = useScrollReveal<HTMLDivElement>();
   return (
-    <motion.div
-      className={className}
-      initial={reduce ? false : "hidden"}
-      whileInView="shown"
-      viewport={{ once: true, amount: 0.15 }}
-      variants={{ shown: { transition: { staggerChildren: stagger } } }}
-    >
+    <div ref={ref} className={`reveal-group ${className ?? ""}`}>
       {children}
-    </motion.div>
+    </div>
   );
 }
-
-export const revealItem = {
-  hidden: { opacity: 0, y: 24 },
-  shown: { opacity: 1, y: 0, transition: { duration: 0.8, ease } },
-};
 
 export function RevealItem({ children, className }: { children: React.ReactNode; className?: string }) {
-  return (
-    <motion.div className={className} variants={revealItem}>
-      {children}
-    </motion.div>
-  );
+  return <div className={className}>{children}</div>;
 }
 
 /** Each word brightens as the paragraph is scrolled through, like reading it aloud. */

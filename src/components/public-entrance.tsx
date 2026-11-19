@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { AnimatePresence, motion, useInView, useReducedMotion, useScroll, useSpring, useTransform } from "motion/react";
 import { ArrowRight, ArrowUpRight, Heart } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { Reveal, RevealGroup, RevealItem, ScrollWords, ease } from "./motion";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Reveal, RevealGroup, RevealItem, ScrollWords } from "./motion";
 
 const messages = [
   { from: "her", time: "01:30", text: "Joshua I love u mimi eeeiiii" },
@@ -68,13 +68,7 @@ function Hero() {
 
   const line = (text: React.ReactNode, delay: number) => (
     <span className="hero-line">
-      <motion.span
-        initial={reduce ? false : { y: "105%" }}
-        animate={{ y: "0%" }}
-        transition={{ duration: 1.2, ease, delay }}
-      >
-        {text}
-      </motion.span>
+      <span style={{ "--d": `${delay}s` } as React.CSSProperties}>{text}</span>
     </span>
   );
 
@@ -83,9 +77,6 @@ function Hero() {
       <motion.div
         className="hero-photo"
         style={reduce ? undefined : { y: photoY, scale: photoScale }}
-        initial={reduce ? false : { opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1.6, ease }}
       >
         <img src="/images/anna/anna-profile.jpg" alt="" />
       </motion.div>
@@ -95,18 +86,13 @@ function Hero() {
           {line("Anna", 0.2)}
           {line(<><span className="hero-amp">&amp;</span>Joshua</>, 0.34)}
         </h1>
-        <motion.div
-          className="hero-foot"
-          initial={reduce ? false : { opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, ease, delay: 0.9 }}
-        >
+        <div className="hero-foot enter" style={{ "--d": "0.9s" } as React.CSSProperties}>
           <p>
             An intimate account of us, told through the conversations that made our
             relationship what it is.
           </p>
           <span className="hero-scroll"><i aria-hidden="true" /> Scroll to read</span>
-        </motion.div>
+        </div>
       </motion.div>
     </header>
   );
@@ -137,14 +123,24 @@ function Thread() {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, amount: 0.4 });
   const reduce = useReducedMotion();
-  const [shown, setShown] = useState(reduce ? messages.length : 0);
-  const typing = inView && shown < messages.length;
+  // Rendered complete on the server; replayed only if the thread starts below the fold.
+  const [shown, setShown] = useState<number>(messages.length);
+  const [armed, setArmed] = useState(false);
+  const typing = armed && inView && shown < messages.length;
+
+  useLayoutEffect(() => {
+    if (reduce || !ref.current) return;
+    if (ref.current.getBoundingClientRect().top > window.innerHeight * 0.6) {
+      setShown(0);
+      setArmed(true);
+    }
+  }, [reduce]);
 
   useEffect(() => {
-    if (!inView || reduce || shown >= messages.length) return;
+    if (!armed || !inView || shown >= messages.length) return;
     const timer = window.setTimeout(() => setShown((count) => count + 1), shown === 0 ? 700 : 1100);
     return () => window.clearTimeout(timer);
-  }, [inView, reduce, shown]);
+  }, [armed, inView, shown]);
 
   return (
     <section className="section" style={{ background: "var(--paper-2)" }}>
@@ -174,7 +170,7 @@ function Thread() {
           {messages.slice(0, shown).map((message, index) => (
             <motion.div
               key={index}
-              initial={reduce ? false : { opacity: 0, y: 12, scale: 0.92 }}
+              initial={armed ? { opacity: 0, y: 12, scale: 0.92 } : false}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ type: "spring", stiffness: 380, damping: 26 }}
               style={{ display: "flex", flexDirection: "column" }}

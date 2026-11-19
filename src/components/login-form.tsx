@@ -1,10 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { motion, useReducedMotion } from "motion/react";
 import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
-import { ease } from "./motion";
 
 const errors: Record<string, string> = {
   "not-allowed": "That Google account isn’t invited. Only Anna and Joshua can enter.",
@@ -24,33 +22,19 @@ function GoogleMark() {
 
 export function LoginPage({ error }: { error?: string }) {
   const [busy, setBusy] = useState(false);
-  const reduce = useReducedMotion();
   const message = error ? errors[error] ?? "Sign-in didn’t finish. Please try again." : "";
 
   const item = (delay: number) => ({
-    initial: reduce ? false : { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.9, ease, delay },
+    className: "enter",
+    style: { "--d": `${delay}s` } as React.CSSProperties,
   });
 
   return (
     <main className="login">
-      <motion.figure
-        className="login-visual"
-        style={{ margin: 0 }}
-        initial={reduce ? false : { clipPath: "inset(0 0 100% 0)" }}
-        animate={{ clipPath: "inset(0 0 0% 0)" }}
-        transition={{ duration: 1.3, ease }}
-      >
-        <motion.img
-          src="/images/anna/anna-sunglasses.jpg"
-          alt="Anna smiling in the sun"
-          initial={reduce ? false : { scale: 1.15 }}
-          animate={{ scale: 1 }}
-          transition={{ duration: 1.8, ease }}
-        />
+      <figure className="login-visual" style={{ margin: 0 }}>
+        <img src="/images/anna/anna-sunglasses.jpg" alt="Anna smiling in the sun" />
         <figcaption>Come back to what is <em>ours.</em></figcaption>
-      </motion.figure>
+      </figure>
 
       <section className="login-panel">
         <div className="login-top">
@@ -61,20 +45,18 @@ export function LoginPage({ error }: { error?: string }) {
         </div>
 
         <div className="login-body">
-          <motion.span className="eyebrow" {...item(0.3)}>Private archive</motion.span>
-          <motion.h1 className="display" {...item(0.4)}>
+          <span {...item(0.3)} className="eyebrow enter">Private archive</span>
+          <h1 {...item(0.4)} className="display enter">
             Welcome <em>home.</em>
-          </motion.h1>
-          <motion.p {...item(0.5)}>
+          </h1>
+          <p {...item(0.5)}>
             The letters, plans, little moments, and everything still being written are
             waiting for you.
-          </motion.p>
+          </p>
           {message && (
-            <motion.p className="notice" role="alert" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              {message}
-            </motion.p>
+            <p className="notice" role="alert">{message}</p>
           )}
-          <motion.div {...item(0.6)}>
+          <div {...item(0.6)}>
             <button
               className="btn btn-primary google-btn"
               disabled={busy}
@@ -89,10 +71,10 @@ export function LoginPage({ error }: { error?: string }) {
               </span>
               {busy ? "Opening Google…" : "Continue with Google"}
             </button>
-          </motion.div>
-          <motion.p className="login-note" {...item(0.7)}>
+          </div>
+          <p {...item(0.7)} className="login-note enter">
             Only the two Google accounts invited to MUMAA can enter.
-          </motion.p>
+          </p>
         </div>
 
         <span className="login-foot">for Anna &amp; Joshua</span>

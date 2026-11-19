@@ -7,5 +7,5 @@ import { readAuthSession } from "@/lib/auth/session";
 export default async function IdeasPage() {
   const session = await readAuthSession((await cookies()).get("mumaa_session")?.value);
   if (!session) redirect("/login");
-  return <SharedModule type="idea" entries={await listSharedContent("idea")} currentEmail={session.email} />;
+  return <SharedModule type="idea" entries={await listSharedContent("idea", session.email)} currentEmail={session.email} />;
 }

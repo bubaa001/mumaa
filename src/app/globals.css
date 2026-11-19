@@ -2456,3 +2456,210 @@ textarea {
     animation: none;
   }
 }
+
+/* ═════════════════════════════════════════════════════════════
+   MOTION WITHOUT WAITING FOR JAVASCRIPT
+   Entrances are CSS, so they play on first paint. Scroll reveals only
+   hide content after hydration, and only if it is still below the fold.
+   ═════════════════════════════════════════════════════════════ */
+
+@keyframes enter {
+  from { opacity: 0; transform: translateY(22px); }
+}
+
+@keyframes rise {
+  from { transform: translateY(105%); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+}
+
+@keyframes settle {
+  from { transform: scale(1.15); }
+}
+
+@keyframes wipe-down {
+  from { clip-path: inset(0 0 100% 0); }
+}
+
+.enter {
+  animation: enter 0.9s var(--ease-out) backwards;
+  animation-delay: var(--d, 0s);
+}
+
+.page-enter {
+  animation: enter 0.7s var(--ease-out) backwards;
+}
+
+.hero-line > span {
+  animation: rise 1.2s var(--ease-out) backwards;
+  animation-delay: var(--d, 0s);
+}
+
+.hero-photo img {
+  animation: fade-in 1.6s var(--ease-out) backwards;
+}
+
+.login-visual {
+  animation: wipe-down 1.3s var(--ease-out) backwards;
+}
+
+.login-visual img {
+  animation: settle 1.8s var(--ease-out) backwards;
+}
+
+.reveal,
+.reveal-group > * {
+  transition:
+    opacity 0.9s var(--ease-out),
+    transform 0.9s var(--ease-out);
+  transition-delay: var(--d, 0s);
+}
+
+.reveal[data-reveal="hidden"] {
+  opacity: 0;
+  transform: translateY(var(--y, 28px));
+  transition-duration: 0s;
+  transition-delay: 0s;
+}
+
+.reveal-group > :nth-child(2) { --d: 0.08s; }
+.reveal-group > :nth-child(3) { --d: 0.16s; }
+.reveal-group > :nth-child(4) { --d: 0.24s; }
+.reveal-group > :nth-child(5) { --d: 0.32s; }
+.reveal-group > :nth-child(6) { --d: 0.4s; }
+.reveal-group > :nth-child(n + 7) { --d: 0.48s; }
+
+.reveal-group[data-reveal="hidden"] > * {
+  opacity: 0;
+  transform: translateY(24px);
+  transition-duration: 0s;
+  transition-delay: 0s;
+}
+
+/* Entry groups, sealed capsules, past events */
+
+.entry-group + .entry-group {
+  margin-top: clamp(48px, 7vw, 72px);
+}
+
+.entry-group-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 20px;
+  font-family: var(--font-meta);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.entry-group-title span {
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  background: var(--paper-2);
+  color: var(--ink-2);
+}
+
+.entry-sealed {
+  border-style: dashed;
+  border-color: var(--line-strong);
+  background:
+    repeating-linear-gradient(135deg, transparent 0 14px, rgba(180, 48, 42, 0.035) 14px 15px),
+    var(--card);
+  box-shadow: none;
+}
+
+.entry-countdown {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.4rem;
+  color: var(--cherry) !important;
+}
+
+.entry-past {
+  opacity: 0.62;
+}
+
+.entry-past:hover {
+  opacity: 1;
+}
+
+.chip-sealed {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.entry-actions {
+  display: inline-flex;
+  gap: 18px;
+}
+
+.danger-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.danger-link svg {
+  width: 13px;
+  height: 13px;
+}
+
+.detail-owner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 28px;
+}
+
+/* Toast */
+
+.toast-region {
+  position: fixed;
+  left: 50%;
+  bottom: calc(96px + env(safe-area-inset-bottom));
+  z-index: 90;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+@media (min-width: 960px) {
+  .toast-region {
+    bottom: 32px;
+  }
+}
+
+.toast {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  border-radius: var(--r-pill);
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 14px;
+  white-space: nowrap;
+  box-shadow: var(--shadow-lift);
+}
+
+.toast svg {
+  width: 16px;
+  height: 16px;
+  color: #ef9a8f;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal[data-reveal],
+  .reveal-group[data-reveal] > * {
+    opacity: 1;
+    transform: none;
+  }
+}

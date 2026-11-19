@@ -1,11 +1,11 @@
 "use client";
 
-import { motion, useMotionValueEvent, useReducedMotion, useScroll } from "motion/react";
+import { motion, useMotionValueEvent, useScroll } from "motion/react";
 import { BookOpen, CalendarDays, Hourglass, House, Images, Lightbulb } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { ease } from "./motion";
+import { ToastProvider } from "./toast";
 
 const navigation = [
   { label: "Home", href: "/home", icon: House },
@@ -22,7 +22,6 @@ function isActive(pathname: string, href: string) {
 
 export function MummaaShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const reduce = useReducedMotion();
   const { scrollY } = useScroll();
   const [scrolled, setScrolled] = useState(false);
   useMotionValueEvent(scrollY, "change", (value) => setScrolled(value > 8));
@@ -55,15 +54,11 @@ export function MummaaShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <motion.main
-        className="app-main"
-        key={pathname}
-        initial={reduce ? false : { opacity: 0, y: 14 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, ease }}
-      >
-        {children}
-      </motion.main>
+      <ToastProvider>
+        <main className="app-main page-enter" key={pathname}>
+          {children}
+        </main>
+      </ToastProvider>
 
       <nav className="tabbar" aria-label="Sections">
         {navigation.map((item) => {
@@ -99,20 +94,15 @@ export function PageHead({
   description?: string;
   children?: React.ReactNode;
 }) {
-  const reduce = useReducedMotion();
-  const enter = (delay: number) => ({
-    initial: reduce ? false : { opacity: 0, y: 22 },
-    animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.9, ease, delay },
-  });
+  const delay = (seconds: number) => ({ "--d": `${seconds}s` }) as React.CSSProperties;
   return (
     <header className="page-head">
       <div>
-        <motion.span className="eyebrow" {...enter(0.05)}>{eyebrow}</motion.span>
-        <motion.h1 className="display" {...enter(0.12)}>{title}</motion.h1>
-        {description && <motion.p {...enter(0.2)}>{description}</motion.p>}
+        <span className="eyebrow enter" style={delay(0.05)}>{eyebrow}</span>
+        <h1 className="display enter" style={delay(0.12)}>{title}</h1>
+        {description && <p className="enter" style={delay(0.2)}>{description}</p>}
       </div>
-      {children && <motion.div className="page-head-side" {...enter(0.28)}>{children}</motion.div>}
+      {children && <div className="page-head-side enter" style={delay(0.28)}>{children}</div>}
     </header>
   );
 }

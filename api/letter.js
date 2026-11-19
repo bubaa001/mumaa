@@ -1,3 +1,4 @@
+import { isSignedIn } from "./_session.js";
 import { put } from "@vercel/blob";
 
 const maxMessageLength = 5000;
@@ -22,6 +23,11 @@ export default async function handler(request, response) {
   if (request.method !== "POST") {
     response.setHeader("Allow", "POST");
     respond(response, 405, "This request is not supported.");
+    return;
+  }
+
+  if (!(await isSignedIn(request))) {
+    respond(response, 401, "Sign in to MUMAA first.");
     return;
   }
 

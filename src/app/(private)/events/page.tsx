@@ -7,5 +7,5 @@ import { readAuthSession } from "@/lib/auth/session";
 export default async function EventsPage() {
   const session = await readAuthSession((await cookies()).get("mumaa_session")?.value);
   if (!session) redirect("/login");
-  return <SharedModule type="event" entries={await listSharedContent("event")} currentEmail={session.email} />;
+  return <SharedModule type="event" entries={await listSharedContent("event", session.email)} currentEmail={session.email} />;
 }

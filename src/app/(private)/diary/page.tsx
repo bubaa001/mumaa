@@ -7,5 +7,5 @@ import { readAuthSession } from "@/lib/auth/session";
 export default async function DiaryPage() {
   const session = await readAuthSession((await cookies()).get("mumaa_session")?.value);
   if (!session) redirect("/login");
-  return <SharedModule type="diary" entries={await listSharedContent("diary")} currentEmail={session.email} />;
+  return <SharedModule type="diary" entries={await listSharedContent("diary", session.email)} currentEmail={session.email} />;
 }
