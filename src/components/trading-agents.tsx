@@ -2,7 +2,7 @@
 
 import { ArrowLeft, ChevronRight } from "lucide-react";
 import { useDesk, OpenTrades } from "./trading-dashboard";
-import { MarketCard } from "./trading-market";
+import { Confidence, MarketCard } from "./trading-market";
 import { TF_NAME, type TraderPull, type TraderState } from "@/lib/trader";
 import {
   ago, closedTrades, pct, rText, signed, STATE_LABEL, when, type Agent, type AgentState as State,
@@ -37,6 +37,9 @@ export function AgentsView({ agents, s, data, agentId, marketId }: {
                 <span className="roster-main">
                   <b>{a.name}</b>
                   <small>{a.pairs.join(" · ")}</small>
+                </span>
+                <span className="roster-conf">
+                  {a.confidence ? <Confidence grade={a.confidence.grade} label={a.confidence.label} compact /> : <span className="roster-muted">Unrated</span>}
                 </span>
                 <span className="roster-side">
                   <span className="roster-state">{STATE_LABEL[a.state].label}</span>
@@ -78,7 +81,10 @@ function AgentDetail({ agent: a, s, data, marketId }: { agent: Agent; s: TraderS
             {a.running ? "Running" : "Stopped"} · last log {ago(a.bot?.last_seen, now)} · {a.pairs.length} {a.pairs.length === 1 ? "market" : "markets"}
           </p>
         </div>
-        <AgentState state={a.state} />
+        <span className="agent-badges">
+          {a.confidence && <Confidence grade={a.confidence.grade} label={a.confidence.label} />}
+          <AgentState state={a.state} />
+        </span>
       </header>
 
       <dl className="agent-stats">

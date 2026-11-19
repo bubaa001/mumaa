@@ -6,6 +6,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { PageHead } from "./mumaa-shell";
 import { AgentsView, AgentState as StateChip } from "./trading-agents";
 import { TradeHistory } from "./trading-history";
+import { SessionClock } from "./trading-sessions";
 import { ease } from "./motion";
 import type { TraderPosition, TraderPull, TraderResult, TraderState } from "@/lib/trader";
 import {
@@ -239,6 +240,8 @@ function OverviewView({ data, s, agents }: { data: TraderPull; s: TraderState; a
         </p>
       )}
 
+      <SessionClock agents={agents} />
+
       <section className="desk-section" aria-labelledby="ov-agents">
         <div className="desk-section-head">
           <h2 className="trade-h" id="ov-agents">Agents</h2>
@@ -251,7 +254,7 @@ function OverviewView({ data, s, agents }: { data: TraderPull; s: TraderState; a
                 <span className="agent-tile-name">{a.name}</span>
                 <StateChip state={a.state} />
               </span>
-              <span className="agent-tile-pairs">{a.pairs.join(" · ")}</span>
+              <span className="agent-tile-pairs">{a.pairs.join(" · ")}{a.confidence && <> · {a.confidence.label} confidence</>}</span>
               <span className="agent-tile-stats">
                 <span><small>Live</small><b className={a.record.net > 0 ? "pos" : a.record.net < 0 ? "neg" : ""}>{a.record.n ? signed(a.record.net) : "—"}</b></span>
                 <span><small>Trades</small><b>{a.record.n}</b></span>

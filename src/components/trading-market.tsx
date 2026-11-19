@@ -98,12 +98,15 @@ function Check({ c }: { c: TraderCheck }) {
   );
 }
 
-function Confidence({ grade }: { grade: "High" | "Medium" | "Low" }) {
+export function Confidence({ grade, label, compact = false }: { grade: "High" | "Medium" | "Low"; label?: string; compact?: boolean }) {
   const n = grade === "High" ? 3 : grade === "Medium" ? 2 : 1;
+  const text = label ?? grade;
   return (
-    <span className={`conf conf-${grade.toLowerCase()}`} title="Based on backtest trade count, results on unseen data, and how many nearby settings were also profitable">
+    <span className={`conf conf-${grade.toLowerCase()}${compact ? " conf-compact" : ""}`}
+      title="Based on backtest trade count, results on unseen data, and how many nearby settings were also profitable"
+      aria-label={`${text} confidence`}>
       <span className="conf-bars" aria-hidden="true">{[1, 2, 3].map((i) => <i key={i} data-on={i <= n} />)}</span>
-      {grade} confidence
+      <span aria-hidden="true">{compact ? text : `${text} confidence`}</span>
     </span>
   );
 }
