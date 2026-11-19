@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useMotionValueEvent, useScroll } from "motion/react";
-import { BookOpen, CalendarDays, Hourglass, House, Images, Lightbulb } from "lucide-react";
+import { BookOpen, CalendarDays, ChartCandlestick, Hourglass, House, Images, Lightbulb } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -14,6 +14,7 @@ const navigation = [
   { label: "Events", href: "/events", icon: CalendarDays },
   { label: "Ideas", href: "/ideas", icon: Lightbulb },
   { label: "Capsules", href: "/time-capsules", icon: Hourglass },
+  { label: "Trading", href: "/trading", icon: ChartCandlestick },
 ];
 
 function isActive(pathname: string, href: string) {
