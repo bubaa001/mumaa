@@ -1,6 +1,6 @@
 "use client";
 
-import type { TraderCheck, TraderMarket, TraderTrade } from "@/lib/trader";
+import { botName, TF_NAME, type TraderCheck, type TraderMarket, type TraderTrade } from "@/lib/trader";
 
 const VERDICT: Record<TraderMarket["verdict"], { label: string; tone: string }> = {
   in_trade: { label: "In a trade", tone: "tone-live" },
@@ -43,7 +43,7 @@ export function CandleChart({ m }: { m: TraderMarket }) {
   return (
     <figure className="candles">
       <svg viewBox={`0 0 ${w} ${h}`} role="img"
-        aria-label={`${m.pair} last ${c.length} hourly candles, now ${m.price}`}>
+        aria-label={`${m.pair} last ${c.length} ${TF_NAME[m.tf ?? "H1"] ?? "hourly"} candles, now ${m.price}`}>
         {[0.25, 0.5, 0.75].map((f) => (
           <line key={f} className="grid" x1={0} x2={w - padR} y1={padY + f * (h - 2 * padY)} y2={padY + f * (h - 2 * padY)} />
         ))}
@@ -117,7 +117,7 @@ export function MarketCard({ m, trades, currency }: { m: TraderMarket; trades: T
     return <article className="trade-card market"><h3 className="market-pair">{m.pair}</h3><p className="trade-muted">Couldn’t read this market: {m.error}</p></article>;
   }
   const v = VERDICT[m.verdict];
-  const mine = trades.filter((t) => t.symbol === m.pair);
+  const mine = trades.filter((t) => t.symbol === m.pair && t.bot === m.bot);
   const wins = mine.filter((t) => t.profit > 0);
   const losses = mine.filter((t) => t.profit < 0);
   const pnl = mine.reduce((s, t) => s + t.profit, 0);
@@ -129,7 +129,7 @@ export function MarketCard({ m, trades, currency }: { m: TraderMarket; trades: T
       <header className="market-head">
         <div>
           <h3 className="market-pair">{m.pair}</h3>
-          <p className="market-strat">{m.name}</p>
+          <p className="market-strat">{botName(m.bot)} · {m.name}</p>
         </div>
         <div className="market-badges">
           {rec && <Confidence grade={rec.confidence} />}
