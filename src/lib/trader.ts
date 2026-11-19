@@ -29,7 +29,7 @@ export type TraderMarket = {
 };
 /** Display names for each bot (each runs as its own agent with its own magic number). */
 export const BOT_NAMES: Record<string, string> = {
-  forex: "Forex bot", gold: "Gold bot", h4candle: "4H candle bot", orbgold: "Gold NY-open bot", jdubgold: "J-Dub gold bot", recovery: "Recovery bot",
+  forex: "Forex bot", gold: "Gold bot", h4candle: "4H candle bot", orbgold: "Gold NY-open bot", jdubgold: "J-Dub gold bot", recovery: "Recovery bot", sosjpy: "Structure bot (fxalexg)", sdgold: "Supply & demand bot (Brad Goh)", mambagold: "NY breakout bot (MambaFx)",
 };
 export const botName = (b: string) => BOT_NAMES[b] ?? b;
 export const TF_NAME: Record<string, string> = { M5: "5-minute", H1: "hourly", H4: "4-hour" };
