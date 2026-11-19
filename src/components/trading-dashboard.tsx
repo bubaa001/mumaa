@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { PageHead } from "./mumaa-shell";
+import { MarketCard } from "./trading-market";
 import type { TraderPull, TraderResult, TraderTrade } from "@/lib/trader";
 
 const POLL_MS = 20_000;
@@ -60,10 +61,13 @@ function EquityChart({ points }: { points: TraderPull["equity"] }) {
   );
 }
 
-function liveStats(trades: TraderTrade[], bot?: string) {
-  const list = bot ? trades.filter((t) => t.bot === bot) : trades;
-  const wins = list.filter((t) => t.profit > 0).length;
-  return { n: list.length, winRate: list.length ? (wins / list.length) * 100 : null, pnl: list.reduce((s, t) => s + t.profit, 0) };
+function summary(trades: TraderTrade[]) {
+  const wins = trades.filter((t) => t.profit > 0), losses = trades.filter((t) => t.profit < 0);
+  const won = wins.reduce((s, t) => s + t.profit, 0), lost = losses.reduce((s, t) => s + t.profit, 0);
+  const best = trades.reduce<TraderTrade | null>((b, t) => (!b || t.profit > b.profit ? t : b), null);
+  const worst = trades.reduce<TraderTrade | null>((b, t) => (!b || t.profit < b.profit ? t : b), null);
+  return { n: trades.length, wins: wins.length, losses: losses.length, won, lost, net: won + lost,
+    winRate: trades.length ? (wins.length / trades.length) * 100 : null, best, worst };
 }
 
 export function TradingDashboard({ initial }: { initial: TraderResult }) {
@@ -95,7 +99,7 @@ export function TradingDashboard({ initial }: { initial: TraderResult }) {
 
   const head = (
     <PageHead eyebrow="Claude trader" title={<>The <em className="serif-em">desk</em></>}
-      description="Live status of the forex and gold bots running on the PC. Updates every 20 seconds." />
+      description="What each bot is watching, why it is or isn’t trading, and what it has made or lost. Refreshes every 20 seconds." />
   );
 
   if (!result.ok || !s) {
@@ -113,7 +117,9 @@ export function TradingDashboard({ initial }: { initial: TraderResult }) {
   const ccy = s.account.currency;
   const age = now === null ? 0 : (now - Date.parse(data!.updated_at ?? s.generated_at)) / 1000;
   const stale = age > STALE_S;
-  const all = liveStats(s.trades);
+  const all = summary(s.trades);
+  const markets = s.markets ?? [];
+  const perMarket = Array.from(new Set(s.trades.map((t) => t.symbol))).map((sym) => ({ sym, ...summary(s.trades.filter((t) => t.symbol === sym)) }));
 
   return (
     <>
@@ -130,44 +136,27 @@ export function TradingDashboard({ initial }: { initial: TraderResult }) {
 
       <section className="trade-stats" aria-label="Account">
         <div className="trade-stat"><span>Equity</span><b>{money(s.account.equity)}</b><small>{ccy}</small></div>
-        <div className="trade-stat"><span>Balance</span><b>{money(s.account.balance)}</b><small>{ccy}</small></div>
         <div className="trade-stat"><span>Open P/L</span><b className={s.account.profit >= 0 ? "pos" : "neg"}>{signed(s.account.profit)}</b><small>{s.positions.length} open</small></div>
         <div className="trade-stat"><span>Closed today</span><b className={today >= 0 ? "pos" : "neg"}>{signed(today)}</b><small>{ccy}</small></div>
-        <div className="trade-stat"><span>Live win rate</span><b>{all.winRate === null ? "—" : `${all.winRate.toFixed(0)}%`}</b><small>{all.n} trades · backtest 72%</small></div>
+        <div className="trade-stat"><span>Net P/L</span><b className={all.net >= 0 ? "pos" : "neg"}>{signed(all.net)}</b><small>made {signed(all.won)} · lost {signed(all.lost)}</small></div>
+        <div className="trade-stat"><span>Live win rate</span><b>{all.winRate === null ? "—" : `${all.winRate.toFixed(0)}%`}</b><small>{all.wins} won · {all.losses} lost · backtest 72%</small></div>
       </section>
+
+      {markets.length > 0 && (
+        <section aria-label="Markets">
+          <div className="trade-section-head">
+            <h2 className="trade-h">Markets</h2>
+            <p className="trade-muted">Hourly candles, live. The bot decides on each closed candle.</p>
+          </div>
+          <div className="market-grid">
+            {markets.map((m) => <MarketCard key={m.pair} m={m} trades={s.trades} currency={ccy} />)}
+          </div>
+        </section>
+      )}
 
       <section className="trade-card">
         <h2 className="trade-h">Equity, last 30 days</h2>
         <EquityChart points={data!.equity} />
-      </section>
-
-      <section className="trade-grid">
-        {Object.entries(s.bots).map(([name, bot]) => {
-          const live = liveStats(s.trades, name);
-          return (
-            <article className="trade-card" key={name}>
-              <div className="trade-card-top">
-                <h2 className="trade-h">{name === "gold" ? "Gold bot" : "Forex bot"}</h2>
-                <span className={`chip ${bot.running ? "chip-done" : ""}`}>{bot.running ? "Running" : "Stopped"}</span>
-              </div>
-              <p className="trade-muted">{Object.keys(bot.markets).join(" · ")}</p>
-              <dl className="trade-dl">
-                <div><dt>Live trades</dt><dd>{live.n}</dd></div>
-                <div><dt>Live win rate</dt><dd>{live.winRate === null ? "—" : `${live.winRate.toFixed(0)}%`}</dd></div>
-                <div><dt>Live P/L</dt><dd className={live.pnl >= 0 ? "pos" : "neg"}>{signed(live.pnl)}</dd></div>
-                {bot.backtest && <>
-                  <div><dt>Backtest win rate</dt><dd>{bot.backtest.win_rate}%</dd></div>
-                  <div><dt>Backtest avg</dt><dd>+{bot.backtest.avg_r}R</dd></div>
-                  <div><dt>Backtest max DD</dt><dd>{bot.backtest.max_dd}%</dd></div>
-                </>}
-              </dl>
-              <details className="trade-log">
-                <summary>Bot log · {ago(bot.last_seen, now)}</summary>
-                <pre>{bot.lines.length ? bot.lines.slice(-25).join("\n") : "No log yet."}</pre>
-              </details>
-            </article>
-          );
-        })}
       </section>
 
       <section className="trade-card">
@@ -175,10 +164,50 @@ export function TradingDashboard({ initial }: { initial: TraderResult }) {
         {s.positions.length === 0 ? <p className="trade-muted">No open trades.</p> : (
           <div className="trade-table-wrap">
             <table className="trade-table">
-              <thead><tr><th>Market</th><th>Side</th><th>Lots</th><th>Entry</th><th>Now</th><th>Stop</th><th>Target</th><th>P/L</th><th>Opened</th></tr></thead>
-              <tbody>{s.positions.map((p, i) => (
-                <tr key={i}><td>{p.symbol}</td><td>{p.side}</td><td>{p.lots}</td><td>{p.open}</td><td>{p.now}</td>
-                  <td>{p.sl}</td><td>{p.tp}</td><td className={p.profit >= 0 ? "pos" : "neg"}>{signed(p.profit)}</td><td>{ago(p.opened, now)}</td></tr>
+              <thead><tr><th>Market</th><th>Side</th><th>Lots</th><th>Entry</th><th>Now</th><th>Stop</th><th>Target</th><th>Progress</th><th>P/L</th><th>Opened</th></tr></thead>
+              <tbody>{s.positions.map((p, i) => {
+                const dir = p.side === "BUY" ? 1 : -1;
+                const toTp = p.tp ? (dir * (p.now - p.open)) / Math.abs(p.tp - p.open) : 0;
+                const toSl = p.sl ? (dir * (p.now - p.open)) / Math.abs(p.open - p.sl) : 0;
+                const prog = toTp >= 0 ? `${Math.round(toTp * 100)}% to target` : `${Math.round(-toSl * 100)}% to stop`;
+                return (
+                  <tr key={i}><td>{p.symbol}</td><td>{p.side}</td><td>{p.lots}</td><td>{p.open}</td><td>{p.now}</td>
+                    <td>{p.sl}</td><td>{p.tp}</td><td>{prog}</td><td className={p.profit >= 0 ? "pos" : "neg"}>{signed(p.profit)}</td><td>{ago(p.opened, now)}</td></tr>
+                );
+              })}</tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      <section className="trade-card">
+        <h2 className="trade-h">Profit and loss by market</h2>
+        {perMarket.length === 0 ? <p className="trade-muted">No closed trades yet. Each market’s wins, losses and net appear here after its first trade.</p> : (
+          <div className="trade-table-wrap">
+            <table className="trade-table">
+              <thead><tr><th>Market</th><th>Trades</th><th>Win rate</th><th>Made</th><th>Lost</th><th>Net</th><th>Best</th><th>Worst</th></tr></thead>
+              <tbody>{perMarket.map((m) => (
+                <tr key={m.sym}><td>{m.sym}</td><td>{m.n}</td><td>{m.winRate === null ? "—" : `${m.winRate.toFixed(0)}%`}</td>
+                  <td className="pos">{signed(m.won)}</td><td className="neg">{signed(m.lost)}</td>
+                  <td className={m.net >= 0 ? "pos" : "neg"}>{signed(m.net)}</td>
+                  <td>{m.best ? signed(m.best.profit) : "—"}</td><td>{m.worst ? signed(m.worst.profit) : "—"}</td></tr>
+              ))}</tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      <section className="trade-card">
+        <h2 className="trade-h">Every closed trade</h2>
+        {s.trades.length === 0 ? <p className="trade-muted">No closed trades yet.</p> : (
+          <div className="trade-table-wrap">
+            <table className="trade-table">
+              <thead><tr><th>Closed</th><th>Market</th><th>Side</th><th>Lots</th><th>Entry</th><th>Exit</th><th>Why it closed</th><th>Result</th><th>P/L</th></tr></thead>
+              <tbody>{s.trades.slice(0, 50).map((t, i) => (
+                <tr key={i}><td>{when(t.closed)}</td><td>{t.symbol}</td><td>{t.side}</td><td>{t.lots}</td>
+                  <td>{t.open}</td><td>{t.close}</td><td>{t.reason === "target" ? "hit target" : t.reason === "stop" ? "hit stop" : "time / manual"}</td>
+                  <td>{t.r === null || t.r === undefined ? "—" : `${t.r > 0 ? "+" : ""}${t.r}R`}</td>
+                  <td className={t.profit >= 0 ? "pos" : "neg"}>{signed(t.profit)}</td></tr>
               ))}</tbody>
             </table>
           </div>
@@ -201,19 +230,20 @@ export function TradingDashboard({ initial }: { initial: TraderResult }) {
         <p className="trade-muted">Bots skip new trades from 30 min before to 30 min after each event on the affected pairs.</p>
       </section>
 
-      <section className="trade-card">
-        <h2 className="trade-h">Recent closed trades</h2>
-        {s.trades.length === 0 ? <p className="trade-muted">No closed trades yet.</p> : (
-          <div className="trade-table-wrap">
-            <table className="trade-table">
-              <thead><tr><th>Closed</th><th>Bot</th><th>Market</th><th>Side</th><th>Lots</th><th>Entry</th><th>Exit</th><th>Why</th><th>P/L</th></tr></thead>
-              <tbody>{s.trades.slice(0, 30).map((t, i) => (
-                <tr key={i}><td>{when(t.closed)}</td><td>{t.bot}</td><td>{t.symbol}</td><td>{t.side}</td><td>{t.lots}</td>
-                  <td>{t.open}</td><td>{t.close}</td><td>{t.reason}</td><td className={t.profit >= 0 ? "pos" : "neg"}>{signed(t.profit)}</td></tr>
-              ))}</tbody>
-            </table>
-          </div>
-        )}
+      <section className="trade-grid">
+        {Object.entries(s.bots).map(([name, bot]) => (
+          <article className="trade-card" key={name}>
+            <div className="trade-card-top">
+              <h2 className="trade-h">{name === "gold" ? "Gold bot" : "Forex bot"}</h2>
+              <span className={`chip ${bot.running ? "chip-done" : ""}`}>{bot.running ? "Running" : "Stopped"}</span>
+            </div>
+            <p className="trade-muted">{Object.keys(bot.markets).join(" · ")}</p>
+            <details className="trade-log">
+              <summary>Bot log · {ago(bot.last_seen, now)}</summary>
+              <pre>{bot.lines.length ? bot.lines.slice(-25).join("\n") : "No log yet."}</pre>
+            </details>
+          </article>
+        ))}
       </section>
     </>
   );
