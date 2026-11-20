@@ -65,7 +65,40 @@ export type Agent = {
   record: Tally;
   /** Backtest confidence across this agent's markets; a range when they differ. Null when unrated. */
   confidence: { grade: Grade; label: string } | null;
+  /** How close its nearest market is to opening a trade. */
+  ready: Readiness;
 };
+
+/**
+ * How close a market is to a trade: how many of its entry conditions hold right now and, when its
+ * trading session is closed, how long until it opens. `score` orders the desk: in a trade, then a live
+ * signal, then markets in an open session by conditions met, then closed sessions soonest first,
+ * then news pauses, then stopped bots.
+ */
+export type Readiness = { met: number; total: number; opensIn: number | null; score: number };
+
+const RANK: Record<AgentState, number> = { in_trade: 40, signal: 30, watching: 10, paused: 5, stopped: 0 };
+const WEEK = 7 * 86_400_000;
+
+export function readinessOf(m: TraderMarket, now: number | null): Readiness {
+  const total = m.checks.length;
+  const met = m.checks.filter((c) => c.ok).length;
+  let opensIn: number | null = null;
+  if (now !== null) {
+    for (const c of m.checks) {
+      if (c.ok) continue;
+      const s = sessionOf(c.label);
+      if (!s) continue;
+      const at = sessionAt(s, now);
+      if (!at.open && Number.isFinite(at.next)) opensIn = Math.min(opensIn ?? Infinity, at.next - now);
+    }
+  }
+  // A closed session sits below every open one (-1), and further down the longer the wait.
+  const wait = opensIn === null ? 0 : 1 + Math.min(opensIn, WEEK) / WEEK;
+  return { met, total, opensIn, score: RANK[m.verdict] + (total ? met / total : 0) - wait };
+}
+
+const NO_MARKETS: Readiness = { met: 0, total: 0, opensIn: null, score: -1 };
 
 type Grade = "High" | "Medium" | "Low";
 const GRADES: Grade[] = ["Low", "Medium", "High"];
@@ -79,7 +112,7 @@ function confidenceOf(ms: TraderMarket[]): Agent["confidence"] {
 }
 
 /** Every bot the reporter knows about, from its process list or its markets, with its rolled-up state. */
-export function agentsFrom(s: TraderState): Agent[] {
+export function agentsFrom(s: TraderState, now: number | null = null): Agent[] {
   const markets = s.markets ?? [];
   const ids = Array.from(new Set([...Object.keys(s.bots), ...markets.map((m) => m.bot)]));
   const agents = ids.map((id): Agent => {
@@ -92,19 +125,35 @@ export function agentsFrom(s: TraderState): Agent[] {
     if (!running) state = "stopped";
     else if (positions.length) state = "in_trade";
     else state = STATE_ORDER.find((v) => mine.some((m) => m.verdict === v)) ?? "watching";
-    const pairs = mine.length ? mine.map((m) => m.pair) : Object.keys(bot?.markets ?? {});
+    const sorted = sortMarkets(mine, now);
+    const pairs = sorted.length ? sorted.map((m) => m.pair) : Object.keys(bot?.markets ?? {});
+    let ready = sorted.length ? readinessOf(sorted[0], now) : NO_MARKETS;
+    if (state === "stopped") ready = { ...ready, score: ready.score - 100 };
+    else if (state === "in_trade") ready = { ...ready, score: Math.max(ready.score, RANK.in_trade + 1) };
     return {
-      id, name: botName(id), bot, running, state, markets: sortMarkets(mine), pairs,
+      id, name: botName(id), bot, running, state, markets: sorted, pairs, ready,
       strategies: Array.from(new Set(mine.map((m) => m.name).filter(Boolean))),
       positions, openPnl: positions.reduce((sum, p) => sum + p.profit, 0),
       trades, record: tally(trades), confidence: confidenceOf(mine),
     };
   });
-  return agents.sort((a, b) => STATE_ORDER.indexOf(a.state) - STATE_ORDER.indexOf(b.state));
+  return agents.sort((a, b) => b.ready.score - a.ready.score || a.name.localeCompare(b.name));
 }
 
-function sortMarkets(ms: TraderMarket[]) {
-  return [...ms].sort((a, b) => STATE_ORDER.indexOf(a.verdict) - STATE_ORDER.indexOf(b.verdict));
+function sortMarkets(ms: TraderMarket[], now: number | null) {
+  const score = new Map(ms.map((m) => [m, readinessOf(m, now).score]));
+  return [...ms].sort((a, b) => score.get(b)! - score.get(a)!);
+}
+
+/** "4 of 5 conditions · session opens in 6 h 10 min", for lists. */
+export function readyText(r: Readiness, state: AgentState) {
+  if (state === "in_trade") return "In a trade now";
+  if (state === "signal") return "Setup complete · entering";
+  if (state === "stopped") return "Bot not running";
+  if (!r.total) return "Waiting for data";
+  const met = `${r.met} of ${r.total} conditions`;
+  if (state === "paused") return `${met} · paused`;
+  return r.opensIn !== null ? `${met} · session opens in ${countdown(r.opensIn)}` : `${met} met`;
 }
 
 /** Replays when the history table has them; otherwise the reporter's recent closed trades, without charts. */
@@ -181,23 +230,29 @@ export function sessionsFrom(agents: Agent[]): Session[] {
   for (const a of agents) {
     for (const m of a.markets) {
       for (const c of m.checks) {
-        if (!/session|window/i.test(c.label)) continue;
-        const x = c.label.match(WINDOW);
-        if (!x) continue;
-        const start = Number(x[1]) * 60 + Number(x[2] ?? 0);
-        const end = Number(x[3]) * 60 + Number(x[4] ?? 0);
-        const tz = x[5].toUpperCase() === "NY" ? "America/New_York" : "UTC";
-        const key = `${tz}-${start}-${end}`;
-        const raw = c.label.slice(0, c.label.indexOf("(")).replace(/^inside the\s+/i, "").trim();
-        const named = raw.charAt(0).toUpperCase() + raw.slice(1);
-        const name = tz === "UTC" || /new york|ny/i.test(named) ? named : `New York ${raw}`;
-        const s = found.get(key) ?? { key, name, start, end, tz, source: x[0].slice(1, -1), agents: [] };
+        const parsed = sessionOf(c.label);
+        if (!parsed) continue;
+        const s = found.get(parsed.key) ?? parsed;
         if (!s.agents.includes(a.name)) s.agents.push(a.name);
-        found.set(key, s);
+        found.set(parsed.key, s);
       }
     }
   }
   return [...found.values()];
+}
+
+/** A session window from a checklist label like "Asian session (21–06 UTC)", or null. */
+export function sessionOf(label: string): Session | null {
+  if (!/session|window/i.test(label)) return null;
+  const x = label.match(WINDOW);
+  if (!x) return null;
+  const start = Number(x[1]) * 60 + Number(x[2] ?? 0);
+  const end = Number(x[3]) * 60 + Number(x[4] ?? 0);
+  const tz = x[5].toUpperCase() === "NY" ? "America/New_York" : "UTC";
+  const raw = label.slice(0, label.indexOf("(")).replace(/^inside the\s+/i, "").trim();
+  const named = raw.charAt(0).toUpperCase() + raw.slice(1);
+  const name = tz === "UTC" || /new york|ny/i.test(named) ? named : `New York ${raw}`;
+  return { key: `${tz}-${start}-${end}`, name, start, end, tz, source: x[0].slice(1, -1), agents: [] };
 }
 
 function tzOffset(t: number, tz: string) {

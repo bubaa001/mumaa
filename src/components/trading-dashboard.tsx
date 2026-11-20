@@ -10,7 +10,7 @@ import { SessionClock } from "./trading-sessions";
 import { ease } from "./motion";
 import type { TraderPosition, TraderPull, TraderResult, TraderState } from "@/lib/trader";
 import {
-  agentsFrom, ago, closedTrades, isView, money, pct, rText, signed, tally, VIEWS, when, type Agent, type DeskNav, type DeskView,
+  agentsFrom, ago, closedTrades, isView, money, pct, readyText, rText, signed, tally, VIEWS, when, type Agent, type DeskNav, type DeskView,
 } from "@/lib/trader-view";
 
 const POLL_MS = 5_000;
@@ -83,7 +83,9 @@ export function TradingDashboard({ initial, nav: initialNav }: { initial: Trader
 
   const data = result.ok ? result.data : null;
   const s = data?.state ?? null;
-  const agents = useMemo(() => (s ? agentsFrom(s) : []), [s]);
+  // Re-rank once a minute (session countdowns), not on every clock tick.
+  const minute = now === null ? null : Math.floor(now / 60_000) * 60_000;
+  const agents = useMemo(() => (s ? agentsFrom(s, minute) : []), [s, minute]);
   const desk = useMemo<Desk>(() => ({ now, mounted: now !== null, ccy: s?.account.currency ?? "", go }), [now, s, go]);
 
   const marketCount = agents.reduce((n, a) => n + a.pairs.length, 0);
@@ -244,7 +246,7 @@ function OverviewView({ data, s, agents }: { data: TraderPull; s: TraderState; a
 
       <section className="desk-section" aria-labelledby="ov-agents">
         <div className="desk-section-head">
-          <h2 className="trade-h" id="ov-agents">Agents</h2>
+          <h2 className="trade-h" id="ov-agents">Agents <small className="trade-muted">closest to a trade first</small></h2>
           <button type="button" className="desk-link" onClick={() => go({ view: "agents" })}>Open the agents <ArrowRight aria-hidden="true" /></button>
         </div>
         <div className="agent-tiles">
@@ -255,6 +257,7 @@ function OverviewView({ data, s, agents }: { data: TraderPull; s: TraderState; a
                 <StateChip state={a.state} />
               </span>
               <span className="agent-tile-pairs">{a.pairs.join(" · ")}{a.confidence && <> · {a.confidence.label} confidence</>}</span>
+              <ReadyMeter agent={a} />
               <span className="agent-tile-stats">
                 <span><small>Live</small><b className={a.record.net > 0 ? "pos" : a.record.net < 0 ? "neg" : ""}>{a.record.n ? signed(a.record.net) : "—"}</b></span>
                 <span><small>Trades</small><b>{a.record.n}</b></span>
@@ -297,6 +300,19 @@ function OverviewView({ data, s, agents }: { data: TraderPull; s: TraderState; a
         </button>
       )}
     </>
+  );
+}
+
+/** Conditions met for the agent's nearest market, as a short bar and a line of text. */
+export function ReadyMeter({ agent: a }: { agent: Agent }) {
+  const r = a.ready;
+  const full = a.state === "in_trade" || a.state === "signal";
+  const share = full ? 1 : r.total ? r.met / r.total : 0;
+  return (
+    <span className="ready" data-state={a.state} data-waiting={r.opensIn !== null}>
+      <span className="ready-bar" aria-hidden="true"><i style={{ width: `${Math.round(share * 100)}%` }} /></span>
+      <span className="ready-text">{readyText(r, a.state)}</span>
+    </span>
   );
 }
 
