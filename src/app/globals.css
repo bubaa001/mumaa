@@ -3766,6 +3766,55 @@ textarea {
   .eq-line, .eq-dot.is-live { animation: none; }
 }
 
+
+/* Agent ranking */
+.rank-note { margin-top: 4px; font-size: 13px; }
+.ranking .trade-card-top { align-items: flex-start; flex-wrap: wrap; }
+.rank-list { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 8px; }
+.rank { border: 1px solid var(--line); border-radius: var(--r-md); background: var(--paper); overflow: hidden; transition: border-color 0.2s; }
+.rank.is-open { border-color: var(--line-strong); }
+.rank.is-first { border-color: var(--ink); background: var(--card); box-shadow: inset 4px 0 0 var(--cherry); }
+.rank-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  grid-template-areas: "place name net chev" "place wl wl chev";
+  align-items: center;
+  gap: 8px 14px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.rank-place { grid-area: place; font-family: var(--font-display); font-size: 2.1rem; line-height: 1; color: var(--muted); font-variant-numeric: tabular-nums; }
+.rank.is-first .rank-place { color: var(--cherry); }
+.rank-name { grid-area: name; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; min-width: 0; }
+.rank-name b { font-weight: 500; font-size: 15.5px; }
+.rank-name small { width: 100%; overflow: hidden; font-family: var(--font-meta); font-size: 11px; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; }
+.rank-best { padding: 2px 8px; border-radius: var(--r-pill); background: var(--ink); color: var(--paper); font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+.rank-wl { grid-area: wl; display: grid; gap: 5px; }
+.rank-wl small { font-family: var(--font-meta); font-size: 11.5px; color: var(--muted); }
+.rank-split { display: block; height: 6px; border-radius: var(--r-pill); background: var(--cherry); opacity: 0.85; overflow: hidden; }
+.rank-split i { display: block; height: 100%; background: #2f7d4f; transition: width 0.6s var(--ease-out); }
+.rank-net { grid-area: net; display: grid; justify-items: end; font-family: var(--font-display); font-size: 1.55rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.rank-net small { font-family: var(--font-meta); font-size: 10.5px; color: var(--muted); }
+.rank-chev { grid-area: chev; width: 18px; height: 18px; color: var(--muted); transition: transform 0.25s var(--ease-out); }
+.rank.is-open .rank-chev { transform: rotate(180deg); }
+.rank-panel { display: grid; gap: 12px; padding: 4px 16px 16px; border-top: 1px solid var(--line); }
+.rank-panel > .seg { justify-self: start; }
+.rank-panel .history { margin-top: 0; }
+.rank-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; margin: 12px 0 0; }
+.rank-stats dt { font-family: var(--font-meta); font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+.rank-stats dd { margin: 2px 0 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+.rank-waiting { margin: 14px 0 0; font-family: var(--font-meta); font-size: 11.5px; color: var(--muted); line-height: 1.6; }
+@media (min-width: 760px) {
+  .rank-row { grid-template-columns: 56px minmax(0, 1.2fr) minmax(0, 1fr) 150px 20px; grid-template-areas: "place name wl net chev"; }
+}
+@media (prefers-reduced-motion: reduce) { .rank-split i, .rank-chev { transition: none; } }
+
 /* ═════════════════════════════════════════════════════════════
    INSTANT RESPONSE — taps answer at once, even before data arrives
    ═════════════════════════════════════════════════════════════ */

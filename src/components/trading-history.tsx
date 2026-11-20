@@ -52,8 +52,8 @@ function ReplayChart({ r }: { r: TraderReplay }) {
   );
 }
 
-type Closed = TraderTrade & { replay?: TraderReplay };
-type Result = "all" | "won" | "lost";
+export type Closed = TraderTrade & { replay?: TraderReplay };
+export type Result = "all" | "won" | "lost";
 
 /** Every closed trade, filterable by agent and result, each opening into a replay of how it went. */
 export function TradeHistory({ trades, agents }: { trades: Closed[]; agents: Agent[] }) {
@@ -98,38 +98,49 @@ export function TradeHistory({ trades, agents }: { trades: Closed[]; agents: Age
       ) : list.length === 0 ? (
         <p className="trade-muted">Nothing matches these filters.</p>
       ) : (
-        <div className="history">
-          {list.slice(0, limit).map((t, i) => {
-            const r = t.replay;
-            return (
-              <details key={r?.id ?? `${t.closed}-${i}`} className={`history-item ${t.profit >= 0 ? "won" : "lost"}`}>
-                <summary>
-                  <span className="h-pair">{t.symbol} <small>{t.side}</small></span>
-                  <span className="h-agent">{name(t.bot)}</span>
-                  <span className={`h-pl ${t.profit >= 0 ? "pos" : "neg"}`}>{signed(t.profit)}</span>
-                  <span className="h-when">{when(t.closed, mounted)}</span>
-                  <span className="h-r">{rText(t.r)}</span>
-                </summary>
-                {r && <ReplayChart r={r} />}
-                <dl className="trade-dl">
-                  <div><dt>Entry → exit</dt><dd>{t.open} → {t.close}</dd></div>
-                  <div><dt>Why it closed</dt><dd>{REASON[t.reason] ?? t.reason}</dd></div>
-                  <div><dt>Lasted</dt><dd>{duration(t.opened, t.closed)}</dd></div>
-                  {r && <div><dt>Best it got</dt><dd className="pos">{r.best_r == null ? r.best_move : rText(r.best_r)}</dd></div>}
-                  {r && <div><dt>Worst it got</dt><dd className="neg">{r.worst_r == null ? r.worst_move : rText(r.worst_r)}</dd></div>}
-                  {r && <div><dt>Stop / target</dt><dd>{r.sl || "—"} / {r.tp || "—"}</dd></div>}
-                  {!r && <div><dt>Lots</dt><dd>{t.lots}</dd></div>}
-                </dl>
-              </details>
-            );
-          })}
-          {list.length > limit && (
-            <button type="button" className="btn btn-ghost history-more" onClick={() => setLimit((n) => n + PAGE)}>
-              Show {Math.min(PAGE, list.length - limit)} more
-            </button>
-          )}
-        </div>
+        <TradeList trades={list} agents={agents} limit={limit} onMore={() => setLimit((n) => n + PAGE)} />
       )}
     </section>
+  );
+}
+
+/** Closed trades as rows that open into a replay chart and the trade's details. */
+export function TradeList({ trades, agents, limit, onMore, showAgent = true }: {
+  trades: Closed[]; agents: Agent[]; limit: number; onMore: () => void; showAgent?: boolean;
+}) {
+  const { mounted } = useDesk();
+  const name = (id: string) => agents.find((a) => a.id === id)?.name ?? id;
+  return (
+    <div className="history">
+      {trades.slice(0, limit).map((t, i) => {
+        const r = t.replay;
+        return (
+          <details key={r?.id ?? `${t.closed}-${i}`} className={`history-item ${t.profit >= 0 ? "won" : "lost"}`}>
+            <summary>
+              <span className="h-pair">{t.symbol} <small>{t.side}</small></span>
+              <span className="h-agent">{showAgent ? name(t.bot) : REASON[t.reason] ?? t.reason}</span>
+              <span className={`h-pl ${t.profit >= 0 ? "pos" : "neg"}`}>{signed(t.profit)}</span>
+              <span className="h-when">{when(t.closed, mounted)}</span>
+              <span className="h-r">{rText(t.r)}</span>
+            </summary>
+            {r && <ReplayChart r={r} />}
+            <dl className="trade-dl">
+              <div><dt>Entry → exit</dt><dd>{t.open} → {t.close}</dd></div>
+              <div><dt>Why it closed</dt><dd>{REASON[t.reason] ?? t.reason}</dd></div>
+              <div><dt>Lasted</dt><dd>{duration(t.opened, t.closed)}</dd></div>
+              {r && <div><dt>Best it got</dt><dd className="pos">{r.best_r == null ? r.best_move : rText(r.best_r)}</dd></div>}
+              {r && <div><dt>Worst it got</dt><dd className="neg">{r.worst_r == null ? r.worst_move : rText(r.worst_r)}</dd></div>}
+              {r && <div><dt>Stop / target</dt><dd>{r.sl || "—"} / {r.tp || "—"}</dd></div>}
+              {!r && <div><dt>Lots</dt><dd>{t.lots}</dd></div>}
+            </dl>
+          </details>
+        );
+      })}
+      {trades.length > limit && (
+        <button type="button" className="btn btn-ghost history-more" onClick={onMore}>
+          Show {Math.min(PAGE, trades.length - limit)} more
+        </button>
+      )}
+    </div>
   );
 }
