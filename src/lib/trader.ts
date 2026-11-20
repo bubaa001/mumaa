@@ -63,6 +63,10 @@ export type TraderPull = {
 
 export type TraderResult = { ok: true; data: TraderPull } | { ok: false; error: string };
 
+function isCompleteMarket(m: TraderMarket): boolean {
+  return !m.error && Array.isArray(m.checks) && Array.isArray(m.gates) && Array.isArray(m.candles) && !!m.meter;
+}
+
 export async function pullTrader(): Promise<TraderResult> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -77,7 +81,11 @@ export async function pullTrader(): Promise<TraderResult> {
     });
     if (res.status === 404) return { ok: false, error: "The trading tables are not set up in Supabase yet." };
     if (!res.ok) return { ok: false, error: `Could not read bot status (${res.status}).` };
-    return { ok: true, data: (await res.json()) as TraderPull };
+    const data = (await res.json()) as TraderPull;
+    // A market the bot could not read (e.g. a symbol missing on this account) arrives as
+    // { pair, bot, error } with no checklist or candles; leave it out instead of breaking the page.
+    if (data.state?.markets) data.state.markets = data.state.markets.filter(isCompleteMarket);
+    return { ok: true, data };
   } catch {
     return { ok: false, error: "Could not reach the database." };
   }
