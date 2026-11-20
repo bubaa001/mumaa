@@ -7,6 +7,7 @@ import { PageHead } from "./mumaa-shell";
 import { AgentsView, AgentState as StateChip } from "./trading-agents";
 import { TradeHistory } from "./trading-history";
 import { SessionClock } from "./trading-sessions";
+import { EquityLine, stamp, type Scrub } from "./trading-chart";
 import { ease } from "./motion";
 import type { TraderPosition, TraderPull, TraderResult, TraderState } from "@/lib/trader";
 import {
@@ -165,6 +166,7 @@ function DeskHero({ data, s }: { data: TraderPull; s: TraderState }) {
   const start = data.equity[0]?.e;
   const change = start ? s.account.equity - start : null;
   const tone = (v: number) => (v > 0 ? "pos" : v < 0 ? "neg" : "");
+  const [scrub, setScrub] = useState<Scrub>(null);
 
   return (
     <section className="desk-hero" aria-label="Account">
@@ -182,12 +184,24 @@ function DeskHero({ data, s }: { data: TraderPull; s: TraderState }) {
       <div className="desk-hero-grid">
         <div className="desk-equity">
           <span className="desk-label">Equity</span>
-          <p className="desk-equity-value">{money(s.account.equity)}<small>{ccy}</small></p>
+          <p className="desk-equity-value" aria-live="off">{money(scrub ? scrub.p.e : s.account.equity)}<small>{ccy}</small></p>
           <p className="desk-equity-sub">
-            {change !== null && <span className={tone(change)}>{signed(change)} over 30 days</span>}
-            <span>balance {money(s.account.balance)}</span>
+            {scrub ? (
+              <>
+                <span className={tone(scrub.change)}>{signed(scrub.change)} since the start</span>
+                <span>{stamp(scrub.p.t)}</span>
+              </>
+            ) : (
+              <>
+                {change !== null && <span className={tone(change)}>{signed(change)} over 30 days</span>}
+                <span>balance {money(s.account.balance)}</span>
+              </>
+            )}
           </p>
-          <Sparkline points={data.equity} />
+          <div className="desk-spark">
+            <EquityLine points={data.equity} height={64} tone="dark" tooltip={false} onScrub={setScrub} />
+            {data.equity.length > 1 && <p className="desk-spark-hint">{scrub ? "Let go to return to now" : "Drag or hover the line to look back"}</p>}
+          </div>
         </div>
         <dl className="desk-kpis">
           <div><dt>Open P/L</dt><dd className={tone(s.account.profit)}>{signed(s.account.profit)}</dd><small>{s.positions.length} open</small></div>
@@ -197,22 +211,6 @@ function DeskHero({ data, s }: { data: TraderPull; s: TraderState }) {
         </dl>
       </div>
     </section>
-  );
-}
-
-function Sparkline({ points }: { points: TraderPull["equity"] }) {
-  if (points.length < 2) return null;
-  const w = 320, h = 56;
-  const ys = points.map((p) => p.e);
-  const min = Math.min(...ys), max = Math.max(...ys), span = max - min || 1;
-  const xy = ys.map((v, i) => [(i / (ys.length - 1)) * w, h - 4 - ((v - min) / span) * (h - 8)]);
-  const line = xy.map(([x, y], i) => `${i ? "L" : "M"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
-  const up = ys[ys.length - 1] >= ys[0];
-  return (
-    <svg className={`desk-spark ${up ? "is-up" : "is-down"}`} viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" aria-hidden="true">
-      <path d={`${line} L${w},${h} L0,${h} Z`} className="area" />
-      <path d={line} className="line" />
-    </svg>
   );
 }
 
@@ -443,27 +441,13 @@ export function OpenTrades({ positions, title = "Open trades" }: { positions: Tr
 function EquityChart({ points }: { points: TraderPull["equity"] }) {
   const { mounted } = useDesk();
   if (points.length < 2) return <p className="trade-muted">The equity curve appears once the reporter has run for a little while.</p>;
-  const w = 600, h = 160, pad = 6;
   const ys = points.map((p) => p.e);
-  const min = Math.min(...ys), max = Math.max(...ys);
-  const span = max - min || 1;
-  const t0 = Date.parse(points[0].t), t1 = Date.parse(points[points.length - 1].t) || t0 + 1;
-  const xy = points.map((p) => [
-    pad + ((Date.parse(p.t) - t0) / (t1 - t0 || 1)) * (w - 2 * pad),
-    h - pad - ((p.e - min) / span) * (h - 2 * pad),
-  ]);
-  const line = xy.map(([x, y], i) => `${i ? "L" : "M"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
-  const up = ys[ys.length - 1] >= ys[0];
   return (
     <figure className="trade-chart">
-      <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" role="img"
-        aria-label={`Equity from ${money(ys[0])} to ${money(ys[ys.length - 1])}`}>
-        <path d={`${line} L${xy[xy.length - 1][0]},${h} L${xy[0][0]},${h} Z`} className={up ? "area-up" : "area-down"} />
-        <path d={line} className={up ? "line-up" : "line-down"} />
-      </svg>
+      <EquityLine points={points} height={180} />
       <figcaption>
         <span>{when(points[0].t, mounted, false)}</span>
-        <span>low {money(min)} · high {money(max)}</span>
+        <span>low {money(Math.min(...ys))} · high {money(Math.max(...ys))}</span>
         <span>{when(points[points.length - 1].t, mounted, false)}</span>
       </figcaption>
     </figure>
