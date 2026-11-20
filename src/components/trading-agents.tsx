@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowLeft, ChevronRight } from "lucide-react";
-import { useDesk, OpenTrades } from "./trading-dashboard";
+import { useDesk, OpenTrades, ReadyMeter } from "./trading-dashboard";
 import { Confidence, MarketCard } from "./trading-market";
 import { TF_NAME, type TraderPull, type TraderState } from "@/lib/trader";
 import {
@@ -37,6 +37,7 @@ export function AgentsView({ agents, s, data, agentId, marketId }: {
                 <span className="roster-main">
                   <b>{a.name}</b>
                   <small>{a.pairs.join(" · ")}</small>
+                  <ReadyMeter agent={a} />
                 </span>
                 <span className="roster-conf">
                   {a.confidence ? <Confidence grade={a.confidence.grade} label={a.confidence.label} compact /> : <span className="roster-muted">Unrated</span>}
@@ -52,7 +53,7 @@ export function AgentsView({ agents, s, data, agentId, marketId }: {
             </li>
           ))}
         </ul>
-        <p className="roster-foot">Listed by what needs your eye first: in a trade, signalling, paused, watching, stopped. Last update {ago(data.updated_at, now)}.</p>
+        <p className="roster-foot">Listed by who is closest to a trade: in a trade, signalling, then most entry conditions met in an open session, then the session that opens soonest. Paused and stopped agents sit last. Last update {ago(data.updated_at, now)}.</p>
       </nav>
 
       {shown && <AgentDetail key={shown.id} agent={shown} s={s} data={data} marketId={marketId} />}

@@ -3534,6 +3534,19 @@ textarea {
 .roster-muted { color: var(--muted); font-size: 11.5px; }
 .roster-chev { width: 16px; height: 16px; color: var(--muted); }
 
+/* readiness: how close an agent is to its next trade */
+.ready { display: grid; gap: 4px; min-width: 0; }
+.ready-bar { position: relative; display: block; height: 4px; border-radius: 999px; background: var(--line); overflow: hidden; }
+.ready-bar i { position: absolute; inset: 0 auto 0 0; border-radius: inherit; background: var(--ink-2); transition: width 0.5s var(--ease-out); }
+.ready[data-state="in_trade"] .ready-bar i, .ready[data-state="signal"] .ready-bar i { background: #2f7d4f; }
+.ready[data-waiting="true"] .ready-bar i { opacity: 0.45; }
+.ready[data-state="paused"] .ready-bar i { background: var(--cherry); }
+.ready-text { overflow: hidden; font-family: var(--font-meta); font-size: 10.5px; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; }
+.roster-main .ready { margin-top: 4px; max-width: 260px; }
+.trade-h small { margin-left: 8px; font-family: var(--font-meta); font-size: 11px; font-weight: 400; letter-spacing: 0.02em; }
+@media (prefers-reduced-motion: reduce) { .ready-bar i { transition: none; } }
+@media (max-width: 560px) { .agent-tile .ready { grid-column: 1 / -1; } }
+
 .roster-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; background: var(--muted); }
 .dot-in_trade, .dot-signal { background: #2f7d4f; box-shadow: 0 0 0 4px rgba(47, 125, 79, 0.15); }
 .dot-watching { background: var(--ink-2); }
