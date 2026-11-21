@@ -4336,3 +4336,12 @@ button,
   text-transform: uppercase;
   color: var(--muted);
 }
+
+/* ─── Investors (founder only) ─────────────────────────────── */
+.inv { display: grid; gap: 18px; }
+.inv > .trade-card { margin-bottom: 0; }
+.inv-add { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.inv-add .field-input { width: auto; min-width: 0; flex: 1 1 180px; max-width: 280px; }
+.inv-alert { border-color: var(--cherry); }
+.inv .trade-table td .chip { margin-left: 6px; }
+.inv .trade-table small { opacity: 0.75; margin-left: 4px; }

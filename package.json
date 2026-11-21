@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "test": "node --test tests/investors.test.mjs",
     "start": "next start",
     "dev:vite": "vite --host 0.0.0.0",
     "build:vite": "vite build"
