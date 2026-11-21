@@ -11,6 +11,8 @@ import { SessionClock } from "./trading-sessions";
 import { EquityLine, stamp, type Scrub } from "./trading-chart";
 import { ease } from "./motion";
 import { InvestorsView } from "@/components/trading-investors";
+import { GrowthChart, type CashFlow } from "@/components/trading-growth";
+import type { Ledger } from "@/lib/investors";
 import type { TraderPosition, TraderPull, TraderResult, TraderState } from "@/lib/trader";
 import {
   agentsFrom, ago, closedTrades, isView, money, pct, readyText, rText, signed, tally, VIEWS, when, type Agent, type DeskNav, type DeskView,
@@ -67,6 +69,8 @@ export function TradingDashboard({ initial, nav: initialNav, founder = false }: 
     };
   }, []);
 
+  const cash = useCashFlows(founder);
+
   const navRef = useRef(nav);
   navRef.current = nav;
   const go = useCallback((next: Partial<DeskNav>) => {
@@ -117,7 +121,7 @@ export function TradingDashboard({ initial, nav: initialNav, founder = false }: 
   return (
     <DeskContext.Provider value={desk}>
       {head}
-      <DeskHero data={data} s={s} />
+      <DeskHero data={data} s={s} cash={cash} />
 
       <div className="desk-tabs" ref={tabsRef}>
         <div className="desk-tabs-inner" role="tablist" aria-label="Trading desk">
@@ -160,7 +164,7 @@ function ViewFade({ id, children }: { id: string; children: React.ReactNode }) {
 
 /* ─── Account header ─────────────────────────────────────────── */
 
-function DeskHero({ data, s }: { data: TraderPull; s: TraderState }) {
+function DeskHero({ data, s, cash }: { data: TraderPull; s: TraderState; cash: Cash }) {
   const { now, ccy } = useDesk();
   const age = now === null ? 0 : (now - Date.parse(data.updated_at ?? s.generated_at)) / 1000;
   const stale = age > STALE_S;
@@ -203,8 +207,7 @@ function DeskHero({ data, s }: { data: TraderPull; s: TraderState }) {
             )}
           </p>
           <div className="desk-spark">
-            <EquityLine points={data.equity} height={64} tone="dark" tooltip={false} onScrub={setScrub} />
-            {data.equity.length > 1 && <p className="desk-spark-hint">{scrub ? "Let go to return to now" : "Drag or hover the line to look back"}</p>}
+            <GrowthChart points={data.equity} flows={cash.flows} startAt={cash.startAt} onScrub={setScrub} ccy={ccy} />
           </div>
         </div>
         <dl className="desk-kpis">
@@ -425,4 +428,33 @@ function EquityChart({ points }: { points: TraderPull["equity"] }) {
       </figcaption>
     </figure>
   );
+}
+
+/* ─── Deposits / cash-outs for the chart (founder only: names are private) ── */
+
+type Cash = { flows: CashFlow[]; startAt: string | null };
+const NO_CASH: Cash = { flows: [], startAt: null };
+
+function useCashFlows(founder: boolean): Cash {
+  const [cash, setCash] = useState<Cash>(NO_CASH);
+  useEffect(() => {
+    if (!founder) return;
+    let alive = true;
+    const load = async () => {
+      try {
+        const r = (await (await fetch("/api/investors", { cache: "no-store" })).json()) as { ok: boolean; ledger?: Ledger };
+        if (!alive || !r.ok || !r.ledger?.started) return;
+        const l = r.ledger;
+        const named = l.investors.flatMap((i) => i.events
+          .filter((e) => e.kind === "deposit" || e.kind === "withdrawal")
+          .map((e) => ({ at: e.at, amount: e.amount, who: i.name })));
+        const open = l.unassigned.map((f) => ({ at: f.at, amount: f.amount, who: "not assigned yet" }));
+        setCash({ flows: [...named, ...open], startAt: l.startedAt });
+      } catch { /* chart works without markers */ }
+    };
+    load();
+    const t = setInterval(() => { if (document.visibilityState === "visible") load(); }, 60_000);
+    return () => { alive = false; clearInterval(t); };
+  }, [founder]);
+  return cash;
 }
