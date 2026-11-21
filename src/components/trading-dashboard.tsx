@@ -141,7 +141,8 @@ export function TradingDashboard({ initial, nav: initialNav, founder = false }: 
         {nav.view === "agents" && <AgentsView agents={agents} s={s} data={data} agentId={nav.agent} marketId={nav.market} />}
         {nav.view === "trades" && <TradesView data={data} s={s} agents={agents} />}
         {nav.view === "rules" && <RulesView s={s} />}
-        {nav.view === "investors" && founder && <InvestorsView mounted={now !== null} />}
+        {/* client-only: rendered after mount so it never hydrates over server HTML (it stuck on "Loading" when opened by link) */}
+        {nav.view === "investors" && founder && (now !== null ? <InvestorsView mounted /> : <section className="trade-card"><p className="trade-muted">Loading investors…</p></section>)}
       </ViewFade>
     </DeskContext.Provider>
   );
