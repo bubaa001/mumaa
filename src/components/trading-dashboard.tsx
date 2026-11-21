@@ -6,6 +6,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { PageHead } from "./mumaa-shell";
 import { AgentsView, AgentState as StateChip } from "./trading-agents";
 import { TradeHistory } from "./trading-history";
+import { Ranking } from "./trading-ranking";
 import { SessionClock } from "./trading-sessions";
 import { EquityLine, stamp, type Scrub } from "./trading-chart";
 import { ease } from "./motion";
@@ -317,43 +318,12 @@ export function ReadyMeter({ agent: a }: { agent: Agent }) {
 /* ─── Trades ────────────────────────────────────────────────── */
 
 function TradesView({ data, s, agents }: { data: TraderPull; s: TraderState; agents: Agent[] }) {
-  const [by, setBy] = useState<"agent" | "market">("agent");
-  const { ccy } = useDesk();
-  const rows = by === "agent"
-    ? agents.map((a) => ({ key: a.id, label: a.name, sub: a.pairs.join(" · "), t: a.record }))
-    : Array.from(new Set(s.trades.map((t) => t.symbol))).map((sym) => ({ key: sym, label: sym, sub: "", t: tally(s.trades.filter((t) => t.symbol === sym)) }));
-  const shown = rows.filter((r) => r.t.n > 0 || by === "agent");
-  const max = Math.max(1, ...shown.map((r) => Math.abs(r.t.net)));
-
+  const closed = closedTrades(s, data.history ?? []);
   return (
     <>
       <OpenTrades positions={s.positions} />
-
-      <section className="trade-card" aria-labelledby="tr-perf">
-        <div className="trade-card-top">
-          <h2 className="trade-h" id="tr-perf">Profit and loss</h2>
-          <div className="seg" role="group" aria-label="Group by">
-            <button type="button" aria-pressed={by === "agent"} onClick={() => setBy("agent")}>By agent</button>
-            <button type="button" aria-pressed={by === "market"} onClick={() => setBy("market")}>By market</button>
-          </div>
-        </div>
-        {shown.length === 0 ? <p className="trade-muted">No closed trades yet.</p> : (
-          <ul className="perf">
-            {shown.map((r) => (
-              <li key={r.key}>
-                <span className="perf-name"><b>{r.label}</b>{r.sub && <small>{r.sub}</small>}</span>
-                <span className="perf-bar" aria-hidden="true">
-                  <i className={r.t.net >= 0 ? "pos" : "neg"} style={{ width: `${(Math.abs(r.t.net) / max) * 100}%` }} />
-                </span>
-                <span className="perf-meta">{r.t.n ? `${r.t.n} ${r.t.n === 1 ? "trade" : "trades"} · ${pct(r.t.winRate)} won` : "no trades yet"}</span>
-                <span className={`perf-net ${r.t.net > 0 ? "pos" : r.t.net < 0 ? "neg" : ""}`}>{r.t.n ? signed(r.t.net) : "—"} <small>{ccy}</small></span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <TradeHistory trades={closedTrades(s, data.history ?? [])} agents={agents} />
+      <Ranking trades={closed} agents={agents} />
+      <TradeHistory trades={closed} agents={agents} />
     </>
   );
 }
