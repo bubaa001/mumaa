@@ -11,13 +11,14 @@ import {
 
 export type AgentState = TraderMarket["verdict"];
 
-export type DeskView = "overview" | "agents" | "trades" | "rules";
+export type DeskView = "overview" | "agents" | "trades" | "rules" | "investors";
 export type DeskNav = { view: DeskView; agent: string | null; market: string | null };
 export const VIEWS: { id: DeskView; label: string; short?: string }[] = [
   { id: "overview", label: "Overview" },
   { id: "agents", label: "Agents" },
   { id: "trades", label: "Trades" },
   { id: "rules", label: "News & rules", short: "News" },
+  { id: "investors", label: "Investors" },   // founder only (see TradingDashboard)
 ];
 export const isView = (v: unknown): v is DeskView => VIEWS.some((x) => x.id === v);
 

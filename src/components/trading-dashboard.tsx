@@ -10,6 +10,7 @@ import { Ranking } from "./trading-ranking";
 import { SessionClock } from "./trading-sessions";
 import { EquityLine, stamp, type Scrub } from "./trading-chart";
 import { ease } from "./motion";
+import { InvestorsView } from "@/components/trading-investors";
 import type { TraderPosition, TraderPull, TraderResult, TraderState } from "@/lib/trader";
 import {
   agentsFrom, ago, closedTrades, isView, money, pct, readyText, rText, signed, tally, VIEWS, when, type Agent, type DeskNav, type DeskView,
@@ -38,7 +39,7 @@ function readNav(): DeskNav {
   return { view: isView(v) ? v : "overview", agent: q.get("agent"), market: q.get("market") };
 }
 
-export function TradingDashboard({ initial, nav: initialNav }: { initial: TraderResult; nav: DeskNav }) {
+export function TradingDashboard({ initial, nav: initialNav, founder = false }: { initial: TraderResult; nav: DeskNav; founder?: boolean }) {
   const [result, setResult] = useState(initial);
   const [now, setNow] = useState<number | null>(null);
   const [nav, setNav] = useState<DeskNav>(initialNav);
@@ -120,7 +121,7 @@ export function TradingDashboard({ initial, nav: initialNav }: { initial: Trader
 
       <div className="desk-tabs" ref={tabsRef}>
         <div className="desk-tabs-inner" role="tablist" aria-label="Trading desk">
-          {VIEWS.map((v) => {
+          {VIEWS.filter((v) => founder || v.id !== "investors").map((v) => {
             const active = nav.view === v.id;
             return (
               <button key={v.id} type="button" role="tab" aria-selected={active} aria-controls="desk-panel"
@@ -140,6 +141,7 @@ export function TradingDashboard({ initial, nav: initialNav }: { initial: Trader
         {nav.view === "agents" && <AgentsView agents={agents} s={s} data={data} agentId={nav.agent} marketId={nav.market} />}
         {nav.view === "trades" && <TradesView data={data} s={s} agents={agents} />}
         {nav.view === "rules" && <RulesView s={s} />}
+        {nav.view === "investors" && founder && <InvestorsView mounted={now !== null} />}
       </ViewFade>
     </DeskContext.Provider>
   );
