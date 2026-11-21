@@ -4345,3 +4345,46 @@ button,
 .inv-alert { border-color: var(--cherry); }
 .inv .trade-table td .chip { margin-left: 6px; }
 .inv .trade-table small { opacity: 0.75; margin-left: 4px; }
+
+/* ticker-style investor list */
+.inv-list {
+  --up: #86cfa0; --down: #f2948b;
+  list-style: none; margin: 4px 0 12px; padding: 6px;
+  border-radius: var(--r-md); background: var(--night); color: var(--on-night);
+  box-shadow: var(--shadow-card);
+}
+.inv-row {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px;
+  padding: 12px 12px; border-radius: var(--r-sm);
+}
+.inv-row + .inv-row { border-top: 1px solid var(--night-line); }
+.inv-row:hover { background: rgba(245, 239, 230, 0.04); }
+.inv-avatar {
+  position: relative; display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%;
+  font: 600 16px/1 var(--font-ui); letter-spacing: 0.02em; color: #fff;
+  background: radial-gradient(circle at 30% 25%, hsl(var(--h) 70% 62%), hsl(var(--h) 55% 38%));
+}
+.inv-badge {
+  position: absolute; right: -3px; bottom: -3px; display: grid; place-items: center; width: 18px; height: 18px;
+  border-radius: 50%; background: #4b7bec; color: #fff; font-size: 11px; border: 2px solid var(--night);
+}
+.inv-who, .inv-now { display: grid; gap: 4px; min-width: 0; }
+.inv-now { text-align: right; justify-items: end; }
+.inv-name { font: 600 17px/1.2 var(--font-ui); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.inv-tag {
+  margin-left: 8px; padding: 2px 7px; border-radius: var(--r-pill); vertical-align: 2px;
+  font: 500 10px/1.4 var(--font-meta); letter-spacing: 0.08em; text-transform: uppercase;
+  background: rgba(245, 239, 230, 0.1); color: var(--on-night-muted);
+}
+.inv-sub { font: 13px/1.3 var(--font-ui); color: var(--on-night-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.inv-value { font: 600 17px/1.2 var(--font-ui); white-space: nowrap; }
+.inv-value small { font-size: 12px; color: var(--on-night-muted); font-weight: 500; }
+.inv-change { font: 500 13px/1.2 var(--font-ui); white-space: nowrap; color: var(--on-night-muted); }
+.inv-up { color: var(--up); }
+.inv-down { color: var(--down); }
+.inv-abs { opacity: 0.75; }
+@media (max-width: 480px) {
+  .inv-row { gap: 10px; padding: 10px 6px; }
+  .inv-avatar { width: 40px; height: 40px; font-size: 14px; }
+  .inv-abs { display: none; }
+}
