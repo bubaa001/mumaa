@@ -98,12 +98,7 @@ export function InvestorsView({ mounted }: { mounted: boolean }) {
           <h2 className="trade-h" id="inv-list">Investors</h2>
           <AddInvestor busy={busy} onAdd={(name) => act({ action: "add", name })} />
         </div>
-        <div className="trade-table-wrap">
-          <table className="trade-table">
-            <thead><tr><th>Name</th><th>Put in</th><th>Taken out</th><th>Worth now</th><th>Profit</th><th>Fees</th><th>Share</th></tr></thead>
-            <tbody>{l.investors.map((i) => <Row key={i.id} i={i} ccy={ccy} />)}</tbody>
-          </table>
-        </div>
+        <ul className="inv-list">{l.investors.map((i) => <Row key={i.id} i={i} ccy={ccy} />)}</ul>
         <p className="trade-muted">Profit is after fees. “Fees” is what an investor has paid you, or for you what you have earned.
           Fee: {FOUNDER_FEE * 100}% of new profit above each investor’s previous best, settled on the 1st of each month.</p>
       </section>
@@ -116,17 +111,34 @@ export function InvestorsView({ mounted }: { mounted: boolean }) {
   );
 }
 
+const HUES = [18, 42, 152, 200, 262, 320, 6, 96];
+const initials = (name: string) => name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? "").join("") || "?";
+const hueOf = (name: string) => HUES[[...name].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % HUES.length];
+
+/** One investor, ticker style: who, what they put in · what it is worth now, up or down since joining. */
 function Row({ i, ccy }: { i: InvestorView; ccy: string }) {
+  const pct = i.profitPct ?? 0;
+  const dir = pct > 0.00005 ? "up" : pct < -0.00005 ? "down" : "flat";
+  const net = i.deposited - i.withdrawn;
   return (
-    <tr>
-      <td><b>{i.name}</b>{i.founder && <span className="chip">founder</span>}</td>
-      <td>{money(i.deposited, ccy)}</td>
-      <td>{i.withdrawn ? money(i.withdrawn, ccy) : "—"}</td>
-      <td>{money(i.value, ccy)}</td>
-      <td className={tone(i.profit)}>{signed(i.profit)} <small>{pctText(i.profitPct)}</small></td>
-      <td>{i.founder ? <span className="pos">{i.feesEarned ? `+${money(i.feesEarned)}` : "—"}</span> : i.feesPaid ? money(i.feesPaid) : "—"}</td>
-      <td>{(i.share * 100).toFixed(1)}%</td>
-    </tr>
+    <li className="inv-row">
+      <span className="inv-avatar" style={{ ["--h" as string]: hueOf(i.name) }} aria-hidden="true">
+        {initials(i.name)}
+        {i.founder && <span className="inv-badge" title="Founder">✓</span>}
+      </span>
+      <span className="inv-who">
+        <span className="inv-name">{i.name}{i.founder && <span className="inv-tag">founder</span>}</span>
+        <span className="inv-sub">put in {money(net, ccy)} · {(i.share * 100).toFixed(1)}% of pool
+          {i.founder ? (i.feesEarned ? ` · fees +${money(i.feesEarned)}` : "") : (i.feesPaid ? ` · fees ${money(i.feesPaid)}` : "")}</span>
+      </span>
+      <span className="inv-now">
+        <span className="inv-value">{money(i.value)} <small>{ccy}</small></span>
+        <span className={`inv-change inv-${dir}`}>
+          {dir === "up" ? "▲" : dir === "down" ? "▼" : "•"} {Math.abs(pct * 100).toFixed(2)}%
+          <span className="inv-abs"> ({signed(i.profit)})</span>
+        </span>
+      </span>
+    </li>
   );
 }
 
