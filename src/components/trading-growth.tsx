@@ -27,6 +27,21 @@ function niceTicks(min: number, max: number, count = 4) {
   return { lo, hi, out, step };
 }
 
+/**
+ * Index of the first point after the last account switch: a jump of more than 20% between two readings
+ * that no known deposit/withdrawal explains (MT5 was logged into another account). Before it, the
+ * history belongs to a different account and would flatten the chart.
+ */
+export function lastSwitch(points: Point[], flows: CashFlow[] = []): number {
+  const near = (t: number) => flows.some((f) => Math.abs(Date.parse(f.at) - t) <= 15 * 60_000);
+  for (let i = points.length - 1; i > 0; i--) {
+    const a = points[i - 1].e, b = points[i].e;
+    const jump = a <= 0 || b <= 0 || Math.abs(b / a - 1) > 0.2;
+    if (jump && !near(Date.parse(points[i].t))) return i;
+  }
+  return 0;
+}
+
 const compact = (v: number) => Math.abs(v) >= 10_000 ? `${(v / 1000).toFixed(1)}k` : Math.abs(v) >= 100 ? v.toFixed(0) : v.toFixed(2);
 const pctLabel = (v: number, d = 1) => `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v).toFixed(d)}%`;
 
@@ -59,12 +74,13 @@ export function GrowthChart({ points, flows = [], startAt = null, height = 168, 
 
   const W = 1000, H = height, PAD = 10;
   const v = useMemo(() => {
-    if (points.length < 2) return null;
-    const end = Date.parse(points[points.length - 1].t);
+    const own = points.slice(lastSwitch(points, flows));
+    if (own.length < 2) return null;
+    const end = Date.parse(own[own.length - 1].t);
     let from = end - RANGE_MS[range];
     if (mode === "return" && startAt) from = Math.max(from, Date.parse(startAt));
-    let pts = points.filter((p) => Date.parse(p.t) >= from);
-    if (pts.length < 2) pts = points.slice(-2);
+    let pts = own.filter((p) => Date.parse(p.t) >= from);
+    if (pts.length < 2) pts = own.slice(-2);
     const ts = pts.map((p) => Date.parse(p.t));
     const t0 = ts[0], t1 = ts[ts.length - 1];
     const inRange = flows.filter((f) => { const t = Date.parse(f.at); return t > t0 && t <= t1; })
@@ -110,7 +126,7 @@ export function GrowthChart({ points, flows = [], startAt = null, height = 168, 
     pick(target - v.ts[lo] <= v.ts[hi] - target ? lo : hi);
   };
 
-  if (!v) return <p className="gc-empty">The chart appears once the reporter has run for a little while.</p>;
+  if (!v) return <p className="gc-empty">The chart appears once this account has reported for a little while.</p>;
 
   const shown = active ?? v.pts.length - 1;
   const [ax, ay] = v.xy[shown];
