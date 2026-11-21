@@ -171,11 +171,6 @@ function DeskHero({ data, s, cash }: { data: TraderPull; s: TraderState; cash: C
   const all = tally(s.trades);
   const day = s.generated_at.slice(0, 10);
   const today = s.trades.filter((t) => t.closed.slice(0, 10) === day).reduce((sum, t) => sum + t.profit, 0);
-  // ignore readings from before the last account switch (another MT5 login)
-  const own = data.equity.slice(lastSwitch(data.equity, cash.flows));
-  const start = own[0]?.e;
-  const change = start ? s.account.equity - start : null;
-  const sinceDays = own.length ? Math.max(1, Math.round(((now ?? Date.parse(s.generated_at)) - Date.parse(own[0].t)) / 86_400_000)) : 30;
   const tone = (v: number) => (v > 0 ? "pos" : v < 0 ? "neg" : "");
   const [scrub, setScrub] = useState<Scrub>(null);
 
@@ -204,7 +199,6 @@ function DeskHero({ data, s, cash }: { data: TraderPull; s: TraderState; cash: C
               </>
             ) : (
               <>
-                {change !== null && <span className={tone(change)}>{signed(change)} over {sinceDays === 1 ? "1 day" : `${sinceDays} days`}</span>}
                 <span>balance {money(s.account.balance)}</span>
               </>
             )}

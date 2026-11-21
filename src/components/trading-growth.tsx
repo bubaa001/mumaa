@@ -143,8 +143,8 @@ export function GrowthChart({ points, flows = [], startAt = null, height = 168, 
         <span className={`gc-sum ${up ? "gc-pos" : "gc-neg"}`}>{up ? "▲" : "▼"} {summary}<small> · {range.toUpperCase()}{mode === "return" ? " trading only" : ""}</small></span>
         <span className="gc-ctl">
           <Seg value={range} set={(r) => { setRange(r); save({ range: r }); }} opts={[["24h", "24H"], ["7d", "7D"], ["30d", "30D"]]} label="Time range" />
-          <Seg value={mode} set={(m) => { setMode(m); save({ mode: m }); }} opts={[["value", "Value"], ["return", "Return %"]]} label="Show" />
-          <Seg value={scale} set={(s) => { setScale(s); save({ scale: s }); }} opts={[["fit", "Zoom"], ["zero", "From 0"]]} label="Scale" />
+          <Seg value={mode} set={(m) => { setMode(m); save({ mode: m }); }} opts={[["value", "Value"], ["return", <><span className="tab-long">Return %</span><span className="tab-short">Return</span></>]]} label="Show" />
+          <Seg value={scale} set={(s) => { setScale(s); save({ scale: s }); }} opts={[["fit", "Zoom"], ["zero", <><span className="tab-long">From 0</span><span className="tab-short">0</span></>]]} label="Scale" />
         </span>
       </div>
 
@@ -217,7 +217,7 @@ export function GrowthChart({ points, flows = [], startAt = null, height = 168, 
   );
 }
 
-function Seg<T extends string>({ value, set, opts, label }: { value: T; set: (v: T) => void; opts: [T, string][]; label: string }) {
+function Seg<T extends string>({ value, set, opts, label }: { value: T; set: (v: T) => void; opts: [T, React.ReactNode][]; label: string }) {
   return (
     <span className="gc-seg" role="group" aria-label={label}>
       {opts.map(([k, text]) => (
