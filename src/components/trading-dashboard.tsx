@@ -278,7 +278,7 @@ function OverviewView({ data, s, agents }: { data: TraderPull; s: TraderState; a
 
       <div className="desk-split">
         <section className="trade-card" aria-labelledby="ov-equity">
-          <div className="trade-card-top"><h2 className="trade-h" id="ov-equity">Equity, 30 days</h2></div>
+          <div className="trade-card-top"><h2 className="trade-h" id="ov-equity">Equity, this account</h2></div>
           <EquityChart points={data.equity} />
         </section>
         <section className="trade-card" aria-labelledby="ov-recent">
@@ -417,8 +417,9 @@ export function OpenTrades({ positions, title = "Open trades" }: { positions: Tr
   );
 }
 
-function EquityChart({ points }: { points: TraderPull["equity"] }) {
+function EquityChart({ points: all }: { points: TraderPull["equity"] }) {
   const { mounted } = useDesk();
+  const points = all.slice(lastSwitch(all));   // only this account (no demo history)
   if (points.length < 2) return <p className="trade-muted">The equity curve appears once the reporter has run for a little while.</p>;
   const ys = points.map((p) => p.e);
   return (
