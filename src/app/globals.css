@@ -4388,3 +4388,8 @@ button,
   .inv-avatar { width: 40px; height: 40px; font-size: 14px; }
   .inv-abs { display: none; }
 }
+@media (max-width: 560px) {
+  .trade-card-top:has(.inv-add) { flex-wrap: wrap; }
+  .trade-card-top .inv-add { flex: 1 1 100%; flex-wrap: nowrap; }
+  .trade-card-top .inv-add .field-input { max-width: none; }
+}
