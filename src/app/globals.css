@@ -4473,3 +4473,59 @@ button,
   .desk-tab { padding: 0 7px; font-size: 12.5px; gap: 4px; }
   .desk-tab-count { display: none; }
 }
+
+/* ── Track record: the card on the Trading page ───────────────── */
+.rec-actions { display: inline-flex; gap: 14px; }
+.rec-actions svg { width: 14px; height: 14px; }
+.rec-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 4px 0 14px; }
+.rec-stats dt { color: var(--muted); font-size: 12px; }
+.rec-stats dd { margin: 2px 0 0; font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.rec-gate { display: grid; gap: 6px; }
+.rec-gate-label { font-size: 13px; }
+.rec-gate-label small { color: var(--muted); font-size: 12px; }
+.rec-bar { display: block; height: 6px; border-radius: var(--r-pill); background: var(--paper-3); overflow: hidden; }
+.rec-bar > span { display: block; height: 100%; border-radius: inherit; background: #2f7d4f; }
+.rec-bar > span.is-down { background: var(--cherry); }
+.rec code { font-family: var(--font-meta); font-size: 12px; }
+@media (max-width: 520px) {
+  .rec-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ── Track record: the public /performance page ───────────────── */
+.perf { max-width: 860px; margin: 0 auto; padding: clamp(28px, 6vw, 64px) 16px 48px; }
+.perf-head { margin-bottom: 24px; }
+.perf-kicker { margin: 0 0 6px; font-family: var(--font-meta); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--cherry); }
+.perf-title { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: clamp(38px, 7vw, 60px); line-height: 1; }
+.perf-lead { margin: 14px 0 0; max-width: 60ch; color: var(--ink-2); font-size: 16px; line-height: 1.55; }
+.perf-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--r-md); padding: 20px; margin-bottom: 16px; box-shadow: var(--shadow-card); }
+.perf-card h2 { margin: 0 0 12px; font-size: 16px; font-weight: 600; }
+.perf-card p { margin: 0; line-height: 1.5; }
+.perf-since { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; }
+.perf-badge { font-family: var(--font-meta); font-size: 11px; padding: 3px 9px; border-radius: var(--r-pill); background: var(--cherry-soft); color: var(--cherry-deep); }
+.perf-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px 12px; margin: 4px 0 18px; }
+.perf-stats dt { color: var(--muted); font-size: 12px; }
+.perf-stats dd { margin: 3px 0 0; font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.perf .pos { color: #2f7d4f; }
+.perf .neg { color: var(--cherry); }
+.perf-muted { color: var(--muted); font-size: 13px; margin-top: 10px !important; }
+.perf-link { color: var(--cherry-deep); font-weight: 500; }
+.perf-chart { display: block; width: 100%; height: auto; }
+.perf-grid { stroke: var(--line); stroke-width: 1; }
+.perf-zero { stroke: var(--line-strong); stroke-width: 1; }
+.perf-axis { fill: var(--muted); font-size: 11px; font-family: var(--font-meta); }
+.perf-line { fill: none; stroke: var(--ink); stroke-width: 2; stroke-linejoin: round; }
+.perf-area-up { fill: rgba(47, 125, 79, 0.14); }
+.perf-area-down { fill: rgba(180, 48, 42, 0.14); }
+.perf-dot-up { fill: #2f7d4f; }
+.perf-dot-down { fill: var(--cherry); }
+.perf-table-wrap { overflow-x: auto; }
+.perf-table { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+.perf-table th { text-align: left; font-weight: 500; color: var(--muted); font-size: 12px; padding: 6px 8px; border-bottom: 1px solid var(--line-strong); }
+.perf-table td { padding: 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.perf-foot { margin-top: 28px; color: var(--muted); font-size: 13px; line-height: 1.55; }
+.perf-foot p { margin: 0 0 10px; }
+@media (max-width: 520px) {
+  .perf-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .perf-stats dd { font-size: 19px; }
+  .perf-card { padding: 16px; }
+}
