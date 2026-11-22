@@ -251,7 +251,12 @@ export function sessionOf(label: string): Session | null {
   const end = Number(x[3]) * 60 + Number(x[4] ?? 0);
   const tz = x[5].toUpperCase() === "NY" ? "America/New_York" : "UTC";
   const raw = label.slice(0, label.indexOf("(")).replace(/^inside the\s+/i, "").trim();
-  const named = raw.charAt(0).toUpperCase() + raw.slice(1);
+  let named = raw.charAt(0).toUpperCase() + raw.slice(1);
+  if (tz === "UTC" && /^session$/i.test(named)) {
+    // a bare "Session (…)": name it after the market that is open when it starts
+    const h = Math.floor(start / 60);
+    named = h >= 21 || h < 6 ? "Asian session" : h < 12 ? "London session" : "London–New York session";
+  }
   const name = tz === "UTC" || /new york|ny/i.test(named) ? named : `New York ${raw}`;
   return { key: `${tz}-${start}-${end}`, name, start, end, tz, source: x[0].slice(1, -1), agents: [] };
 }

@@ -8,6 +8,7 @@ import { AgentsView, AgentState as StateChip } from "./trading-agents";
 import { TradeHistory } from "./trading-history";
 import { Ranking } from "./trading-ranking";
 import { SessionClock } from "./trading-sessions";
+import { Glossary, RightNow } from "./trading-plain";
 import { EquityLine, stamp, type Scrub } from "./trading-chart";
 import { ease } from "./motion";
 import { InvestorsView } from "@/components/trading-investors";
@@ -20,6 +21,8 @@ import {
 } from "@/lib/trader-view";
 
 const POLL_MS = 5_000;
+/** Cent accounts: 100 USC = 1 US dollar. */
+const usd = (v: number, ccy: string) => (ccy === "USC" ? `about $${(v / 100).toFixed(2)} · cent account, 100 USC = $1` : "");
 const STALE_S = 120;
 
 
@@ -96,12 +99,13 @@ export function TradingDashboard({ initial, nav: initialNav, founder = false }: 
   const agents = useMemo(() => (s ? agentsFrom(s, minute) : []), [s, minute]);
   const desk = useMemo<Desk>(() => ({ now, mounted: now !== null, ccy: s?.account.currency ?? "", go }), [now, s, go]);
 
-  const marketCount = agents.reduce((n, a) => n + a.pairs.length, 0);
+  // A bot that is switched off (paused) and holds no trade is not counted as one of "your bots".
+  const live = agents.filter((a) => a.state !== "stopped" || a.positions.length > 0);
   const head = (
-    <PageHead eyebrow="Claude trader" title={<>The <em className="serif-em">desk</em></>}
-      description={agents.length
-        ? `${agents.length} agents on ${marketCount} markets, one account. What each is watching, why it is or isn’t trading, and what it has made.`
-        : "What each bot is watching, why it is or isn’t trading, and what it has made or lost."} />
+    <PageHead eyebrow="Trading" title={<>Your <em className="serif-em">bots</em></>}
+      description={live.length
+        ? `${live.length} bots trade forex and gold for you, day and night. See what they are doing right now, what they have made, and who owns what.`
+        : "See what the bots are doing right now and what they have made or lost."} />
   );
 
   if (!result.ok || !s || !data) {
@@ -117,7 +121,7 @@ export function TradingDashboard({ initial, nav: initialNav, founder = false }: 
   }
 
   const tradesCount = s.positions.length + (data.history?.length || s.trades.length);
-  const counts: Partial<Record<DeskView, number>> = { agents: agents.length, trades: tradesCount };
+  const counts: Partial<Record<DeskView, number>> = { agents: live.length, trades: tradesCount };
 
   return (
     <DeskContext.Provider value={desk}>
@@ -181,16 +185,14 @@ function DeskHero({ data, s, cash }: { data: TraderPull; s: TraderState; cash: C
         <span className={`trade-dot ${stale ? "is-off" : "is-on"}`} aria-hidden="true" />
         <span>{stale ? "Reporter offline · " : "Live · "}updated {ago(data.updated_at, now)}</span>
         <span className="desk-status-tags">
-          <span className={`chip ${s.account.mode === "DEMO" ? "chip-done" : "chip-sealed"}`}>{s.account.mode}</span>
-          <span className="chip">1:{s.account.leverage}</span>
-          <span className="chip">{s.settings.risk_pct}% risk</span>
-          {s.settings.kill_switch && <span className="chip chip-sealed">Kill switch on</span>}
+          <span className={`chip ${s.account.mode === "DEMO" ? "chip-done" : "chip-sealed"}`}>{s.account.mode === "DEMO" ? "Practice money" : "Real money"}</span>
+          {s.settings.kill_switch && <span className="chip chip-sealed">Stopped by you</span>}
         </span>
       </div>
 
       <div className="desk-hero-grid">
         <div className="desk-equity">
-          <span className="desk-label">Equity</span>
+          <span className="desk-label">Account value</span>
           <p className="desk-equity-value" aria-live="off">{money(scrub ? scrub.p.e : s.account.equity)}<small>{ccy}</small></p>
           <p className="desk-equity-sub">
             {scrub ? (
@@ -200,7 +202,7 @@ function DeskHero({ data, s, cash }: { data: TraderPull; s: TraderState; cash: C
               </>
             ) : (
               <>
-                <span>balance {money(s.account.balance)}</span>
+                <span>{usd(s.account.equity, ccy)}</span>
               </>
             )}
           </p>
@@ -209,10 +211,10 @@ function DeskHero({ data, s, cash }: { data: TraderPull; s: TraderState; cash: C
           </div>
         </div>
         <dl className="desk-kpis">
-          <div><dt>Open P/L</dt><dd className={tone(s.account.profit)}>{signed(s.account.profit)}</dd><small>{s.positions.length} open</small></div>
-          <div><dt>Closed today</dt><dd className={tone(today)}>{signed(today)}</dd><small>{ccy}</small></div>
-          <div><dt>Net P/L</dt><dd className={tone(all.net)}>{signed(all.net)}</dd><small>{all.n} closed trades</small></div>
-          <div><dt>Win rate</dt><dd>{pct(all.winRate)}</dd><small><span className="pos">{all.wins} won</span> · <span className="neg">{all.losses} lost</span></small></div>
+          <div><dt>In open trades</dt><dd className={tone(s.account.profit)}>{signed(s.account.profit)}</dd><small>{s.positions.length ? `${s.positions.length} open now` : "none open"}</small></div>
+          <div><dt>Made today</dt><dd className={tone(today)}>{signed(today)}</dd><small>{ccy}</small></div>
+          <div><dt>Made recently</dt><dd className={tone(all.net)}>{signed(all.net)}</dd><small>from {all.n} finished trades</small></div>
+          <div><dt>Trades won</dt><dd>{pct(all.winRate)}</dd><small><span className="pos">{all.wins} won</span> · <span className="neg">{all.losses} lost</span></small></div>
         </dl>
       </div>
     </section>
@@ -223,8 +225,8 @@ function DeskHero({ data, s, cash }: { data: TraderPull; s: TraderState; cash: C
 
 function OverviewView({ data, s, agents }: { data: TraderPull; s: TraderState; agents: Agent[] }) {
   const { go, mounted, ccy } = useDesk();
+  const live = agents.filter((a) => a.state !== "stopped" || a.positions.length > 0);
   const recent = closedTrades(s, data.history ?? []).slice(0, 5);
-  const watching = agents.filter((a) => a.state === "watching").length;
   const next = s.news.upcoming[0];
   const blocked = Object.keys(s.news.blocked);
 
@@ -237,23 +239,18 @@ function OverviewView({ data, s, agents }: { data: TraderPull; s: TraderState; a
         </button>
       )}
 
+      <RightNow s={s} agents={live} />
       <OpenTrades positions={s.positions} />
-      {s.positions.length === 0 && (
-        <p className="desk-quiet">
-          <span className="trade-dot is-on" aria-hidden="true" />
-          No open trades. {watching} of {agents.length} agents are watching; a trade shows up here the moment one opens.
-        </p>
-      )}
 
-      <SessionClock agents={agents} />
+      <SessionClock agents={live} limit={3} />
 
       <section className="desk-section" aria-labelledby="ov-agents">
         <div className="desk-section-head">
-          <h2 className="trade-h" id="ov-agents">Agents <small className="trade-muted">closest to a trade first</small></h2>
-          <button type="button" className="desk-link" onClick={() => go({ view: "agents" })}>Open the agents <ArrowRight aria-hidden="true" /></button>
+          <h2 className="trade-h" id="ov-agents">Bots closest to a trade</h2>
+          <button type="button" className="desk-link" onClick={() => go({ view: "agents" })}>See all {live.length} <ArrowRight aria-hidden="true" /></button>
         </div>
         <div className="agent-tiles">
-          {agents.map((a) => (
+          {live.slice(0, 4).map((a) => (
             <button type="button" key={a.id} className="agent-tile" data-state={a.state} onClick={() => go({ view: "agents", agent: a.id })}>
               <span className="agent-tile-top">
                 <span className="agent-tile-name">{a.name}</span>
@@ -262,9 +259,9 @@ function OverviewView({ data, s, agents }: { data: TraderPull; s: TraderState; a
               <span className="agent-tile-pairs">{a.pairs.join(" · ")}{a.confidence && <> · {a.confidence.label} confidence</>}</span>
               <ReadyMeter agent={a} />
               <span className="agent-tile-stats">
-                <span><small>Live</small><b className={a.record.net > 0 ? "pos" : a.record.net < 0 ? "neg" : ""}>{a.record.n ? signed(a.record.net) : "—"}</b></span>
+                <span><small>Made</small><b className={a.record.net > 0 ? "pos" : a.record.net < 0 ? "neg" : ""}>{a.record.n ? signed(a.record.net) : "—"}</b></span>
                 <span><small>Trades</small><b>{a.record.n}</b></span>
-                <span><small>Backtest</small><b>{a.bot?.backtest?.win_rate != null ? `${Math.round(a.bot.backtest.win_rate)}%` : "—"}</b></span>
+                <span><small>Tested win rate</small><b>{a.bot?.backtest?.win_rate != null ? `${Math.round(a.bot.backtest.win_rate)}%` : "—"}</b></span>
               </span>
             </button>
           ))}
@@ -296,6 +293,7 @@ function OverviewView({ data, s, agents }: { data: TraderPull; s: TraderState; a
       </div>
 
       <TrackRecordCard />
+      <Glossary />
 
       {next && (
         <button type="button" className="desk-next" onClick={() => go({ view: "rules" })}>

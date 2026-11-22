@@ -53,7 +53,7 @@ export function TrackRecordCard() {
           <div className="rec-gate">
             <span className="rec-gate-label">
               <b>{days >= GATE_DAYS ? "90-day gate reached" : `Day ${days} of ${GATE_DAYS}`}</b>
-              <small> · public selling waits for a positive {GATE_DAYS}-day record</small>
+              <small> · checks on day 30, 60 and 90; nothing is sold before they pass</small>
             </span>
             <span className="rec-bar" role="progressbar" aria-valuemin={0} aria-valuemax={GATE_DAYS} aria-valuenow={Math.min(days, GATE_DAYS)}
               aria-label="Days of track record">
@@ -63,7 +63,7 @@ export function TrackRecordCard() {
           <p className="trade-muted">
             {res.verified
               ? <>Verified: <a href={res.verified.url} target="_blank" rel="noopener noreferrer">{res.verified.label} ↗</a></>
-              : <>Not independently verified yet. Once the Myfxbook (or broker read-only) link exists, add it in Vercel as <code>VERIFIED_RECORD_URL</code> and it appears here and on the public page.</>}
+              : <>Counts only from {new Date(r.start).toLocaleDateString("en-GB", { day: "numeric", month: "long" })}, when tracking began, so it can differ from the numbers above. Share the link with anyone: it shows percentages, never amounts.</>}
           </p>
         </>
       )}
