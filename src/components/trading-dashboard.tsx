@@ -11,6 +11,7 @@ import { SessionClock } from "./trading-sessions";
 import { EquityLine, stamp, type Scrub } from "./trading-chart";
 import { ease } from "./motion";
 import { InvestorsView } from "@/components/trading-investors";
+import { TrackRecordCard } from "@/components/trading-record";
 import { GrowthChart, lastSwitch, type CashFlow } from "@/components/trading-growth";
 import type { Ledger } from "@/lib/investors";
 import type { TraderPosition, TraderPull, TraderResult, TraderState } from "@/lib/trader";
@@ -293,6 +294,8 @@ function OverviewView({ data, s, agents }: { data: TraderPull; s: TraderState; a
           )}
         </section>
       </div>
+
+      <TrackRecordCard />
 
       {next && (
         <button type="button" className="desk-next" onClick={() => go({ view: "rules" })}>
