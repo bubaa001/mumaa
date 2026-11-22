@@ -90,3 +90,22 @@ test("money moved before tracking started is ignored", () => {
   assert.equal(l.unassigned.length, 0);
   close(view(l, 1).value, 800, "founder owns all");
 });
+
+test("split deposit: each person buys units at the same price, values add up", () => {
+  const flows = [seed, { ...dep(2, "2026-11-25T10:00:00Z", 1500, 880), status: "split", investor_id: null }];
+  const inv3 = [...inv, { id: 3, name: "Brother 2", is_founder: false, created_at: "2026-11-21T00:00:00Z" }];
+  const parts = [{ flow_id: 2, investor_id: 2, amount: 1000 }, { flow_id: 2, investor_id: 3, amount: 500 }];
+  const l = buildLedger({ investors: inv3, flows, parts, marks: [startMark], equity: 2380, currency: "USC", updated_at: null });
+  close(view(l, 2).value, 1000, "brother 1");
+  close(view(l, 3).value, 500, "brother 2");
+  close(view(l, 1).value, 880, "founder");
+  close(sum(l), 2380, "values add up to equity");
+  assert.equal(view(l, 3).events[0].flow, 2);
+  assert.equal(view(l, 3).events[0].split, true);
+});
+
+test("a split with no parts yet is skipped, not counted for anyone", () => {
+  const flows = [seed, { ...dep(2, "2026-11-25T10:00:00Z", 1500, 800), status: "split", investor_id: null }];
+  const l = buildLedger({ investors: inv, flows, marks: [startMark], equity: 2300, currency: "USC", updated_at: null });
+  close(view(l, 1).value, 2300, "unowned money sits with the owners");
+});

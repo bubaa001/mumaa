@@ -3,7 +3,9 @@ import { cookies } from "next/headers";
 import { readAuthSession } from "@/lib/auth/session";
 import { isFounderEmail } from "@/lib/auth/allowed-email";
 import { buildLedger } from "@/lib/investors";
-import { addInvestor, assignFlow, pullInvestors, startInvestors } from "@/lib/investors-server";
+import {
+  addInvestor, assignFlow, pullInvestors, removeInvestor, renameInvestor, splitFlow, startInvestors, unassignFlow,
+} from "@/lib/investors-server";
 
 export const dynamic = "force-dynamic";
 const noStore = { "Cache-Control": "no-store" };
@@ -27,7 +29,14 @@ export async function GET() {
 type Body =
   | { action: "start"; name: string }
   | { action: "add"; name: string }
-  | { action: "assign"; flow: number; investor: number | null; ignore?: boolean };
+  | { action: "assign"; flow: number; investor: number | null; ignore?: boolean }
+  | { action: "rename"; investor: number; name: string }
+  | { action: "remove"; investor: number }
+  | { action: "unassign"; flow: number }
+  | { action: "split"; flow: number; parts: { investor: number; amount: number }[] };
+
+const bad = (error = "Bad request.") => NextResponse.json({ ok: false, error }, { status: 400 });
+const cleanName = (v: unknown) => { const n = String(v ?? "").trim(); return n && n.length <= 60 ? n : null; };
 
 export async function POST(request: NextRequest) {
   const me = await founder();
@@ -44,8 +53,24 @@ export async function POST(request: NextRequest) {
     } else if (body.action === "assign") {
       if (!Number.isInteger(body.flow)) return NextResponse.json({ error: "Bad request." }, { status: 400 });
       await assignFlow(body.flow, body.ignore ? null : body.investor, Boolean(body.ignore));
+    } else if (body.action === "rename") {
+      const name = cleanName(body.name);
+      if (!Number.isInteger(body.investor) || !name) return bad("Give a name (up to 60 letters).");
+      await renameInvestor(body.investor, name);
+    } else if (body.action === "remove") {
+      if (!Number.isInteger(body.investor)) return bad();
+      await removeInvestor(body.investor);
+    } else if (body.action === "unassign") {
+      if (!Number.isInteger(body.flow)) return bad();
+      await unassignFlow(body.flow);
+    } else if (body.action === "split") {
+      const parts = Array.isArray(body.parts) ? body.parts : [];
+      const ok = parts.length >= 2 && parts.length <= 20 && parts.every((x) => Number.isInteger(x?.investor) && Number.isFinite(x?.amount))
+        && new Set(parts.map((x) => x.investor)).size === parts.length;
+      if (!Number.isInteger(body.flow) || !ok) return bad("A split needs 2 or more different people, each with an amount.");
+      await splitFlow(body.flow, parts.map((x) => ({ investor: x.investor, amount: Math.round(x.amount * 100) / 100 })));
     } else {
-      return NextResponse.json({ error: "Bad request." }, { status: 400 });
+      return bad();
     }
     const pull = await pullInvestors();
     return NextResponse.json({ ok: true, ledger: buildLedger(pull) }, { headers: noStore });

@@ -17,18 +17,22 @@ export const FOUNDER_FEE = 0.2;
 export type InvestorRow = { id: number; name: string; is_founder: boolean; created_at: string };
 export type FlowRow = {
   id: number; deal_id: number | null; at: string; amount: number; nav_before: number | null;
-  kind: "seed" | "deposit" | "withdrawal"; status: "unassigned" | "assigned" | "ignored";
+  kind: "seed" | "deposit" | "withdrawal"; status: "unassigned" | "assigned" | "ignored" | "split";
   investor_id: number | null; comment: string | null;
 };
+/** One person's share of a split deposit/withdrawal (same sign as the flow). */
+export type PartRow = { flow_id: number; investor_id: number; amount: number };
 export type MarkRow = { month: string; equity: number; at: string };
 export type InvestorPull = {
-  investors: InvestorRow[]; flows: FlowRow[]; marks: MarkRow[];
+  investors: InvestorRow[]; flows: FlowRow[]; marks: MarkRow[]; parts?: PartRow[];
   equity: number | null; currency: string | null; updated_at: string | null;
 };
 
 export type LedgerEvent = {
   at: string; investor: number; kind: "start" | "deposit" | "withdrawal" | "fee_paid" | "fee_earned";
   amount: number; units: number; price: number;
+  flow?: number;          // the deposit/withdrawal row this came from (to undo it)
+  split?: boolean;        // part of a deposit shared between several people
 };
 export type InvestorView = {
   id: number; name: string; founder: boolean;
@@ -44,6 +48,7 @@ export type Ledger = {
   investors: InvestorView[];
   unassigned: FlowRow[];        // oldest first; must be assigned for the numbers to be right
   missingNav: FlowRow[];        // assigned flows with no equity reading (should not happen)
+  ignored: FlowRow[];           // marked "not investor money" (newest first), so they can be undone
 };
 
 type Acc = { units: number; basis: number; deposited: number; withdrawn: number; feesPaid: number; feesEarned: number; events: LedgerEvent[] };
@@ -57,7 +62,7 @@ export function buildLedger(p: InvestorPull, fee = FOUNDER_FEE): Ledger {
   const equity = p.equity ?? 0;
   if (!seed || !founder) {
     return { started: false, startedAt: null, currency, equity, units: 0, price: 1, priceChange: null,
-      investors: [], unassigned: [], missingNav: [] };
+      investors: [], unassigned: [], missingNav: [], ignored: [] };
   }
 
   const acc = new Map<number, Acc>();
@@ -110,27 +115,37 @@ export function buildLedger(p: InvestorPull, fee = FOUNDER_FEE): Ledger {
     return due;
   };
 
+  const partsOf = new Map<number, PartRow[]>();
+  for (const pt of p.parts ?? []) partsOf.set(pt.flow_id, [...(partsOf.get(pt.flow_id) ?? []), pt]);
+
+  // One person's money in or out, at the price just before the flow arrived.
+  const move = (f: FlowRow, investor: number, amount: number, price: number, split: boolean) => {
+    const a = get(investor);
+    if (amount > 0) {
+      const u = amount / price;
+      a.units += u; a.basis += amount; a.deposited += amount; total += u;
+      a.events.push({ at: f.at, investor, kind: "deposit", amount, units: u, price, flow: f.id, split });
+    } else {
+      const want = -amount / price;
+      const u = Math.min(want, a.units);       // can't sell more than they own
+      const frac = a.units > EPS ? u / a.units : 0;
+      a.units -= u; a.basis *= 1 - frac; a.withdrawn += -amount; total -= u;
+      a.events.push({ at: f.at, investor, kind: "withdrawal", amount, units: -u, price, flow: f.id, split });
+    }
+  };
+
   for (const e of evs) {
     if (e.mark) {
       if (total > EPS) settle(e.mark.equity / total, e.mark.at, true);
       continue;
     }
     const f = e.flow!;
-    if (f.status !== "assigned" || f.investor_id === null) continue;   // ignored: stays in equity as profit
+    const parts = f.status === "split" ? partsOf.get(f.id) ?? [] : [];
+    if (f.status === "split" ? !parts.length : f.status !== "assigned" || f.investor_id === null) continue;   // ignored: stays in equity as profit
     if (f.nav_before === null || !(f.nav_before > 0) || total <= EPS) { missingNav.push(f); continue; }
-    const price = f.nav_before / total;
-    const a = get(f.investor_id);
-    if (f.amount > 0) {
-      const u = f.amount / price;
-      a.units += u; a.basis += f.amount; a.deposited += f.amount; total += u;
-      a.events.push({ at: f.at, investor: f.investor_id, kind: "deposit", amount: f.amount, units: u, price });
-    } else {
-      const want = -f.amount / price;
-      const u = Math.min(want, a.units);       // can't sell more than they own
-      const frac = a.units > EPS ? u / a.units : 0;
-      a.units -= u; a.basis *= 1 - frac; a.withdrawn += -f.amount; total -= u;
-      a.events.push({ at: f.at, investor: f.investor_id, kind: "withdrawal", amount: f.amount, units: -u, price });
-    }
+    const price = f.nav_before / total;       // one price for every part of a split
+    if (f.status === "split") for (const pt of parts) move(f, pt.investor_id, pt.amount, price, true);
+    else move(f, f.investor_id!, f.amount, price, false);
   }
 
   // Units are moved by fees, never created, so the founder's units include fees earned.
@@ -153,5 +168,6 @@ export function buildLedger(p: InvestorPull, fee = FOUNDER_FEE): Ledger {
   }).sort((x, y) => Number(y.founder) - Number(x.founder) || y.value - x.value);
 
   return { started: true, startedAt: seed.at, currency, equity, units: total, price,
-    priceChange: price - 1, investors, unassigned, missingNav };
+    priceChange: price - 1, investors, unassigned, missingNav,
+    ignored: p.flows.filter((f) => f.status === "ignored" && f.kind !== "seed" && Date.parse(f.at) > seedT).reverse() };
 }

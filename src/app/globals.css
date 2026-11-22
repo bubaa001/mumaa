@@ -4357,7 +4357,12 @@ button,
   display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px;
   padding: 12px 12px; border-radius: var(--r-sm);
 }
-.inv-row + .inv-row { border-top: 1px solid var(--night-line); }
+.inv-list > li + li .inv-row { border-top: 1px solid var(--night-line); }
+button.inv-row {
+  width: 100%; margin: 0; border: 0; background: none; color: inherit; font: inherit;
+  text-align: left; cursor: pointer;
+}
+button.inv-row:focus-visible { outline: 2px solid var(--on-night); outline-offset: -2px; }
 .inv-row:hover { background: rgba(245, 239, 230, 0.04); }
 .inv-avatar {
   position: relative; display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%;
@@ -4528,4 +4533,35 @@ button,
   .perf-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .perf-stats dd { font-size: 19px; }
   .perf-card { padding: 16px; }
+}
+
+/* ── Investors: assign / split a deposit, one person's statement ─── */
+.inv-seg { display: inline-flex; gap: 4px; padding: 3px; margin: 10px 0 12px; border-radius: var(--r-pill); background: var(--paper-2); }
+.inv-seg button { border: 0; background: none; font: 500 13px/1 var(--font-ui); color: var(--ink-2); padding: 8px 14px; border-radius: var(--r-pill); cursor: pointer; }
+.inv-seg button.is-on { background: var(--card); color: var(--ink); box-shadow: var(--shadow-card); }
+.inv-seg button:disabled { opacity: 0.45; cursor: not-allowed; }
+.inv-split { display: grid; gap: 8px; }
+.inv-split-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 140px) auto; gap: 8px; align-items: center; }
+.inv-split-row .icon-btn { width: 36px; height: 36px; }
+.inv-split-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px; margin: 2px 0 6px; }
+.inv-split-foot svg { width: 14px; height: 14px; }
+.inv-st { display: grid; gap: 14px; }
+.inv-st-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; margin: 0; }
+.inv-st-stats dt { color: var(--muted); font-size: 12px; }
+.inv-st-stats dd { margin: 2px 0 0; font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.inv-st-stats dd small { font-size: 12px; font-weight: 500; color: var(--muted); }
+.inv-st-share { display: flex; gap: 8px; flex-wrap: wrap; }
+.inv-st-share .btn svg { width: 16px; height: 16px; }
+.inv-st-h { margin: 8px 0 0; font: 600 14px/1.2 var(--font-ui); }
+.inv-st-events { list-style: none; margin: 0; padding: 0; }
+.inv-st-events li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+.inv-st-events li small { color: var(--muted); }
+.inv-st-events li > span:nth-child(2) { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.inv-st-events .desk-link svg { width: 14px; height: 14px; }
+.inv .pos, .inv-st .pos { color: #2f7d4f; }
+.inv .neg, .inv-st .neg { color: var(--cherry); }
+.inv-danger { color: var(--cherry); border-color: var(--cherry); }
+.inv-danger svg { width: 16px; height: 16px; }
+@media (max-width: 520px) {
+  .inv-split-row { grid-template-columns: minmax(0, 1fr) 110px auto; }
 }

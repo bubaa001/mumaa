@@ -27,3 +27,8 @@ export const startInvestors = (founder: string) => rpc<null>("investor_start", {
 export const addInvestor = (name: string) => rpc<number>("investor_add", { p_name: name });
 export const assignFlow = (flow: number, investor: number | null, ignore: boolean) =>
   rpc<null>("investor_assign", { p_flow: flow, p_investor: investor, p_ignore: ignore });
+export const renameInvestor = (id: number, name: string) => rpc<null>("investor_rename", { p_id: id, p_name: name });
+export const removeInvestor = (id: number) => rpc<null>("investor_remove", { p_id: id });
+export const unassignFlow = (flow: number) => rpc<null>("investor_unassign", { p_flow: flow });
+export const splitFlow = (flow: number, parts: { investor: number; amount: number }[]) =>
+  rpc<null>("investor_split", { p_flow: flow, p_parts: parts });
