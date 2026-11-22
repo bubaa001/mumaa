@@ -4565,3 +4565,25 @@ button.inv-row:focus-visible { outline: 2px solid var(--on-night); outline-offse
 @media (max-width: 520px) {
   .inv-split-row { grid-template-columns: minmax(0, 1fr) 110px auto; }
 }
+
+/* ── Plain-language pieces on the Trading overview ─────────────── */
+.plain-now {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 16px 18px; margin-bottom: 18px;
+  border-radius: var(--r-md); background: var(--card); border: 1px solid var(--line); box-shadow: var(--shadow-card);
+}
+.plain-now-dot { flex: none; width: 10px; height: 10px; margin-top: 6px; border-radius: 50%; background: var(--muted); }
+.plain-now.is-calm .plain-now-dot { background: #2f7d4f; box-shadow: 0 0 0 4px rgba(47, 125, 79, 0.14); }
+.plain-now.is-up .plain-now-dot { background: #2f7d4f; box-shadow: 0 0 0 4px rgba(47, 125, 79, 0.18); }
+.plain-now.is-down .plain-now-dot, .plain-now.is-warn .plain-now-dot { background: var(--cherry); box-shadow: 0 0 0 4px rgba(180, 48, 42, 0.14); }
+.plain-now-head { margin: 0; font: 600 16px/1.35 var(--font-ui); color: var(--ink); }
+.plain-now-sub { margin: 4px 0 0; font-size: 14px; line-height: 1.45; color: var(--ink-2); }
+.clock-more { margin: 4px 0 8px; }
+.plain-words summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+.plain-words summary::-webkit-details-marker { display: none; }
+.plain-words summary::after { content: "+"; font-size: 20px; color: var(--muted); }
+.plain-words[open] summary::after { content: "–"; }
+.plain-words summary .trade-h { margin: 0; }
+.plain-words dl { margin: 12px 0 0; display: grid; gap: 10px; }
+.plain-words dt { font-weight: 600; font-size: 14px; }
+.plain-words dd { margin: 2px 0 0; font-size: 14px; color: var(--ink-2); line-height: 1.45; }

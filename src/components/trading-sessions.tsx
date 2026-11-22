@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useDesk } from "./trading-dashboard";
 import { countdown, sessionAt, sessionsFrom, type Agent } from "@/lib/trader-view";
 
@@ -9,8 +9,9 @@ const hm = (t: number) => new Date(t).toLocaleTimeString("en-US", { hour: "numer
 const minuteOfDay = (t: number) => { const d = new Date(t); return d.getHours() * 60 + d.getMinutes(); };
 
 /** Every session the bots trade in, in the viewer's own time, with how long until it opens or closes. */
-export function SessionClock({ agents }: { agents: Agent[] }) {
+export function SessionClock({ agents, limit }: { agents: Agent[]; limit?: number }) {
   const { now } = useDesk();
+  const [all, setAll] = useState(false);
   const sessions = useMemo(() => sessionsFrom(agents), [agents]);
   if (!sessions.length) return null;
 
@@ -26,9 +27,9 @@ export function SessionClock({ agents }: { agents: Agent[] }) {
     <section className="trade-card clock" aria-labelledby="clock-h">
       <div className="clock-head">
         <div>
-          <h2 className="trade-h" id="clock-h">Session clock</h2>
+          <h2 className="trade-h" id="clock-h">When the bots trade</h2>
           <p className="trade-muted">
-            {now === null ? "Your local time" : `${zone} · ${short}`} · {openCount ? `${openCount} open now` : "all closed right now"}
+            {now === null ? "Your local time" : `${zone} · ${short}`} · {openCount ? `${openCount} trading now` : "none trading right now"}
           </p>
         </div>
         <p className="clock-now" aria-live="off">
@@ -38,7 +39,7 @@ export function SessionClock({ agents }: { agents: Agent[] }) {
       </div>
 
       <ul className="clock-list">
-        {rows.map(({ s, at }) => {
+        {(limit && !all ? rows.slice(0, limit) : rows).map(({ s, at }) => {
           const segs: [number, number][] = [];
           if (at) {
             const a = minuteOfDay(at.start), len = (at.end - at.start) / 60_000;
@@ -68,6 +69,11 @@ export function SessionClock({ agents }: { agents: Agent[] }) {
           );
         })}
       </ul>
+      {limit && rows.length > limit && (
+        <button type="button" className="desk-link clock-more" onClick={() => setAll(!all)} aria-expanded={all}>
+          {all ? "Show fewer" : `Show all ${rows.length} trading times`}
+        </button>
+      )}
       <p className="clock-scale" aria-hidden="true"><span>12 AM</span><span>6 AM</span><span>12 PM</span><span>6 PM</span><span>12 AM</span></p>
     </section>
   );
