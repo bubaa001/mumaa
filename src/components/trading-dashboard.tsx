@@ -358,7 +358,7 @@ function RulesView({ s }: { s: TraderState }) {
             <li key={i}><time>{when(e.time, mounted)}</time><span className="chip">{e.currency}</span><span>{e.title}</span></li>
           ))}</ul>
         )}
-        <p className="trade-muted">No new trades from 30 minutes before to 30 minutes after each event on the affected pairs. The Gold NY-open and J-Dub gold bots stand aside for 2 hours.</p>
+        <p className="trade-muted">No new trades from 30 minutes before to 30 minutes after each event on the affected pairs.</p>
       </section>
 
       <section className="trade-card" aria-labelledby="ru-rules">
@@ -366,7 +366,8 @@ function RulesView({ s }: { s: TraderState }) {
         <dl className="rules">
           <div><dt>Risk per trade</dt><dd>{r.risk_pct}% of equity</dd></div>
           <div><dt>Daily loss limit</dt><dd>{r.daily_loss_pct}% · all agents stop for the day</dd></div>
-          <div><dt>Most trades open at once</dt><dd>{r.max_open}</dd></div>
+          <div><dt>Most trades open at once</dt><dd>{r.max_open} across all agents{r.max_per_market ? ` · ${r.max_per_market} per market, ${r.max_gold ?? r.max_per_market} on gold` : ""}</dd></div>
+          <div><dt>Gold agents</dt><dd>Smallest lot (0.01) · skip when the spread is over 2.5× normal</dd></div>
           <div><dt>Same-direction USD trades</dt><dd>{r.max_same_usd_dir} at most</dd></div>
           <div><dt>Kill switch</dt><dd className={r.kill_switch ? "neg" : ""}>{r.kill_switch ? "On · nothing trades" : "Off"}</dd></div>
         </dl>
