@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, Copy, MessageCircle, Plus, Trash2, Undo2, X } from "lucide-react";
 import { FOUNDER_FEE, type Ledger, type InvestorView, type FlowRow } from "@/lib/investors";
 import { money, signed, when } from "@/lib/trader-view";
@@ -46,7 +46,7 @@ export function InvestorsView({ mounted }: { mounted: boolean }) {
     return ok;
   }, []);
 
-  if (!resp) return <section className="trade-card"><p className="trade-muted">Loading investors…</p></section>;
+  if (!resp) return <InvestorsSkeleton />;
   if (!resp.ok) {
     return (
       <section className="notice trade-notice">
@@ -82,16 +82,17 @@ export function InvestorsView({ mounted }: { mounted: boolean }) {
   const selected = l.investors.find((i) => i.id === open) ?? null;
 
   return (
-    <div className="inv">
+    <div className="inv" data-busy={busy} aria-busy={busy}>
+      <span className="inv-progress" aria-hidden="true" />
       {l.unassigned.length > 0 && <Unassigned key={l.unassigned[0].id} l={l} busy={busy} act={act} mounted={mounted} />}
       {err && <p className="trade-block" role="alert">{err}</p>}
 
       <section className="trade-card" aria-labelledby="inv-sum">
         <h2 className="trade-h" id="inv-sum">The pool</h2>
         <dl className="rules">
-          <div><dt>Account value</dt><dd>{money(l.equity, ccy)}</dd></div>
+          <div><dt>Account value</dt><dd><Count value={l.equity} fmt={(v) => money(v, ccy)} /></dd></div>
           <div><dt>Unit price</dt><dd>{l.price.toFixed(4)} <span className={tone(l.price - 1)}>({pctText(l.priceChange)} since start)</span></dd></div>
-          <div><dt>Your stake</dt><dd>{money(founder?.value, ccy)} · {((founder?.share ?? 0) * 100).toFixed(1)}% of the account</dd></div>
+          <div><dt>Your stake</dt><dd><Count value={founder?.value ?? 0} fmt={(v) => money(v, ccy)} /> · {((founder?.share ?? 0) * 100).toFixed(1)}% of the account</dd></div>
           <div><dt>Your fees earned</dt><dd className={tone(feesEarned)}>{money(feesEarned, ccy)}</dd></div>
           <div><dt>Fee building up this month</dt><dd>{money(feeAccruing, ccy)} <span className="trade-muted">(taken on the 1st)</span></dd></div>
           <div><dt>Tracking since</dt><dd>{l.startedAt ? when(l.startedAt, mounted) : "—"}</dd></div>
@@ -104,7 +105,7 @@ export function InvestorsView({ mounted }: { mounted: boolean }) {
           <h2 className="trade-h" id="inv-list">Investors</h2>
           <AddInvestor busy={busy} onAdd={(name) => act({ action: "add", name })} />
         </div>
-        <ul className="inv-list">{l.investors.map((i) => <Row key={i.id} i={i} ccy={ccy} onOpen={() => setOpen(i.id)} />)}</ul>
+        <ul className="inv-list">{l.investors.map((i, n) => <Row key={i.id} i={i} ccy={ccy} n={n} onOpen={() => setOpen(i.id)} />)}</ul>
         <p className="trade-muted">Tap a person for their statement, to rename or remove them, or to undo a deposit.
           Profit is after fees. Fee: {FOUNDER_FEE * 100}% of new profit above each investor’s previous best, settled on the 1st of each month.</p>
       </section>
@@ -127,12 +128,12 @@ const initials = (name: string) => name.trim().split(/\s+/).slice(0, 2).map((w) 
 const hueOf = (name: string) => HUES[[...name].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % HUES.length];
 
 /** One investor, ticker style: who, what they put in · what it is worth now, up or down since joining. */
-function Row({ i, ccy, onOpen }: { i: InvestorView; ccy: string; onOpen: () => void }) {
+function Row({ i, ccy, n, onOpen }: { i: InvestorView; ccy: string; n: number; onOpen: () => void }) {
   const pct = i.profitPct ?? 0;
   const dir = pct > 0.00005 ? "up" : pct < -0.00005 ? "down" : "flat";
   const net = i.deposited - i.withdrawn;
   return (
-    <li>
+    <li style={{ ["--i" as string]: n }}>
       <button type="button" className="inv-row" onClick={onOpen} aria-label={`${i.name}: open statement`}>
         <span className="inv-avatar" style={{ ["--h" as string]: hueOf(i.name) }} aria-hidden="true">
           {initials(i.name)}
@@ -144,7 +145,7 @@ function Row({ i, ccy, onOpen }: { i: InvestorView; ccy: string; onOpen: () => v
             {i.founder ? (i.feesEarned ? ` · fees +${money(i.feesEarned)}` : "") : (i.feesPaid ? ` · fees ${money(i.feesPaid)}` : "")}</span>
         </span>
         <span className="inv-now">
-          <span className="inv-value">{money(i.value)} <small>{ccy}</small></span>
+          <span className="inv-value"><Count value={i.value} fmt={(v) => money(v)} /> <small>{ccy}</small></span>
           <span className={`inv-change inv-${dir}`}>
             {dir === "up" ? "▲" : dir === "down" ? "▼" : "•"} {Math.abs(pct * 100).toFixed(2)}%
             <span className="inv-abs"> ({signed(i.profit)})</span>
@@ -367,5 +368,70 @@ function History({ l, ccy, mounted, busy, act }: { l: Ledger; ccy: string; mount
         </>
       )}
     </>
+  );
+}
+
+/** A number that counts up from zero the first time it appears, then just shows the new value. */
+function Count({ value, fmt }: { value: number; fmt: (v: number) => string }) {
+  const [shown, setShown] = useState(0);
+  const done = useRef(false);
+  useEffect(() => {
+    const first = !done.current;
+    done.current = true;
+    if (!first || !value || window.matchMedia("(prefers-reduced-motion: reduce)").matches) { setShown(value); return; }
+    let raf = 0;
+    const t0 = performance.now(), ms = 900;
+    const tick = (t: number) => {
+      const k = Math.min(1, (t - t0) / ms);
+      setShown(value * (1 - (1 - k) ** 3)); // ease out
+      if (k < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [value]);
+  return <>{fmt(shown)}</>;
+}
+
+const STEPS = ["Reading the account", "Working out who owns what", "Adding up profit and fees"];
+
+/** The investors page in outline while it loads: the pool, the people, the history, shimmering in a wave. */
+export function InvestorsSkeleton() {
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setStep((n) => (n + 1) % STEPS.length), 1300);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <div className="inv inv-skel" role="status" aria-live="polite" aria-label="Loading investors">
+      <p className="inv-skel-step" key={step}><span className="inv-skel-dot" aria-hidden="true" />{STEPS[step]}…</p>
+      <section className="trade-card" aria-hidden="true">
+        <i className="sk sk-h" />
+        <div className="sk-rows">
+          {[58, 44, 66, 38, 52, 46].map((w, n) => (
+            <div key={n} style={{ ["--i" as string]: n }}><i className="sk" style={{ width: `${w - 14}%` }} /><i className="sk" style={{ width: `${w / 2}%` }} /></div>
+          ))}
+        </div>
+      </section>
+      <section className="trade-card" aria-hidden="true">
+        <i className="sk sk-h" />
+        <ul className="inv-list sk-list">
+          {[0, 1, 2].map((n) => (
+            <li key={n} className="inv-row" style={{ ["--i" as string]: n }}>
+              <i className="sk sk-avatar" />
+              <span className="sk-col"><i className="sk" style={{ width: "64%" }} /><i className="sk sk-thin" style={{ width: "88%" }} /></span>
+              <span className="sk-col sk-end"><i className="sk" style={{ width: 84 }} /><i className="sk sk-thin" style={{ width: 52 }} /></span>
+            </li>
+          ))}
+        </ul>
+      </section>
+      <section className="trade-card" aria-hidden="true">
+        <i className="sk sk-h" />
+        <div className="sk-rows">
+          {[72, 60, 68].map((w, n) => (
+            <div key={n} style={{ ["--i" as string]: n + 2 }}><i className="sk" style={{ width: `${w}%` }} /><i className="sk" style={{ width: "18%" }} /></div>
+          ))}
+        </div>
+      </section>
+    </div>
   );
 }

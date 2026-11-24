@@ -11,7 +11,7 @@ import { SessionClock } from "./trading-sessions";
 import { Glossary, RightNow } from "./trading-plain";
 import { EquityLine, stamp, type Scrub } from "./trading-chart";
 import { ease } from "./motion";
-import { InvestorsView } from "@/components/trading-investors";
+import { InvestorsSkeleton, InvestorsView } from "@/components/trading-investors";
 import { TrackRecordCard } from "@/components/trading-record";
 import { GrowthChart, lastSwitch, type CashFlow } from "@/components/trading-growth";
 import type { Ledger } from "@/lib/investors";
@@ -151,7 +151,7 @@ export function TradingDashboard({ initial, nav: initialNav, founder = false }: 
         {nav.view === "trades" && <TradesView data={data} s={s} agents={agents} />}
         {nav.view === "rules" && <RulesView s={s} />}
         {/* client-only: rendered after mount so it never hydrates over server HTML (it stuck on "Loading" when opened by link) */}
-        {nav.view === "investors" && founder && (now !== null ? <InvestorsView mounted /> : <section className="trade-card"><p className="trade-muted">Loading investors…</p></section>)}
+        {nav.view === "investors" && founder && (now !== null ? <InvestorsView mounted /> : <InvestorsSkeleton />)}
       </ViewFade>
     </DeskContext.Provider>
   );
