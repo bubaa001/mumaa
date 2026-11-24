@@ -258,10 +258,10 @@ function Statement({ i, l, mounted, busy, act, onRemoved }: {
     `Mumaa Trading: statement for ${i.name}`,
     `As of ${day(new Date().toISOString())}`,
     ``,
-    `Put in: ${money(i.deposited, ccy)} ${ccy}${i.withdrawn ? ` · taken out: ${money(i.withdrawn, ccy)} ${ccy}` : ""}`,
-    `Worth now: ${money(i.value, ccy)} ${ccy}`,
+    `Put in: ${money(i.deposited, ccy)}${i.withdrawn ? ` · taken out: ${money(i.withdrawn, ccy)}` : ""}`,
+    `Worth now: ${money(i.value, ccy)}`,
     `Profit after fees: ${signed(i.profit)} ${ccy} (${pctText(i.profitPct, 2)})`,
-    i.founder ? `Fees earned: ${money(i.feesEarned, ccy)} ${ccy}` : `Fees paid so far: ${money(i.feesPaid, ccy)} ${ccy}`,
+    i.founder ? `Fees earned: ${money(i.feesEarned, ccy)}` : `Fees paid so far: ${money(i.feesPaid, ccy)}`,
     `Share of the account: ${(i.share * 100).toFixed(1)}%`,
     ``,
     `Trading carries risk; the value can go down as well as up.`,
@@ -280,7 +280,7 @@ function Statement({ i, l, mounted, busy, act, onRemoved }: {
   return (
     <div className="inv-st">
       <dl className="inv-st-stats">
-        <div><dt>Worth now</dt><dd>{money(i.value, ccy)} <small>{ccy}</small></dd></div>
+        <div><dt>Worth now</dt><dd>{money(i.value, ccy)}</dd></div>
         <div><dt>Profit after fees</dt><dd className={tone(i.profit)}>{signed(i.profit)} <small>({pctText(i.profitPct, 2)})</small></dd></div>
         <div><dt>Put in (net)</dt><dd>{money(net, ccy)}</dd></div>
         <div><dt>Share of pool</dt><dd>{(i.share * 100).toFixed(1)}%</dd></div>

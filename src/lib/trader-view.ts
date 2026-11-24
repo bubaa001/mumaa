@@ -68,6 +68,8 @@ export type Agent = {
   confidence: { grade: Grade; label: string } | null;
   /** How close its nearest market is to opening a trade. */
   ready: Readiness;
+  /** Every market has used its one setup for the day, so it cannot trade again until tomorrow. */
+  done: boolean;
 };
 
 /**
@@ -112,9 +114,35 @@ function confidenceOf(ms: TraderMarket[]): Agent["confidence"] {
   return { grade: GRADES[avg], label: lo === hi ? GRADES[lo] : `${GRADES[lo]}–${GRADES[hi]}` };
 }
 
+/**
+ * The reporter has no "finished for today" flag; a once-a-day setup says so in the detail of the check
+ * it can no longer meet ("already broke out earlier today"). Matching that wording is the only way to
+ * tell it apart from a bot that is still waiting.
+ */
+const DONE_TODAY = /\balready\b.*\btoday\b|\bdone for (the )?day\b/i;
+export const doneToday = (m: TraderMarket) =>
+  !m.position && m.verdict !== "stopped" && m.verdict !== "in_trade"
+  && m.checks.some((c) => !c.ok && DONE_TODAY.test(`${c.label} ${c.detail}`));
+
+/** candle_time comes without a zone and is UTC. */
+const utc = (t: string) => Date.parse(/(Z|[+-]\d\d:?\d\d)$/.test(t) ? t : `${t}Z`);
+
+/**
+ * The reporter keeps saying "signal" until the next candle closes, even after the bot has opened (and
+ * maybe closed) the trade. A trade by this bot on this market opened at or after the signal candle
+ * means the signal was taken, so show the market as waiting again.
+ */
+function settled(m: TraderMarket, trades: TraderTrade[]): TraderMarket {
+  if (m.verdict !== "signal" || m.position) return m;
+  const at = utc(m.candle_time);
+  if (!Number.isFinite(at)) return m;
+  const taken = trades.some((t) => t.bot === m.bot && t.symbol === m.pair && Date.parse(t.opened) >= at);
+  return taken ? { ...m, verdict: "watching", why: "signal already taken; waiting for the next setup" } : m;
+}
+
 /** Every bot the reporter knows about, from its process list or its markets, with its rolled-up state. */
 export function agentsFrom(s: TraderState, now: number | null = null): Agent[] {
-  const markets = s.markets ?? [];
+  const markets = (s.markets ?? []).map((m) => settled(m, s.trades));
   const ids = Array.from(new Set([...Object.keys(s.bots), ...markets.map((m) => m.bot)]));
   const agents = ids.map((id): Agent => {
     const bot = s.bots[id] ?? null;
@@ -129,10 +157,12 @@ export function agentsFrom(s: TraderState, now: number | null = null): Agent[] {
     const sorted = sortMarkets(mine, now);
     const pairs = sorted.length ? sorted.map((m) => m.pair) : Object.keys(bot?.markets ?? {});
     let ready = sorted.length ? readinessOf(sorted[0], now) : NO_MARKETS;
+    const done = state === "watching" && mine.length > 0 && mine.every(doneToday);
     if (state === "stopped") ready = { ...ready, score: ready.score - 100 };
+    else if (done) ready = { ...ready, score: ready.score - 50 }; // below every bot that can still trade today
     else if (state === "in_trade") ready = { ...ready, score: Math.max(ready.score, RANK.in_trade + 1) };
     return {
-      id, name: botName(id), bot, running, state, markets: sorted, pairs, ready,
+      id, name: botName(id), bot, running, state, markets: sorted, pairs, ready, done,
       strategies: Array.from(new Set(mine.map((m) => m.name).filter(Boolean))),
       positions, openPnl: positions.reduce((sum, p) => sum + p.profit, 0),
       trades, record: tally(trades), confidence: confidenceOf(mine),
@@ -147,8 +177,9 @@ function sortMarkets(ms: TraderMarket[], now: number | null) {
 }
 
 /** "4 of 5 conditions · session opens in 6 h 10 min", for lists. */
-export function readyText(r: Readiness, state: AgentState) {
+export function readyText(r: Readiness, state: AgentState, done = false) {
   if (state === "in_trade") return "In a trade now";
+  if (done) return "Done for today · trades again tomorrow";
   if (state === "signal") return "Setup complete · entering";
   if (state === "stopped") return "Bot not running";
   if (!r.total) return "Waiting for data";
