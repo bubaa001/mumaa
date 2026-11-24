@@ -8,8 +8,8 @@ import {
   ago, closedTrades, pct, rText, signed, STATE_LABEL, when, type Agent, type AgentState as State,
 } from "@/lib/trader-view";
 
-export function AgentState({ state }: { state: State }) {
-  const v = STATE_LABEL[state];
+export function AgentState({ state, done = false }: { state: State; done?: boolean }) {
+  const v = done ? { label: "Done for today", tone: "tone-calm" } : STATE_LABEL[state];
   return <span className={`verdict ${v.tone}`} data-state={state}>{v.label}</span>;
 }
 
@@ -43,7 +43,7 @@ export function AgentsView({ agents, s, data, agentId, marketId }: {
                   {a.confidence ? <Confidence grade={a.confidence.grade} label={a.confidence.label} compact /> : <span className="roster-muted">Unrated</span>}
                 </span>
                 <span className="roster-side">
-                  <span className="roster-state">{STATE_LABEL[a.state].label}</span>
+                  <span className="roster-state">{a.done ? "Done for today" : STATE_LABEL[a.state].label}</span>
                   <span className={a.openPnl || a.record.net ? ((a.positions.length ? a.openPnl : a.record.net) >= 0 ? "pos" : "neg") : "roster-muted"}>
                     {a.positions.length ? `${signed(a.openPnl)} open` : a.record.n ? signed(a.record.net) : "no trades yet"}
                   </span>
@@ -53,7 +53,7 @@ export function AgentsView({ agents, s, data, agentId, marketId }: {
             </li>
           ))}
         </ul>
-        <p className="roster-foot">Listed by who is closest to a trade: in a trade, signalling, then most entry conditions met in an open session, then the session that opens soonest. Paused and stopped agents sit last. Last update {ago(data.updated_at, now)}.</p>
+        <p className="roster-foot">Listed by who is closest to a trade: in a trade, signalling, then most entry conditions met in an open session, then the session that opens soonest. Paused agents, agents done for the day, and stopped agents sit last. Last update {ago(data.updated_at, now)}.</p>
       </nav>
 
       {shown && <AgentDetail key={shown.id} agent={shown} s={s} data={data} marketId={marketId} />}
@@ -84,7 +84,7 @@ function AgentDetail({ agent: a, s, data, marketId }: { agent: Agent; s: TraderS
         </div>
         <span className="agent-badges">
           {a.confidence && <Confidence grade={a.confidence.grade} label={a.confidence.label} />}
-          <AgentState state={a.state} />
+          <AgentState state={a.state} done={a.done} />
         </span>
       </header>
 

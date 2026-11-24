@@ -224,7 +224,7 @@ function DeskHero({ data, s, cash }: { data: TraderPull; s: TraderState; cash: C
 /* ─── Overview ──────────────────────────────────────────────── */
 
 function OverviewView({ data, s, agents }: { data: TraderPull; s: TraderState; agents: Agent[] }) {
-  const { go, mounted, ccy } = useDesk();
+  const { go, mounted, ccy, now } = useDesk();
   const live = agents.filter((a) => a.state !== "stopped" || a.positions.length > 0);
   const recent = closedTrades(s, data.history ?? []).slice(0, 5);
   const next = s.news.upcoming[0];
@@ -254,12 +254,18 @@ function OverviewView({ data, s, agents }: { data: TraderPull; s: TraderState; a
             <button type="button" key={a.id} className="agent-tile" data-state={a.state} onClick={() => go({ view: "agents", agent: a.id })}>
               <span className="agent-tile-top">
                 <span className="agent-tile-name">{a.name}</span>
-                <StateChip state={a.state} />
+                <StateChip state={a.state} done={a.done} />
               </span>
               <span className="agent-tile-pairs">{a.pairs.join(" · ")}{a.confidence && <> · {a.confidence.label} confidence</>}</span>
               <ReadyMeter agent={a} />
               <span className="agent-tile-stats">
-                <span><small>Made</small><b className={a.record.net > 0 ? "pos" : a.record.net < 0 ? "neg" : ""}>{a.record.n ? signed(a.record.net) : "—"}</b></span>
+                {a.done && now !== null ? (() => {
+                  // A finished bot's number is money already banked today, not a trade still to come.
+                  const today = tally(a.trades.filter((t) => new Date(t.closed).toDateString() === new Date(now).toDateString())).net;
+                  return <span><small>Made today</small><b className={today > 0 ? "pos" : today < 0 ? "neg" : ""}>{signed(today)}</b></span>;
+                })() : (
+                  <span><small>Made</small><b className={a.record.net > 0 ? "pos" : a.record.net < 0 ? "neg" : ""}>{a.record.n ? signed(a.record.net) : "—"}</b></span>
+                )}
                 <span><small>Trades</small><b>{a.record.n}</b></span>
                 <span><small>Tested win rate</small><b>{a.bot?.backtest?.win_rate != null ? `${Math.round(a.bot.backtest.win_rate)}%` : "—"}</b></span>
               </span>
@@ -314,7 +320,7 @@ export function ReadyMeter({ agent: a }: { agent: Agent }) {
   return (
     <span className="ready" data-state={a.state} data-waiting={r.opensIn !== null}>
       <span className="ready-bar" aria-hidden="true"><i style={{ width: `${Math.round(share * 100)}%` }} /></span>
-      <span className="ready-text">{readyText(r, a.state)}</span>
+      <span className="ready-text">{readyText(r, a.state, a.done)}</span>
     </span>
   );
 }
