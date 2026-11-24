@@ -30,9 +30,16 @@ export type TraderMarket = {
 /** Display names for each bot (each runs as its own agent with its own magic number). */
 export const BOT_NAMES: Record<string, string> = {
   forex: "Forex bot", gold: "Gold bot", h4candle: "4H candle bot", orbgold: "Gold NY-open bot", jdubgold: "J-Dub gold bot", recovery: "Recovery bot", sosjpy: "Structure bot (fxalexg)", sdgold: "Supply & demand bot (Brad Goh)", mambagold: "NY breakout bot (MambaFx)", chfm15: "USDCHF London bot", crtndx: "CRT NAS100 bot", crossfx: "Forex crosses bot", cadx: "CAD crosses bot", rsi2fx: "RSI pullback bot",
+  // 24-25 Nov 2026: retrained agents and the gold agents (all passed the 3-year test)
+  oil: "Oil mean-reversion bot", rtm4h: "4-hour mean-reversion bot", rsi4h: "4-hour RSI pullback bot",
+  m15fx: "15-minute forex bot", m15rsi: "15-minute RSI bot", m5fx: "5-minute forex bot",
+  goldm15: "Gold 15-minute bot", sosgold: "Gold structure-shift bot",
+  goldvwap: "Gold NY VWAP bot", goldbb: "Gold London band bot", goldrtm: "Gold hourly reversion bot",
+  goldrsi4h: "Gold 4-hour RSI bot", goldibs: "Gold dip-buy bot", goldibs4h: "Gold 4-hour dip-buy bot",
+  goldsqz: "Gold squeeze bot",
 };
 export const botName = (b: string) => BOT_NAMES[b] ?? b;
-export const TF_NAME: Record<string, string> = { M5: "5-minute", H1: "hourly", H4: "4-hour" };
+export const TF_NAME: Record<string, string> = { M5: "5-minute", M15: "15-minute", H1: "hourly", H4: "4-hour" };
 export type TraderBot = {
   running: boolean; markets: Record<string, string>; last_seen: string | null; log_age_s?: number;
   lines: string[];
@@ -42,7 +49,8 @@ export type TraderState = {
   generated_at: string;
   account: { mode: string; currency: string; leverage: number; balance: number; equity: number;
     margin: number; free_margin: number; profit: number };
-  settings: { risk_pct: number; daily_loss_pct: number; max_open: number; max_same_usd_dir: number; kill_switch: boolean };
+  settings: { risk_pct: number; daily_loss_pct: number; max_open: number; max_same_usd_dir: number; kill_switch: boolean;
+    max_open_per_bot?: number; max_per_market?: number; max_gold?: number };
   bots: Record<string, TraderBot>;
   positions: TraderPosition[];
   trades: TraderTrade[];
