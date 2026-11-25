@@ -4690,3 +4690,218 @@ button.inv-row:focus-visible { outline: 2px solid var(--on-night); outline-offse
 .results-growth .trade-h { margin: 0 0 12px; color: var(--on-night); }
 .results-note { margin: 0; }
 @media (min-width: 900px) { .desk-hero-compact .desk-hero-grid { align-items: center; } }
+
+/* ─── Love letters (Time capsules page). Every class starts with ll- so nothing clashes with capsule cards. ── */
+.ll { margin-top: clamp(48px, 8vw, 96px); padding-top: clamp(28px, 5vw, 48px); border-top: 1px solid var(--line); }
+.ll-head { display: grid; gap: 8px; margin-bottom: 24px; }
+.ll-title { margin: 0; font: 400 clamp(2.2rem, 7vw, 3.6rem)/0.98 var(--font-display); letter-spacing: -0.01em; }
+.ll-title em { color: var(--cherry); }
+.ll-lede { margin: 0; max-width: 52ch; color: var(--ink-2); }
+.ll-note { padding: 14px 16px; border-radius: var(--r-sm); background: var(--paper-2); color: var(--ink-2); }
+
+/* The writing paper */
+.ll-desk { position: relative; }
+.ll-paper {
+  --line-h: 36px; --margin: clamp(34px, 6vw, 54px);
+  position: relative; display: grid; gap: 2px; max-width: 720px;
+  padding: 28px clamp(20px, 4vw, 44px) 22px calc(var(--margin) + 16px);
+  border-radius: 4px 4px 14px 4px; color: #2a1f19;
+  background:
+    linear-gradient(90deg, transparent calc(var(--margin) - 1px), rgba(196, 64, 58, 0.45) calc(var(--margin) - 1px), rgba(196, 64, 58, 0.45) var(--margin), transparent var(--margin)),
+    repeating-linear-gradient(180deg, transparent 0, transparent calc(var(--line-h) - 1px), rgba(92, 120, 160, 0.16) calc(var(--line-h) - 1px), rgba(92, 120, 160, 0.16) var(--line-h)),
+    radial-gradient(140% 100% at 0% 0%, #fffefa, #fcf6ea 55%, #f5ebdb);
+  background-position: 0 0, 0 22px, 0 0;
+  box-shadow: 0 1px 0 rgba(26, 20, 17, 0.05), 0 30px 60px -34px rgba(26, 20, 17, 0.55), 0 0 0 1px rgba(26, 20, 17, 0.05);
+  font: 400 clamp(1.5rem, 4vw, 1.75rem)/var(--line-h) var(--font-hand), cursive;
+}
+.ll-stamp {
+  position: absolute; top: 16px; right: 18px; display: grid; place-items: center; width: 46px; height: 54px;
+  background: #fff7f2; border: 2px dashed rgba(180, 48, 42, 0.45); border-radius: 3px; transform: rotate(4deg);
+  color: var(--cherry); box-shadow: 0 2px 6px -3px rgba(26, 20, 17, 0.3);
+}
+.ll-stamp svg { width: 22px; height: 22px; fill: currentColor; }
+.ll-date { margin: 0 62px 0 0; text-align: right; font: 12px/var(--line-h) var(--font-meta); letter-spacing: 0.06em; color: #8a7868; }
+.ll-to { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 10px; margin: 0; }
+.ll-to input {
+  flex: 1 1 140px; min-width: 0; max-width: 300px; padding: 0 4px; border: 0; border-bottom: 1.5px dashed rgba(180, 48, 42, 0.45);
+  background: transparent; color: var(--cherry-deep); font: inherit; font-weight: 600; outline: none;
+}
+.ll-to input:focus { border-bottom-style: solid; border-bottom-color: var(--cherry); }
+.ll-body {
+  display: block; width: 100%; min-height: calc(var(--line-h) * 6); margin: 0; padding: 0 0 0 1.2em; border: 0; resize: none; overflow: hidden;
+  background: transparent; color: inherit; font: inherit; line-height: var(--line-h); white-space: pre-wrap; overflow-wrap: anywhere; outline: none;
+}
+.ll-body::placeholder, .ll-to input::placeholder { color: #b3a395; }
+.ll-sign { display: flex; align-items: baseline; justify-content: flex-end; flex-wrap: wrap; gap: 0 6px; margin: 6px 0 0; }
+.ll-sign select {
+  appearance: none; padding: 0 4px; border: 0; border-bottom: 1.5px dashed rgba(180, 48, 42, 0.45); border-radius: 0;
+  background: transparent; color: inherit; font: inherit; cursor: pointer;
+}
+.ll-signature { flex-basis: 100%; text-align: right; font-size: 1.45em; font-weight: 600; color: var(--cherry-deep); transform: rotate(-3deg); transform-origin: right; }
+.ll-actions {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-top: 18px; padding-top: 16px;
+  border-top: 1px dashed rgba(61, 51, 44, 0.22); font: 14px/1.3 var(--font-ui);
+}
+.ll-later { display: inline-flex; align-items: center; gap: 7px; cursor: pointer; color: var(--ink-2); }
+.ll-later svg { width: 15px; height: 15px; }
+.ll-when { padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-sm); background: #fffdf8; font: 14px var(--font-ui); color: var(--ink); }
+.ll-count { font: 11px var(--font-meta); color: var(--muted); }
+.ll-send { margin-left: auto; gap: 9px; }
+.ll-err { margin: 8px 0 0; font: 14px/1.3 var(--font-ui); color: var(--cherry); }
+
+/* Wax seals */
+.ll-wax {
+  position: relative; display: inline-grid; place-items: center; width: 38px; height: 38px; border-radius: 47% 53% 50% 50% / 52% 48% 52% 48%; flex: none;
+  background: radial-gradient(circle at 34% 28%, #e2675e, #b3271f 55%, #7a140f);
+  color: #ffe6df; font: 600 15px/1 var(--font-display);
+  box-shadow: 0 3px 6px rgba(90, 15, 10, 0.4), inset 0 -3px 4px rgba(0, 0, 0, 0.25), inset 0 2px 2px rgba(255, 255, 255, 0.18);
+}
+.ll-wax::before { content: ""; position: absolute; inset: 5px; border-radius: 50%; border: 1px solid rgba(255, 220, 210, 0.35); }
+.ll-wax-sm { width: 24px; height: 24px; font-size: 11px; box-shadow: none; }
+.ll-wax-sm::before { inset: 3px; }
+
+/* Envelopes */
+.ll-env {
+  position: relative; display: block; width: 100%; aspect-ratio: 1.62; border-radius: 8px; overflow: hidden; isolation: isolate;
+  box-shadow: 0 18px 30px -22px rgba(26, 20, 17, 0.6), 0 0 0 1px rgba(26, 20, 17, 0.08);
+}
+.ll-env-back { position: absolute; inset: 0; background: linear-gradient(170deg, #f9efe0, #ecdcc3); }
+.ll-env-front {
+  position: absolute; inset: 0;
+  background:
+    linear-gradient(to top right, #f3e6d1 49.6%, transparent 50%) left bottom / 50.5% 62% no-repeat,
+    linear-gradient(to top left, #f0e2cb 49.6%, transparent 50%) right bottom / 50.5% 62% no-repeat;
+}
+.ll-env-flap {
+  position: absolute; inset: 0 0 auto 0; height: 56%; transform-origin: top;
+  background: linear-gradient(180deg, #e9d6b8, #e2cca9); clip-path: polygon(0 0, 100% 0, 50% 100%);
+  filter: drop-shadow(0 2px 2px rgba(26, 20, 17, 0.12)); transition: transform 0.45s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.ll-env .ll-wax { position: absolute; left: 50%; top: 56%; z-index: 3; transform: translate(-50%, -50%); transition: transform 0.35s ease; }
+.ll-postmark {
+  position: absolute; top: 10px; right: 10px; z-index: 3; padding: 5px 7px; border: 1.5px solid rgba(110, 90, 140, 0.5); border-radius: 50%;
+  font: 600 8.5px/1 var(--font-meta); letter-spacing: 0.08em; color: rgba(90, 70, 120, 0.75); transform: rotate(-12deg);
+}
+.ll-env-to {
+  position: absolute; left: 8%; right: 8%; bottom: 14%; z-index: 3; text-align: center;
+  font: 600 clamp(1.25rem, 3.4vw, 1.55rem)/1.1 var(--font-hand), cursive; color: #3b2a22;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ll-env-from { position: absolute; left: 0; right: 0; bottom: 5%; z-index: 3; text-align: center; font: 10px/1 var(--font-meta); letter-spacing: 0.05em; color: #8a7868; }
+.ll-lock {
+  position: absolute; top: 8px; left: 8px; z-index: 4; display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 8px; border-radius: var(--r-pill); background: var(--cherry); color: #fff3ef;
+  font: 600 10px/1 var(--font-meta); letter-spacing: 0.04em; box-shadow: 0 3px 8px -2px rgba(90, 15, 10, 0.45);
+}
+.ll-lock svg { width: 10px; height: 10px; }
+.ll-env.is-big { max-width: 320px; margin: 0 auto; }
+.ll-env.is-big .ll-wax { width: 52px; height: 52px; font-size: 21px; }
+
+.ll-shelves { display: grid; gap: 26px; margin-top: 36px; }
+.ll-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 18px; margin: 12px 0 0; padding: 0; list-style: none; }
+.ll-card {
+  display: grid; gap: 8px; width: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+.ll-card:hover .ll-env:not(.is-sealed) .ll-env-flap, .ll-card:focus-visible .ll-env:not(.is-sealed) .ll-env-flap { transform: scaleY(0.72); }
+.ll-card:hover .ll-env:not(.is-sealed) .ll-wax { transform: translate(-50%, -78%); }
+.ll-card:focus-visible { outline: none; }
+.ll-card:focus-visible .ll-env { box-shadow: 0 0 0 3px var(--cherry-soft), 0 0 0 1px var(--cherry); }
+.ll-card-meta { padding-left: 4px; font: 11px/1.2 var(--font-meta); letter-spacing: 0.03em; color: var(--muted); }
+
+/* Sending and reading */
+.ll-sending { display: grid; place-items: center; min-height: 300px; }
+.ll-sending .ll-env { width: min(320px, 80vw); }
+.ll-read { display: grid; gap: 16px; }
+.ll-paper.is-reading { max-width: none; }
+.ll-paper.is-reading .ll-body { min-height: 0; padding-left: 1.2em; }
+.ll-sealed { display: grid; gap: 18px; justify-items: center; padding: 10px 0 18px; text-align: center; color: var(--ink-2); }
+.ll-sealed p { margin: 0; max-width: 34ch; }
+.ll-remove { justify-self: start; }
+.ll-from { display: flex; align-items: center; gap: 6px; margin: 0; font: 12px var(--font-meta); color: var(--muted); }
+.ll-from svg { width: 14px; height: 14px; }
+@media (max-width: 560px) {
+  .ll-paper { --line-h: 33px; padding-top: 22px; }
+  .ll-stamp { width: 38px; height: 44px; top: 12px; right: 12px; }
+  .ll-date { margin-right: 46px; }
+  .ll-send { margin-left: 0; width: 100%; justify-content: center; }
+  .ll-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .ll-env-from { display: none; }
+  .ll-env-to { bottom: 10%; font-size: 1.05rem; }
+  .ll-env .ll-wax { width: 30px; height: 30px; font-size: 12px; }
+  .ll-postmark { top: 6px; right: 6px; padding: 4px 5px; font-size: 7px; }
+  .ll-lock { top: 6px; left: 6px; padding: 3px 7px; font-size: 9px; }
+}
+
+/* ─── Love letters: motion layer ─── */
+/* Writing: the sheet lifts toward you while you write (secondary: the shadow deepens). */
+.ll-writing { transition: box-shadow 0.45s cubic-bezier(0.4, 0, 0.2, 1), translate 0.45s cubic-bezier(0.4, 0, 0.2, 1); }
+.ll-writing:focus-within {
+  translate: 0 -3px;
+  box-shadow: 0 1px 0 rgba(26, 20, 17, 0.05), 0 44px 80px -40px rgba(26, 20, 17, 0.6), 0 0 0 1px rgba(180, 48, 42, 0.12);
+}
+.ll-to input { transition: border-color 0.3s ease, background-size 0.45s cubic-bezier(0.4, 0, 0.2, 1); }
+/* Ambient: the heart stamp breathes; the lock on a sealed envelope glows softly. */
+.ll-stamp svg { animation: ll-breathe 3.2s ease-in-out infinite; transform-origin: center; }
+@keyframes ll-breathe { 50% { transform: scale(1.08); } }
+.ll-lock { animation: ll-glow 2.6s ease-in-out infinite; }
+@keyframes ll-glow { 50% { box-shadow: 0 3px 14px -1px rgba(180, 48, 42, 0.55); } }
+/* Wax catches the light as you pass over an envelope. */
+.ll-wax { overflow: hidden; }
+.ll-wax::after {
+  content: ""; position: absolute; inset: -40%; transform: translateX(-120%) rotate(25deg);
+  background: linear-gradient(90deg, transparent 35%, rgba(255, 235, 228, 0.55) 50%, transparent 65%);
+}
+.ll-card:hover .ll-wax::after { transition: transform 0.9s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(120%) rotate(25deg); }
+/* Hover: the flap lifts a little and the seal rises with it (the card itself lifts via motion). */
+.ll-env { perspective: 600px; }
+.ll-env-flap { transform-origin: 50% 0; transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+.ll-env .ll-wax { transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+.ll-card:hover .ll-env:not(.is-sealed) .ll-env-flap, .ll-card:focus-visible .ll-env:not(.is-sealed) .ll-env-flap { transform: rotateX(38deg); }
+.ll-card:hover .ll-env:not(.is-sealed) .ll-wax { transform: translate(-50%, -70%); }
+.ll-card:hover .ll-env.is-sealed .ll-lock { animation-duration: 0.9s; }
+.ll-card { will-change: transform; }
+
+/* The 3D envelope used for sealing and opening */
+.ll-scene { position: relative; display: grid; place-items: center; gap: 14px; width: 100%; min-height: 330px; padding: 40px 0 20px; border: 0; background: none; color: inherit; font: inherit; cursor: default; }
+.ll-scene-open { cursor: pointer; }
+.ll-scene-hint { font: 11px/1 var(--font-meta); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); animation: ll-hint 1.8s ease-in-out infinite; }
+@keyframes ll-hint { 50% { opacity: 0.45; } }
+.ll-e3 { position: relative; width: min(320px, 78vw); aspect-ratio: 1.62; perspective: 900px; transform-style: preserve-3d; }
+.ll-e3 > span { position: absolute; }
+.ll-e3-back { inset: 0; border-radius: 10px; background: linear-gradient(170deg, #d9c19c, #cdb38b); box-shadow: 0 30px 50px -30px rgba(26, 20, 17, 0.7); }
+.ll-e3-paper {
+  left: 7%; right: 7%; top: 6%; height: 88%; z-index: 1; display: grid; align-content: start; gap: 11%; padding: 14% 10% 0;
+  border-radius: 4px; background: linear-gradient(180deg, #fffefa, #f8efdf); box-shadow: 0 2px 8px -3px rgba(26, 20, 17, 0.3);
+}
+.ll-e3-paper i { display: block; height: 3px; border-radius: 2px; background: rgba(92, 120, 160, 0.28); }
+.ll-e3-paper i:nth-child(1) { width: 45%; background: rgba(180, 48, 42, 0.4); }
+.ll-e3-paper i:nth-child(3) { width: 82%; }
+.ll-e3-paper i:nth-child(4) { width: 60%; }
+.ll-e3-front {
+  inset: 0; z-index: 2; border-radius: 10px;
+  background:
+    linear-gradient(to top right, #f6ead6 49.6%, transparent 50%) left bottom / 50.5% 64% no-repeat,
+    linear-gradient(to top left, #f1e3cc 49.6%, transparent 50%) right bottom / 50.5% 64% no-repeat,
+    linear-gradient(180deg, transparent 52%, #f3e6d1 52%) 0 0 / 100% 100% no-repeat;
+  box-shadow: inset 0 0 0 1px rgba(26, 20, 17, 0.08);
+}
+.ll-e3-to { position: absolute; left: 0; right: 0; bottom: 12%; text-align: center; font: 600 clamp(1.4rem, 5vw, 1.8rem)/1 var(--font-hand), cursive; color: #3b2a22; }
+.ll-e3-shadow { left: 0; right: 0; top: 0; height: 60%; z-index: 3; opacity: 0; background: radial-gradient(60% 80% at 50% 0%, rgba(26, 20, 17, 0.25), transparent 70%); pointer-events: none; }
+.ll-e3-flap {
+  left: 0; right: 0; top: 0; height: 58%; z-index: 4; transform-origin: 50% 0; backface-visibility: visible;
+  background: linear-gradient(180deg, #ead8ba, #ddc5a0); clip-path: polygon(0 0, 100% 0, 50% 100%);
+  border-radius: 10px 10px 0 0; filter: drop-shadow(0 3px 3px rgba(26, 20, 17, 0.15));
+}
+.ll-e3-seal { left: 50%; top: 58%; z-index: 6; width: 54px; height: 54px; margin: -27px 0 0 -27px; font-size: 22px; }
+.ll-e3-ring {
+  left: 50%; top: 58%; z-index: 5; width: 54px; height: 54px; margin: -27px 0 0 -27px; border-radius: 50%;
+  border: 2px solid rgba(214, 90, 80, 0.7); opacity: 0; pointer-events: none;
+}
+/* Reading: paragraphs keep one ruled line between them. */
+.ll-para { margin: 0; white-space: pre-wrap; }
+.ll-para + .ll-para { margin-top: var(--line-h); }
+.ll-paper.is-reading .ll-body { white-space: normal; }
+@media (prefers-reduced-motion: reduce) {
+  .ll-writing:focus-within { translate: none; }
+  .ll-card:hover .ll-env-flap { transform: none !important; }
+}
