@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useDesk } from "./trading-dashboard";
 import type { TraderReplay, TraderTrade } from "@/lib/trader";
-import { duration, REASON, rText, signed, tally, pct, when, type Agent } from "@/lib/trader-view";
+import { dayKey, dayName, duration, REASON, rText, signed, tally, pct, when, type Agent } from "@/lib/trader-view";
 
 const PAGE = 15;
 
@@ -98,24 +98,40 @@ export function TradeHistory({ trades, agents }: { trades: Closed[]; agents: Age
       ) : list.length === 0 ? (
         <p className="trade-muted">Nothing matches these filters.</p>
       ) : (
-        <TradeList trades={list} agents={agents} limit={limit} onMore={() => setLimit((n) => n + PAGE)} />
+        <TradeList trades={list} agents={agents} limit={limit} onMore={() => setLimit((n) => n + PAGE)} byDay />
       )}
     </section>
   );
 }
 
 /** Closed trades as rows that open into a replay chart and the trade's details. */
-export function TradeList({ trades, agents, limit, onMore, showAgent = true }: {
+export function TradeList({ trades, agents, limit, onMore, showAgent = true, byDay = false }: {
   trades: Closed[]; agents: Agent[]; limit: number; onMore: () => void; showAgent?: boolean;
+  /** Put a heading with the day's total above the first trade of each day. */
+  byDay?: boolean;
 }) {
-  const { mounted } = useDesk();
+  const { mounted, now, ccy } = useDesk();
   const name = (id: string) => agents.find((a) => a.id === id)?.name ?? id;
+  const days = new Map<string, { net: number; n: number }>();
+  if (byDay) for (const t of trades) {
+    const k = dayKey(t.closed, mounted), d = days.get(k) ?? { net: 0, n: 0 };
+    days.set(k, { net: d.net + t.profit, n: d.n + 1 });
+  }
   return (
     <div className="history">
-      {trades.slice(0, limit).map((t, i) => {
+      {trades.slice(0, limit).map((t, i, shown) => {
         const r = t.replay;
+        const k = byDay ? dayKey(t.closed, mounted) : "";
+        const d = byDay && (i === 0 || dayKey(shown[i - 1].closed, mounted) !== k) ? days.get(k) : undefined;
         return (
-          <details key={r?.id ?? `${t.closed}-${i}`} className={`history-item ${t.profit >= 0 ? "won" : "lost"}`}>
+          <Fragment key={r?.id ?? `${t.closed}-${i}`}>
+          {d && (
+            <h3 className="history-day">
+              <span>{dayName(k, now, mounted)}</span>
+              <small>{d.n} {d.n === 1 ? "trade" : "trades"} · <b className={d.net > 0 ? "pos" : d.net < 0 ? "neg" : ""}>{signed(d.net)} {ccy}</b></small>
+            </h3>
+          )}
+          <details className={`history-item ${t.profit >= 0 ? "won" : "lost"}`}>
             <summary>
               <span className="h-pair">{t.symbol} <small>{t.side}</small></span>
               <span className="h-agent">{showAgent ? name(t.bot) : REASON[t.reason] ?? t.reason}</span>
@@ -134,6 +150,7 @@ export function TradeList({ trades, agents, limit, onMore, showAgent = true }: {
               {!r && <div><dt>Lots</dt><dd>{t.lots}</dd></div>}
             </dl>
           </details>
+          </Fragment>
         );
       })}
       {trades.length > limit && (
