@@ -4690,3 +4690,151 @@ button.inv-row:focus-visible { outline: 2px solid var(--on-night); outline-offse
 .results-growth .trade-h { margin: 0 0 12px; color: var(--on-night); }
 .results-note { margin: 0; }
 @media (min-width: 900px) { .desk-hero-compact .desk-hero-grid { align-items: center; } }
+
+/* ─── Love letters (Time capsules page). Every class starts with ll- so nothing clashes with capsule cards. ── */
+.ll { margin-top: clamp(48px, 8vw, 96px); padding-top: clamp(28px, 5vw, 48px); border-top: 1px solid var(--line); }
+.ll-head { display: grid; gap: 8px; margin-bottom: 24px; }
+.ll-title { margin: 0; font: 400 clamp(2.2rem, 7vw, 3.6rem)/0.98 var(--font-display); letter-spacing: -0.01em; }
+.ll-title em { color: var(--cherry); }
+.ll-lede { margin: 0; max-width: 52ch; color: var(--ink-2); }
+.ll-note { padding: 14px 16px; border-radius: var(--r-sm); background: var(--paper-2); color: var(--ink-2); }
+
+/* The writing paper */
+.ll-desk { position: relative; }
+.ll-paper {
+  --line-h: 36px; --margin: clamp(34px, 6vw, 54px);
+  position: relative; display: grid; gap: 2px; max-width: 720px;
+  padding: 28px clamp(20px, 4vw, 44px) 22px calc(var(--margin) + 16px);
+  border-radius: 4px 4px 14px 4px; color: #2a1f19;
+  background:
+    linear-gradient(90deg, transparent calc(var(--margin) - 1px), rgba(196, 64, 58, 0.45) calc(var(--margin) - 1px), rgba(196, 64, 58, 0.45) var(--margin), transparent var(--margin)),
+    repeating-linear-gradient(180deg, transparent 0, transparent calc(var(--line-h) - 1px), rgba(92, 120, 160, 0.16) calc(var(--line-h) - 1px), rgba(92, 120, 160, 0.16) var(--line-h)),
+    radial-gradient(140% 100% at 0% 0%, #fffefa, #fcf6ea 55%, #f5ebdb);
+  background-position: 0 0, 0 22px, 0 0;
+  box-shadow: 0 1px 0 rgba(26, 20, 17, 0.05), 0 30px 60px -34px rgba(26, 20, 17, 0.55), 0 0 0 1px rgba(26, 20, 17, 0.05);
+  font: 400 clamp(1.5rem, 4vw, 1.75rem)/var(--line-h) var(--font-hand), cursive;
+}
+.ll-enter { animation: ll-in 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; }
+@keyframes ll-in { from { opacity: 0; transform: translateY(18px) rotate(-0.8deg); } }
+.ll-stamp {
+  position: absolute; top: 16px; right: 18px; display: grid; place-items: center; width: 46px; height: 54px;
+  background: #fff7f2; border: 2px dashed rgba(180, 48, 42, 0.45); border-radius: 3px; transform: rotate(4deg);
+  color: var(--cherry); box-shadow: 0 2px 6px -3px rgba(26, 20, 17, 0.3);
+}
+.ll-stamp svg { width: 22px; height: 22px; fill: currentColor; }
+.ll-date { margin: 0 62px 0 0; text-align: right; font: 12px/var(--line-h) var(--font-meta); letter-spacing: 0.06em; color: #8a7868; }
+.ll-to { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 10px; margin: 0; }
+.ll-to input {
+  flex: 1 1 140px; min-width: 0; max-width: 300px; padding: 0 4px; border: 0; border-bottom: 1.5px dashed rgba(180, 48, 42, 0.45);
+  background: transparent; color: var(--cherry-deep); font: inherit; font-weight: 600; outline: none;
+}
+.ll-to input:focus { border-bottom-style: solid; border-bottom-color: var(--cherry); }
+.ll-body {
+  display: block; width: 100%; min-height: calc(var(--line-h) * 6); margin: 0; padding: 0 0 0 1.2em; border: 0; resize: none; overflow: hidden;
+  background: transparent; color: inherit; font: inherit; line-height: var(--line-h); white-space: pre-wrap; overflow-wrap: anywhere; outline: none;
+}
+.ll-body::placeholder, .ll-to input::placeholder { color: #b3a395; }
+.ll-sign { display: flex; align-items: baseline; justify-content: flex-end; flex-wrap: wrap; gap: 0 6px; margin: 6px 0 0; }
+.ll-sign select {
+  appearance: none; padding: 0 4px; border: 0; border-bottom: 1.5px dashed rgba(180, 48, 42, 0.45); border-radius: 0;
+  background: transparent; color: inherit; font: inherit; cursor: pointer;
+}
+.ll-signature { flex-basis: 100%; text-align: right; font-size: 1.45em; font-weight: 600; color: var(--cherry-deep); transform: rotate(-3deg); transform-origin: right; }
+.ll-actions {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-top: 18px; padding-top: 16px;
+  border-top: 1px dashed rgba(61, 51, 44, 0.22); font: 14px/1.3 var(--font-ui);
+}
+.ll-later { display: inline-flex; align-items: center; gap: 7px; cursor: pointer; color: var(--ink-2); }
+.ll-later svg { width: 15px; height: 15px; }
+.ll-when { padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-sm); background: #fffdf8; font: 14px var(--font-ui); color: var(--ink); }
+.ll-count { font: 11px var(--font-meta); color: var(--muted); }
+.ll-send { margin-left: auto; gap: 9px; }
+.ll-err { margin: 8px 0 0; font: 14px/1.3 var(--font-ui); color: var(--cherry); }
+
+/* Wax seals */
+.ll-wax {
+  position: relative; display: inline-grid; place-items: center; width: 38px; height: 38px; border-radius: 47% 53% 50% 50% / 52% 48% 52% 48%; flex: none;
+  background: radial-gradient(circle at 34% 28%, #e2675e, #b3271f 55%, #7a140f);
+  color: #ffe6df; font: 600 15px/1 var(--font-display);
+  box-shadow: 0 3px 6px rgba(90, 15, 10, 0.4), inset 0 -3px 4px rgba(0, 0, 0, 0.25), inset 0 2px 2px rgba(255, 255, 255, 0.18);
+}
+.ll-wax::before { content: ""; position: absolute; inset: 5px; border-radius: 50%; border: 1px solid rgba(255, 220, 210, 0.35); }
+.ll-wax-sm { width: 24px; height: 24px; font-size: 11px; box-shadow: none; }
+.ll-wax-sm::before { inset: 3px; }
+
+/* Envelopes */
+.ll-env {
+  position: relative; display: block; width: 100%; aspect-ratio: 1.62; border-radius: 8px; overflow: hidden; isolation: isolate;
+  box-shadow: 0 18px 30px -22px rgba(26, 20, 17, 0.6), 0 0 0 1px rgba(26, 20, 17, 0.08);
+}
+.ll-env-back { position: absolute; inset: 0; background: linear-gradient(170deg, #f9efe0, #ecdcc3); }
+.ll-env-front {
+  position: absolute; inset: 0;
+  background:
+    linear-gradient(to top right, #f3e6d1 49.6%, transparent 50%) left bottom / 50.5% 62% no-repeat,
+    linear-gradient(to top left, #f0e2cb 49.6%, transparent 50%) right bottom / 50.5% 62% no-repeat;
+}
+.ll-env-flap {
+  position: absolute; inset: 0 0 auto 0; height: 56%; transform-origin: top;
+  background: linear-gradient(180deg, #e9d6b8, #e2cca9); clip-path: polygon(0 0, 100% 0, 50% 100%);
+  filter: drop-shadow(0 2px 2px rgba(26, 20, 17, 0.12)); transition: transform 0.45s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.ll-env .ll-wax { position: absolute; left: 50%; top: 56%; z-index: 3; transform: translate(-50%, -50%); transition: transform 0.35s ease; }
+.ll-postmark {
+  position: absolute; top: 10px; right: 10px; z-index: 3; padding: 5px 7px; border: 1.5px solid rgba(110, 90, 140, 0.5); border-radius: 50%;
+  font: 600 8.5px/1 var(--font-meta); letter-spacing: 0.08em; color: rgba(90, 70, 120, 0.75); transform: rotate(-12deg);
+}
+.ll-env-to {
+  position: absolute; left: 8%; right: 8%; bottom: 14%; z-index: 3; text-align: center;
+  font: 600 clamp(1.25rem, 3.4vw, 1.55rem)/1.1 var(--font-hand), cursive; color: #3b2a22;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ll-env-from { position: absolute; left: 0; right: 0; bottom: 5%; z-index: 3; text-align: center; font: 10px/1 var(--font-meta); letter-spacing: 0.05em; color: #8a7868; }
+.ll-lock {
+  position: absolute; top: 8px; left: 8px; z-index: 4; display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 8px; border-radius: var(--r-pill); background: var(--cherry); color: #fff3ef;
+  font: 600 10px/1 var(--font-meta); letter-spacing: 0.04em; box-shadow: 0 3px 8px -2px rgba(90, 15, 10, 0.45);
+}
+.ll-lock svg { width: 10px; height: 10px; }
+.ll-env.is-big { max-width: 320px; margin: 0 auto; }
+.ll-env.is-big .ll-wax { width: 52px; height: 52px; font-size: 21px; }
+
+.ll-shelves { display: grid; gap: 26px; margin-top: 36px; }
+.ll-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 18px; margin: 12px 0 0; padding: 0; list-style: none; }
+.ll-grid > li { animation: ll-drop 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; animation-delay: calc(var(--i, 0) * 0.07s); }
+@keyframes ll-drop { from { opacity: 0; transform: translateY(-14px) rotate(calc(var(--tilt, 0deg) * -3)); } }
+.ll-card {
+  display: grid; gap: 8px; width: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer;
+  transform: rotate(var(--tilt, 0deg)); transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.ll-card:hover, .ll-card:focus-visible { transform: rotate(0deg) translateY(-4px); }
+.ll-card:hover .ll-env:not(.is-sealed) .ll-env-flap, .ll-card:focus-visible .ll-env:not(.is-sealed) .ll-env-flap { transform: scaleY(0.72); }
+.ll-card:hover .ll-env:not(.is-sealed) .ll-wax { transform: translate(-50%, -78%); }
+.ll-card:focus-visible { outline: none; }
+.ll-card:focus-visible .ll-env { box-shadow: 0 0 0 3px var(--cherry-soft), 0 0 0 1px var(--cherry); }
+.ll-card-meta { padding-left: 4px; font: 11px/1.2 var(--font-meta); letter-spacing: 0.03em; color: var(--muted); }
+
+/* Sending and reading */
+.ll-sending { display: grid; place-items: center; min-height: 300px; }
+.ll-sending .ll-env { width: min(320px, 80vw); }
+.ll-read { display: grid; gap: 16px; }
+.ll-paper.is-reading { max-width: none; }
+.ll-paper.is-reading .ll-body { min-height: 0; padding-left: 1.2em; }
+.ll-sealed { display: grid; gap: 18px; justify-items: center; padding: 10px 0 18px; text-align: center; color: var(--ink-2); }
+.ll-sealed p { margin: 0; max-width: 34ch; }
+.ll-remove { justify-self: start; }
+.ll-from { display: flex; align-items: center; gap: 6px; margin: 0; font: 12px var(--font-meta); color: var(--muted); }
+.ll-from svg { width: 14px; height: 14px; }
+@media (max-width: 560px) {
+  .ll-paper { --line-h: 33px; padding-top: 22px; }
+  .ll-stamp { width: 38px; height: 44px; top: 12px; right: 12px; }
+  .ll-date { margin-right: 46px; }
+  .ll-send { margin-left: 0; width: 100%; justify-content: center; }
+  .ll-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .ll-env-from { display: none; }
+  .ll-env-to { bottom: 10%; font-size: 1.05rem; }
+  .ll-env .ll-wax { width: 30px; height: 30px; font-size: 12px; }
+  .ll-postmark { top: 6px; right: 6px; padding: 4px 5px; font-size: 7px; }
+  .ll-lock { top: 6px; left: 6px; padding: 3px 7px; font-size: 9px; }
+}
+@media (prefers-reduced-motion: reduce) { .ll-card { transform: none; } }
