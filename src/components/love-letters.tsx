@@ -1,16 +1,14 @@
 "use client";
 
 import { AnimatePresence, motion, useAnimate, useReducedMotion } from "motion/react";
-import { Lock, PenLine, Plane, Send, Trash2 } from "lucide-react";
+import { Lock, PenLine, Send, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Letter } from "@/lib/letters";
 import { Sheet } from "./sheet";
 import { useToast } from "./toast";
 
 /*
- * Airmail: letters travel like post to the sky (blue-and-red airmail envelopes, a plane stamp, a postmark,
- * thin airmail paper; sending stamps the envelope and flies it away along a dotted route).
- * Layout as before. A dark panel at the very top of the page holds the newest letter for you as a
+ * Letters by candlelight. A dark panel at the very top of the page holds the newest letter for you as a
  * large envelope (marked New until you open it) and a button to write one; every other letter sits in a
  * row of small envelopes beneath. Letters themselves are fine stationery: cream cotton paper, a thin
  * printed border, a monogram, and the site's serif. One premium motion voice throughout.
@@ -182,15 +180,14 @@ function Featured({ letter: l, now, fresh, onOpen }: { letter: Letter; now: numb
   );
 }
 
-/** An airmail envelope: striped border, a plane stamp, a round postmark with the sender's initial, the name across it. */
+/** A cream envelope with a crisp flap, the name written across it, and a deep red wax seal. */
 function EnvelopeArt({ name, wax, small = false, sealed = false, live = false }: { name: string; wax: string; small?: boolean; sealed?: boolean; live?: boolean }) {
   return (
     <span className={`ll-env${small ? " is-small" : ""}${sealed ? " is-sealed" : ""}${live ? " is-live" : ""}`} aria-hidden="true">
       <span className="ll-env-body" />
-      <span className="ll-stamp"><Plane /><b>Mumaa post</b></span>
-      <span className="ll-postmark"><b>{wax}</b></span>
-      {!small && <span className="ll-env-label">Par avion · By airmail</span>}
+      <span className="ll-env-flap" />
       {name && <span className="ll-env-name">{name}</span>}
+      <span className="ll-seal">{wax}</span>
       {sealed && <span className="ll-env-lock"><Lock /></span>}
     </span>
   );
@@ -249,7 +246,6 @@ function Composer({ name, onSent }: { name: string; onSent: (l: Letter) => void 
         <motion.form key="paper" className="ll-compose" onSubmit={(e) => { e.preventDefault(); send(); }}
           exit={{ scaleY: 0.2, y: -10, opacity: 0, transition: { duration: 0.42, ease: LEAVE } }} style={{ transformOrigin: "50% 0%" }}>
           <motion.div className="ll-paper" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ ...PAPER, delay: 0.1 }}>
-            <span className="ll-tag" aria-hidden="true"><Plane /> Par avion</span>
             <span className="ll-monogram" aria-hidden="true">{initial(name)}<i>&amp;</i>{to ? initial(to) : "·"}</span>
             <p className="ll-date">{today || " "}</p>
             <label className="ll-to">
@@ -279,11 +275,11 @@ function Composer({ name, onSent }: { name: string; onSent: (l: Letter) => void 
               )}
             </AnimatePresence>
             <motion.button type="submit" className="btn btn-primary ll-send" disabled={!ready || busy} whileTap={ready ? { scale: 0.97 } : undefined}>
-              <motion.span className="ll-send-plane" aria-hidden="true"
-                animate={busy ? { x: [0, 4, 0], y: [0, -3, 0] } : { x: 0, y: 0 }} transition={busy ? { duration: 0.7, repeat: Infinity, ease: "easeInOut" } : { duration: 0.2 }}>
-                <Plane />
+              <motion.span className="ll-seal ll-seal-sm" aria-hidden="true"
+                animate={busy ? { rotate: [0, -12, 12, 0] } : { rotate: 0 }} transition={busy ? { duration: 0.6, repeat: Infinity, ease: "easeInOut" } : { duration: 0.2 }}>
+                {initial(name)}
               </motion.span>
-              {busy ? "Posting…" : later ? "Seal it for later" : "Send by airmail"} <Send aria-hidden="true" />
+              {busy ? "Sealing…" : later ? "Seal it" : "Seal & send"} <Send aria-hidden="true" />
             </motion.button>
           </div>
           <AnimatePresence>
@@ -300,25 +296,31 @@ function Composer({ name, onSent }: { name: string; onSent: (l: Letter) => void 
   );
 }
 
-/** Sending (~2.6 s): the letter folds in thirds and slips into the envelope, the flap shuts, the plane
- * stamp is pressed on, the postmark lands, then the envelope takes off along a dotted route behind a plane. */
+/** Sealing and sending (~3 s): the letter folds in thirds and slips in, the flap shuts, a drop of red wax
+ * falls and splashes, the seal is pressed into it, little hearts float up, and the envelope sways and flies
+ * away along a dotted trail. */
 function SendScene({ letter, name, onDone }: { letter: Letter; name: string; onDone: () => void }) {
   const [scope, animate] = useAnimate();
   useEffect(() => {
     let live = true;
     (async () => {
       const $ = (s: string) => scope.current?.querySelector(s) as Element;
+      const $$ = (s: string) => Array.from(scope.current?.querySelectorAll(s) ?? []) as Element[];
       await animate(scope.current, { opacity: [0, 1], y: [24, 0] }, { duration: 0.4, ease: ENTER });
-      await animate($(".ll-am-paper"), { scaleY: [1, 0.67, 0.34] }, { duration: 0.5, ease: EASE, times: [0, 0.5, 1] });
-      await animate($(".ll-am-paper"), { y: ["-60%", "30%"] }, { duration: 0.42, ease: EASE });
-      await animate($(".ll-am-flap"), { rotateX: [180, 0] }, { duration: 0.4, ease: EASE });
-      await animate($(".ll-am-stamp"), { scale: [1.8, 0.92, 1], opacity: [0, 1, 1], rotate: [-18, 4, 3] }, { duration: 0.38, ease: ENTER, times: [0, 0.6, 1] });
-      animate($(".ll-am-ink"), { scale: [0.5, 1.9], opacity: [0.45, 0] }, { duration: 0.55, ease: ENTER });
-      await animate($(".ll-am-post"), { scale: [1.5, 1], opacity: [0, 0.85], rotate: [10, -8] }, { duration: 0.3, ease: ENTER });
-      await wait(260);
-      animate($(".ll-am-route path"), { pathLength: [0, 1], opacity: [0, 1] }, { duration: 0.75, ease: EASE });
-      animate($(".ll-am-plane"), { offsetDistance: ["0%", "100%"], opacity: [0, 1, 1, 0] }, { duration: 0.9, ease: LEAVE });
-      await animate($(".ll-am-env"), { x: [0, 30, 200], y: [0, -40, -170], rotate: [0, -4, -14], scale: [1, 0.85, 0.4], opacity: [1, 1, 0] },
+      await animate($(".ll-e3-paper"), { y: "-115%", scaleY: [1, 0.66, 0.34] }, { duration: 0.5, ease: EASE, times: [0, 0.5, 1] });
+      await animate($(".ll-e3-paper"), { y: ["-115%", "8%"] }, { duration: 0.45, ease: EASE });
+      animate($(".ll-e3-shadow"), { opacity: [0, 0.5] }, { duration: 0.4, ease: EASE });
+      await animate($(".ll-e3-flap"), { rotateX: [180, 0] }, { duration: 0.42, ease: EASE });
+      await animate($(".ll-e3-drip"), { y: [-120, 0], opacity: [0, 1, 1], scaleY: [1.5, 1.3, 1] }, { duration: 0.32, ease: [0.5, 0, 1, 1] });
+      animate($(".ll-e3-drip"), { scaleX: [1, 2.6], scaleY: [1, 0.35], opacity: [1, 0] }, { duration: 0.2, ease: EASE });
+      animate($(".ll-e3-ring"), { scale: [0.4, 2.4], opacity: [0.55, 0] }, { duration: 0.7, ease: ENTER });
+      await animate($(".ll-e3-seal"), { scale: [1.9, 0.86, 1], opacity: [0, 1, 1], rotate: [-20, 4, 0] }, { duration: 0.42, ease: ENTER, times: [0, 0.6, 1] });
+      $$(".ll-e3-heart").forEach((h, i) => animate(h, { y: [0, -90 - i * 14], x: [0, (i - 2) * 16], opacity: [0, 1, 0], scale: [0.5, 1.1, 0.8], rotate: [0, (i - 2) * 12] },
+        { duration: 1.1, ease: ENTER, delay: i * 0.07 }));
+      await wait(380);
+      await animate(scope.current, { rotate: [0, -3, 3, 0], y: [0, 4, 0] }, { duration: 0.4, ease: "easeInOut" });
+      animate($(".ll-e3-trail path"), { pathLength: [0, 1], opacity: [0, 1, 0.6] }, { duration: 0.8, ease: EASE });
+      await animate($(".ll-e3-fly"), { x: [0, 40, 230], y: [0, -50, -190], rotate: [0, -6, -16], scale: [1, 0.85, 0.4], opacity: [1, 1, 0] },
         { duration: 0.85, ease: LEAVE, times: [0, 0.35, 1] });
       await wait(150);
       if (live) onDone();
@@ -328,21 +330,22 @@ function SendScene({ letter, name, onDone }: { letter: Letter; name: string; onD
 
   return (
     <div className="ll-scene" aria-live="polite">
-      <span className="sr-only">Sending your letter to {letter.recipient} by airmail…</span>
-      <div ref={scope} className="ll-am" aria-hidden="true">
-        <svg className="ll-am-route" viewBox="0 0 300 220" preserveAspectRatio="none">
-          <path d="M150 150 C 200 130, 240 80, 296 8" pathLength={1} style={{ opacity: 0 }} />
+      <span className="sr-only">Sealing your letter to {letter.recipient}…</span>
+      <div ref={scope} className="ll-e3" aria-hidden="true">
+        <svg className="ll-e3-trail" viewBox="0 0 300 220" preserveAspectRatio="none">
+          <path d="M150 140 C 190 150, 230 90, 210 70 C 195 55, 175 75, 195 90 C 225 110, 260 40, 296 6" pathLength={1} style={{ opacity: 0 }} />
         </svg>
-        <span className="ll-am-plane" style={{ opacity: 0 }}><Plane /></span>
-        <div className="ll-am-env">
-          <span className="ll-am-back" />
-          <span className="ll-am-paper" style={{ transform: "translateY(-60%)" }}><i /><i /><i /><i /></span>
-          <span className="ll-am-front"><span className="ll-am-to">{letter.recipient}</span></span>
-          <span className="ll-am-flap" style={{ transform: "rotateX(180deg)" }} />
-          <span className="ll-am-ink" />
-          <span className="ll-stamp ll-am-stamp" style={{ opacity: 0 }}><Plane /><b>Mumaa post</b></span>
-          <span className="ll-postmark ll-am-post" style={{ opacity: 0 }}><b>{initial(name)}</b></span>
-        </div>
+        <span className="ll-e3-fly">
+          <span className="ll-e3-back" />
+          <span className="ll-e3-paper"><i /><i /><i /><i /></span>
+          <span className="ll-e3-front"><span className="ll-e3-to">{letter.recipient}</span></span>
+          <span className="ll-e3-shadow" />
+          <span className="ll-e3-flap" style={{ transform: "rotateX(180deg)" }} />
+          <span className="ll-e3-drip" style={{ opacity: 0 }} />
+          <span className="ll-e3-ring" />
+          <span className="ll-seal ll-e3-seal" style={{ opacity: 0 }}>{initial(name)}</span>
+        {[0, 1, 2, 3, 4].map((i) => <span key={i} className="ll-e3-heart" style={{ left: `${30 + i * 10}%` }}>♥</span>)}
+        </span>
       </div>
     </div>
   );
@@ -383,7 +386,6 @@ function Reading({ letter: l, mine, onDeleted }: { letter: Letter; mine: boolean
         <motion.article className="ll-paper is-reading"
           initial={reduce ? false : { opacity: 0, y: 30, scaleY: 0.6 }} animate={{ opacity: 1, y: 0, scaleY: 1 }}
           transition={{ ...PAPER, opacity: { duration: 0.3, ease: EASE } }} style={{ transformOrigin: "50% 0%" }}>
-          <span className="ll-tag" aria-hidden="true"><Plane /> Par avion</span>
           <span className="ll-monogram" aria-hidden="true">{initial(l.authorName)}<i>&amp;</i>{initial(l.recipient)}</span>
           <motion.p className="ll-date" initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25, duration: 0.4 }}>{day(l.createdAt)}</motion.p>
           <motion.p className="ll-to" initial={reduce ? false : { opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.45, ease: ENTER }}>
@@ -430,8 +432,9 @@ function Reading({ letter: l, mine, onDeleted }: { letter: Letter; mine: boolean
   );
 }
 
-/** Opening (~1.8 s): the envelope drops in, the tear strip rips away along the top, the flap lifts, and the
- * letter rises out folded and opens out fold by fold. Tapping skips ahead. */
+/** Opening (~2 s): the envelope drops in and settles, the wax seal cracks in two and the halves tumble
+ * away, the flap swings open, and the letter rises out still folded and opens fold by fold as hearts drift up.
+ * Tapping skips ahead. */
 function OpenScene({ letter, onOpened }: { letter: Letter; onOpened: () => void }) {
   const [scope, animate] = useAnimate();
   const done = useRef(false);
@@ -440,12 +443,21 @@ function OpenScene({ letter, onOpened }: { letter: Letter; onOpened: () => void 
     let live = true;
     (async () => {
       const $ = (s: string) => scope.current?.querySelector(s) as Element;
-      await animate(scope.current, { opacity: [0, 1], y: [-40, 6, 0], rotate: [-6, 1, 0] }, { duration: 0.5, ease: ENTER, times: [0, 0.7, 1] });
-      await animate($(".ll-am-tear"), { clipPath: ["inset(0 0% 0 0)", "inset(0 0% 0 100%)"] }, { duration: 0.38, ease: EASE });
-      await animate($(".ll-am-flap"), { rotateX: 180 }, { duration: 0.35, ease: EASE });
-      animate($(".ll-am-flap"), { zIndex: 0 }, { duration: 0 });
-      await animate($(".ll-am-paper"), { y: ["30%", "-70%"] }, { duration: 0.4, ease: ENTER });
-      await animate($(".ll-am-paper"), { scaleY: [0.34, 0.67, 1] }, { duration: 0.35, ease: EASE, times: [0, 0.5, 1] });
+      const $$ = (s: string) => Array.from(scope.current?.querySelectorAll(s) ?? []) as Element[];
+      await animate(scope.current, { opacity: [0, 1], y: [-50, 8, 0], rotate: [-5, 1.5, 0] }, { duration: 0.55, ease: ENTER, times: [0, 0.7, 1] });
+      await animate($(".ll-e3-crack"), { opacity: [0, 1], scaleY: [0, 1] }, { duration: 0.18, ease: EASE });
+      animate($(".ll-e3-half.is-l"), { x: -46, y: 70, rotate: -50, opacity: 0 }, { duration: 0.6, ease: LEAVE });
+      animate($(".ll-e3-half.is-r"), { x: 46, y: 80, rotate: 60, opacity: 0 }, { duration: 0.6, ease: LEAVE });
+      animate($(".ll-e3-crack"), { opacity: 0 }, { duration: 0.1 });
+      animate($(".ll-e3-shadow"), { opacity: 0 }, { duration: 0.3 });
+      await wait(160);
+      await animate($(".ll-e3-flap"), { rotateX: 180 }, { duration: 0.45, ease: EASE });
+      animate($(".ll-e3-flap"), { zIndex: 0 }, { duration: 0 });
+      await animate($(".ll-e3-paper"), { y: "-78%" }, { duration: 0.42, ease: ENTER });
+      $$(".ll-e3-heart").forEach((h, i) => animate(h, { y: [0, -110 - i * 10], x: [0, (i - 2) * 18], opacity: [0, 1, 0], scale: [0.5, 1, 0.7] },
+        { duration: 1.2, ease: ENTER, delay: i * 0.06 }));
+      await animate($(".ll-e3-paper"), { scaleY: [0.34, 0.67, 1] }, { duration: 0.4, ease: EASE, times: [0, 0.5, 1] });
+      await wait(120);
       if (live) finish();
     })();
     return () => { live = false; };
@@ -453,16 +465,16 @@ function OpenScene({ letter, onOpened }: { letter: Letter; onOpened: () => void 
 
   return (
     <button type="button" className="ll-scene ll-scene-open" onClick={finish} aria-label="Open the letter">
-      <div ref={scope} className="ll-am">
-        <div className="ll-am-env">
-          <span className="ll-am-back" />
-          <span className="ll-am-paper" style={{ transform: "translateY(30%) scaleY(0.34)" }}><i /><i /><i /><i /></span>
-          <span className="ll-am-front"><span className="ll-am-to">{letter.recipient}</span></span>
-          <span className="ll-am-flap" />
-          <span className="ll-am-tear" />
-          <span className="ll-stamp ll-am-stamp" style={{ transform: "rotate(3deg)" }}><Plane /><b>Mumaa post</b></span>
-          <span className="ll-postmark ll-am-post" style={{ opacity: 0.85, transform: "rotate(-8deg)" }}><b>{initial(letter.authorName)}</b></span>
-        </div>
+      <div ref={scope} className="ll-e3">
+        <span className="ll-e3-back" />
+        <span className="ll-e3-paper" style={{ transform: "translateY(8%) scaleY(0.34)" }}><i /><i /><i /><i /></span>
+        <span className="ll-e3-front"><span className="ll-e3-to">{letter.recipient}</span></span>
+        <span className="ll-e3-shadow" style={{ opacity: 0.5 }} />
+        <span className="ll-e3-flap" />
+        <span className="ll-seal ll-e3-seal ll-e3-half is-l">{initial(letter.authorName)}</span>
+        <span className="ll-seal ll-e3-seal ll-e3-half is-r">{initial(letter.authorName)}</span>
+        <span className="ll-e3-crack" style={{ opacity: 0 }} />
+        {[0, 1, 2, 3, 4].map((i) => <span key={i} className="ll-e3-heart" style={{ left: `${30 + i * 10}%` }}>♥</span>)}
       </div>
       <span className="ll-scene-hint">Tap to open</span>
     </button>
