@@ -14,10 +14,11 @@ export default async function TimeCapsulesPage() {
     listLetters().then((l): { list: Letter[]; error: string | null } => ({ list: l, error: null }))
       .catch((e: unknown) => ({ list: [], error: e instanceof Error ? e.message : "Letters could not be loaded." })),
   ]);
+  // Letters come first: the newest one waiting for you is the first thing on the page.
   return (
     <>
-      <SharedModule type="capsule" entries={entries} currentEmail={session.email} />
       <LoveLetters initial={letters.list} error={letters.error} currentEmail={session.email} currentName={session.name.trim().split(/\s+/)[0] || session.name} />
+      <SharedModule type="capsule" entries={entries} currentEmail={session.email} />
     </>
   );
 }

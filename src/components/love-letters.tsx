@@ -1,53 +1,75 @@
 "use client";
 
-import { AnimatePresence, motion, useAnimate, useReducedMotion, type Variants } from "motion/react";
-import { Feather, Heart, Lock, Send, Trash2 } from "lucide-react";
-import { Caveat } from "next/font/google";
-import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion, useAnimate, useReducedMotion } from "motion/react";
+import { Lock, PenLine, Send, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Letter } from "@/lib/letters";
 import { Sheet } from "./sheet";
 import { useToast } from "./toast";
 
-/** Handwriting for the words on the paper and the names on the envelopes. */
-const hand = Caveat({ subsets: ["latin"], weight: ["400", "600"], variable: "--font-hand", display: "swap" });
-
 /*
- * Motion: one "premium" voice for the whole section. A single signature curve for movement on screen,
- * an emphasised curve for things arriving, an accelerating one for things leaving, 350–600ms moves,
- * and paper that settles with only a whisper of overshoot. Reduced motion skips every sequence.
+ * Letters by candlelight. A dark panel at the very top of the page holds the newest letter for you as a
+ * large envelope (marked New until you open it) and a button to write one; every other letter sits in a
+ * row of small envelopes beneath. Letters themselves are fine stationery: cream cotton paper, a thin
+ * printed border, a monogram, and the site's serif. One premium motion voice throughout.
  */
 const EASE = [0.4, 0, 0.2, 1] as const;     // signature
 const ENTER = [0.05, 0.7, 0.1, 1] as const; // arrivals
 const LEAVE = [0.3, 0, 1, 1] as const;      // departures
-const PAPER = { type: "spring", stiffness: 260, damping: 26, mass: 0.9 } as const; // ~3% overshoot
+const PAPER = { type: "spring", stiffness: 260, damping: 26, mass: 0.9 } as const;
 
 const CLOSINGS = ["Forever yours", "All my love", "Yours, always", "With every heartbeat", "Love you endlessly"];
+const SEEN = "mumaa.letters.seen.v1";
 
 const day = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
-const stampDay = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { day: "2-digit", month: "short" }).toUpperCase();
 const initial = (name: string) => name.trim().charAt(0).toUpperCase() || "♥";
 const daysUntil = (iso: string, now: number) => Math.max(0, Math.ceil((Date.parse(iso) - now) / 86_400_000));
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+function since(iso: string, now: number) {
+  const m = Math.max(0, Math.round((now - Date.parse(iso)) / 60_000));
+  if (m < 1) return "just now";
+  if (m < 60) return `${m} min ago`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `${h} ${h === 1 ? "hour" : "hours"} ago`;
+  const d = Math.round(h / 24);
+  return d === 1 ? "yesterday" : `${d} days ago`;
+}
+const isSealed = (l: Letter, now: number | null) => l.sealed && !(now !== null && l.openAt && Date.parse(l.openAt) <= now);
 
-const rise: Variants = {
-  hidden: { opacity: 0, y: 18 },
-  shown: (i: number = 0) => ({ opacity: 1, y: 0, transition: { duration: 0.6, ease: ENTER, delay: i * 0.08 } }),
-};
+/** Which letters you have opened on this device, so new ones can say so. */
+function useSeen() {
+  const [seen, setSeen] = useState<Set<string> | null>(null);
+  useEffect(() => {
+    try { setSeen(new Set(JSON.parse(localStorage.getItem(SEEN) ?? "[]") as string[])); } catch { setSeen(new Set()); }
+  }, []);
+  const mark = useCallback((id: string) => {
+    setSeen((cur) => {
+      const next = new Set(cur ?? []);
+      next.add(id);
+      try { localStorage.setItem(SEEN, JSON.stringify([...next].slice(-300))); } catch { /* private mode */ }
+      return next;
+    });
+  }, []);
+  return { seen, mark };
+}
 
-/**
- * Write to your love: letter paper in handwriting, folded into an envelope, sealed with wax and sent,
- * optionally kept sealed until a day you choose. Below, letters received and sent, as envelopes that
- * open with a little ceremony.
- */
 export function LoveLetters({ initial: start, error, currentEmail, currentName }: {
   initial: Letter[]; error: string | null; currentEmail: string; currentName: string;
 }) {
   const [letters, setLetters] = useState(start);
-  const [open, setOpen] = useState<Letter | null>(null);
+  const [reading, setReading] = useState<Letter | null>(null);
+  const [writing, setWriting] = useState(false);
   const [now, setNow] = useState<number | null>(null);
+  const { seen, mark } = useSeen();
   const me = currentEmail.toLowerCase();
-  const forYou = letters.filter((l) => l.authorEmail !== me);
-  const fromYou = letters.filter((l) => l.authorEmail === me);
+  const received = letters.filter((l) => l.authorEmail !== me);
+  // The letter that takes the stage: the newest one for you that you haven't opened, else the newest for you.
+  const featured = useMemo(
+    () => received.find((l) => seen && !seen.has(l.id) && !isSealed(l, now)) ?? received[0] ?? null,
+    [received, seen, now],
+  );
+  const rest = letters.filter((l) => l.id !== featured?.id);
+  const unread = seen ? received.filter((l) => !seen.has(l.id) && !isSealed(l, now)).length : 0;
 
   useEffect(() => {
     setNow(Date.now());
@@ -61,33 +83,113 @@ export function LoveLetters({ initial: start, error, currentEmail, currentName }
     fetch("/api/letters", { cache: "no-store" }).then((r) => r.json()).then((r: { letters?: Letter[] }) => r.letters && setLetters(r.letters)).catch(() => {});
   }, [now, letters]);
 
+  const open = (l: Letter) => { setReading(l); if (!isSealed(l, now)) mark(l.id); };
+
   return (
-    <section className={`ll ${hand.variable}`} aria-labelledby="ll-h">
-      <motion.header className="ll-head" initial="hidden" whileInView="shown" viewport={{ once: true, amount: 0.6 }}>
-        <motion.span className="eyebrow" variants={rise} custom={0}>Letters</motion.span>
-        <motion.h2 className="ll-title" id="ll-h" variants={rise} custom={1}>Write to your <em>love.</em></motion.h2>
-        <motion.p className="ll-lede" variants={rise} custom={2}>Put it on paper, seal it with wax, and send it. Or keep it sealed until a day that matters.</motion.p>
-      </motion.header>
+    <section className="ll" aria-labelledby="ll-h">
+      <span className="ll-glow" aria-hidden="true" />
+      <motion.div className="ll-top" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: ENTER }}>
+        <div className="ll-heading">
+          <span className="ll-eyebrow">Letters{unread > 0 && <b className="ll-new-dot" aria-label={`${unread} new`}>{unread} new</b>}</span>
+          <h2 className="ll-title" id="ll-h">Words for <em>each other.</em></h2>
+        </div>
+        {!error && (
+          <motion.button type="button" className="ll-write" onClick={() => setWriting(true)} whileTap={{ scale: 0.97 }} transition={{ duration: 0.12 }}>
+            <PenLine aria-hidden="true" /> Write a letter
+          </motion.button>
+        )}
+      </motion.div>
 
-      {error ? <p className="ll-note">{error}</p> : <Composer name={currentName} onSent={(l) => setLetters((cur) => [l, ...cur])} />}
+      {error ? (
+        <p className="ll-note">{error}</p>
+      ) : featured ? (
+        <Featured letter={featured} now={now} fresh={!!seen && !seen.has(featured.id) && !isSealed(featured, now)} onOpen={() => open(featured)} />
+      ) : (
+        <motion.div className="ll-empty" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: ENTER, delay: 0.15 }}>
+          <EnvelopeArt name="" wax="♥" />
+          <p>No letter for you yet. Be the first to write one.</p>
+        </motion.div>
+      )}
 
-      {letters.length > 0 && (
-        <div className="ll-shelves">
-          {forYou.length > 0 && <Shelf title="For you" letters={forYou} me={me} now={now} onOpen={setOpen} />}
-          {fromYou.length > 0 && <Shelf title="You sent" letters={fromYou} me={me} now={now} onOpen={setOpen} />}
+      {rest.length > 0 && (
+        <div className="ll-row-wrap">
+          <span className="ll-row-label">All letters</span>
+          <ul className="ll-row">
+            <AnimatePresence initial={false}>
+              {rest.map((l, i) => {
+                const mine = l.authorEmail === me;
+                const sealed = isSealed(l, now);
+                const fresh = !mine && !!seen && !seen.has(l.id) && !sealed;
+                return (
+                  <motion.li key={l.id} layout initial={{ opacity: 0, y: 14, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2, ease: LEAVE } }}
+                    transition={{ ...PAPER, delay: 0.15 + Math.min(i, 6) * 0.05 }}>
+                    <motion.button type="button" className="ll-mini" onClick={() => open(l)} whileHover={{ y: -4 }} whileTap={{ scale: 0.97 }}
+                      transition={{ duration: 0.3, ease: EASE }}
+                      aria-label={`${mine ? `Your letter to ${l.recipient}` : `Letter from ${l.authorName}`}${sealed ? ", still sealed" : ""}${fresh ? ", new" : ""}`}>
+                      <EnvelopeArt name={mine ? l.recipient : l.authorName} wax={initial(l.authorName)} small sealed={sealed} />
+                      <span className="ll-mini-text">
+                        <b>{mine ? `To ${l.recipient}` : `From ${l.authorName}`}{fresh && <i className="ll-new">New</i>}</b>
+                        <small>{now === null ? " " : sealed && l.openAt ? `Opens in ${daysUntil(l.openAt, now)} days` : since(l.createdAt, now)}</small>
+                      </span>
+                    </motion.button>
+                  </motion.li>
+                );
+              })}
+            </AnimatePresence>
+          </ul>
         </div>
       )}
 
-      <Sheet open={!!open} onClose={() => setOpen(null)} eyebrow={open && open.authorEmail === me ? "You wrote" : "A letter for you"}
-        title={open ? (open.authorEmail === me ? <>To <em>{open.recipient}</em></> : <>From <em>{open.authorName}</em></>) : ""}>
-        {open && (
-          <div className={hand.variable}>
-            <Reading key={open.id} letter={open} mine={open.authorEmail === me}
-              onDeleted={() => { setLetters((cur) => cur.filter((l) => l.id !== open.id)); setOpen(null); }} />
-          </div>
+      <Sheet open={writing} onClose={() => setWriting(false)} eyebrow="A letter" title={<>Write to your <em>love.</em></>}>
+        {writing && <Composer name={currentName} onSent={(l) => { setLetters((cur) => [l, ...cur]); setWriting(false); }} />}
+      </Sheet>
+
+      <Sheet open={!!reading} onClose={() => setReading(null)} eyebrow={reading && reading.authorEmail === me ? "You wrote" : "A letter for you"}
+        title={reading ? (reading.authorEmail === me ? <>To <em>{reading.recipient}</em></> : <>From <em>{reading.authorName}</em></>) : ""}>
+        {reading && (
+          <Reading key={reading.id} letter={reading} mine={reading.authorEmail === me}
+            onDeleted={() => { setLetters((cur) => cur.filter((l) => l.id !== reading.id)); setReading(null); }} />
         )}
       </Sheet>
     </section>
+  );
+}
+
+/* ─── The newest letter, on stage ─────────────────────────────────────── */
+
+function Featured({ letter: l, now, fresh, onOpen }: { letter: Letter; now: number | null; fresh: boolean; onOpen: () => void }) {
+  const sealed = isSealed(l, now);
+  return (
+    <motion.button type="button" className="ll-stage" onClick={onOpen}
+      initial={{ opacity: 0, y: 24, rotate: -1.5 }} animate={{ opacity: 1, y: 0, rotate: 0 }} transition={{ ...PAPER, delay: 0.12 }}
+      whileHover="hover" whileTap={{ scale: 0.985 }}
+      aria-label={`${sealed ? "Sealed letter" : "Open the letter"} from ${l.authorName}`}>
+      <motion.span className="ll-stage-env" variants={{ hover: { y: -6, rotate: -0.6 } }} transition={{ duration: 0.4, ease: EASE }}>
+        <EnvelopeArt name={l.recipient} wax={initial(l.authorName)} sealed={sealed} live={fresh} />
+      </motion.span>
+      <span className="ll-stage-text">
+        {fresh && <span className="ll-new">New</span>}
+        <span className="ll-stage-from">From {l.authorName}</span>
+        <span className="ll-stage-when">
+          {now === null ? " " : sealed && l.openAt ? <><Lock aria-hidden="true" /> Sealed · opens {day(l.openAt)}</> : `Arrived ${since(l.createdAt, now)}`}
+        </span>
+        <span className="ll-stage-cta">{sealed ? "See it" : "Open the letter"} →</span>
+      </span>
+    </motion.button>
+  );
+}
+
+/** A cream envelope with a crisp flap, the name written across it, and a deep red wax seal. */
+function EnvelopeArt({ name, wax, small = false, sealed = false, live = false }: { name: string; wax: string; small?: boolean; sealed?: boolean; live?: boolean }) {
+  return (
+    <span className={`ll-env${small ? " is-small" : ""}${sealed ? " is-sealed" : ""}${live ? " is-live" : ""}`} aria-hidden="true">
+      <span className="ll-env-body" />
+      <span className="ll-env-flap" />
+      {name && <span className="ll-env-name">{name}</span>}
+      <span className="ll-seal">{wax}</span>
+      {sealed && <span className="ll-env-lock"><Lock /></span>}
+    </span>
   );
 }
 
@@ -108,20 +210,16 @@ function Composer({ name, onSent }: { name: string; onSent: (l: Letter) => void 
   const reduce = useReducedMotion();
   const ready = to.trim().length > 0 && body.trim().length > 0 && (!later || !!openAt);
 
-  // Dates are in your own time, so they are filled in once the page runs in the browser.
   useEffect(() => setToday(day(new Date().toISOString())), []);
-
-  // The paper grows with the letter instead of scrolling inside a little box.
   useEffect(() => {
     const t = text.current;
     if (!t) return;
     t.style.height = "auto";
-    t.style.height = `${Math.max(t.scrollHeight, 204)}px`;
+    t.style.height = `${Math.max(t.scrollHeight, 220)}px`;
   }, [body]);
 
   const finish = (letter: Letter) => {
     onSent(letter);
-    setBody(""); setLater(false); setOpenAt(""); setSending(null);
     toast(letter.sealed ? "Sealed. It opens on the day you chose." : `Sent to ${letter.recipient} ♥`);
   };
 
@@ -135,8 +233,7 @@ function Composer({ name, onSent }: { name: string; onSent: (l: Letter) => void 
       });
       const r = (await res.json().catch(() => ({}))) as { letter?: Letter; error?: string };
       if (!res.ok || !r.letter) throw new Error(r.error ?? "The letter could not be sent.");
-      if (reduce) finish(r.letter);
-      else setSending(r.letter);
+      if (reduce) finish(r.letter); else setSending(r.letter);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "The letter could not be sent.");
     }
@@ -144,19 +241,16 @@ function Composer({ name, onSent }: { name: string; onSent: (l: Letter) => void 
   };
 
   return (
-    <div className="ll-desk">
-      <AnimatePresence mode="wait" initial={false}>
-        {!sending ? (
-          <motion.form key="paper" className="ll-paper ll-writing" onSubmit={(e) => { e.preventDefault(); send(); }}
-            initial={{ opacity: 0, y: 28, rotate: -0.8 }} whileInView={{ opacity: 1, y: 0, rotate: 0 }} viewport={{ once: true, amount: 0.25 }}
-            transition={{ ...PAPER, opacity: { duration: 0.5, ease: EASE } }}
-            // Folding up: the sheet creases toward its top edge before it goes into the envelope.
-            exit={{ scaleY: 0.18, y: -10, opacity: 0.0, transition: { duration: 0.42, ease: LEAVE } }} style={{ transformOrigin: "50% 0%" }}>
-            <span className="ll-stamp" aria-hidden="true"><Heart /></span>
+    <AnimatePresence mode="wait" initial={false}>
+      {!sending ? (
+        <motion.form key="paper" className="ll-compose" onSubmit={(e) => { e.preventDefault(); send(); }}
+          exit={{ scaleY: 0.2, y: -10, opacity: 0, transition: { duration: 0.42, ease: LEAVE } }} style={{ transformOrigin: "50% 0%" }}>
+          <motion.div className="ll-paper" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ ...PAPER, delay: 0.1 }}>
+            <span className="ll-monogram" aria-hidden="true">{initial(name)}<i>&amp;</i>{to ? initial(to) : "·"}</span>
             <p className="ll-date">{today || " "}</p>
             <label className="ll-to">
               <span>My dearest</span>
-              <input value={to} onChange={(e) => setTo(e.target.value)} placeholder="their name" maxLength={80} aria-label="Who the letter is for" required />
+              <input value={to} onChange={(e) => setTo(e.target.value)} placeholder="their name" maxLength={80} aria-label="Who the letter is for" required autoFocus />
               <span aria-hidden="true">,</span>
             </label>
             <textarea ref={text} className="ll-body" value={body} onChange={(e) => setBody(e.target.value)}
@@ -165,51 +259,44 @@ function Composer({ name, onSent }: { name: string; onSent: (l: Letter) => void 
               <select value={closing} onChange={(e) => setClosing(e.target.value)} aria-label="How you sign off">
                 {CLOSINGS.map((c) => <option key={c}>{c}</option>)}
               </select>
-              <span>,</span>
               <span className="ll-signature">{name}</span>
             </div>
+          </motion.div>
 
-            <div className="ll-actions">
-              <label className="ll-later">
-                <input type="checkbox" checked={later} onChange={(e) => setLater(e.target.checked)} />
-                <Lock aria-hidden="true" /> Keep it sealed until a date
-              </label>
-              <AnimatePresence initial={false}>
-                {later && (
-                  <motion.input key="when" type="datetime-local" className="ll-when" value={openAt} onChange={(e) => setOpenAt(e.target.value)} aria-label="When it opens" required
-                    initial={{ opacity: 0, x: -8, width: 0 }} animate={{ opacity: 1, x: 0, width: "auto" }} exit={{ opacity: 0, x: -8, width: 0 }}
-                    transition={{ duration: 0.35, ease: EASE }} />
-                )}
-              </AnimatePresence>
-              <span className="ll-count" aria-hidden="true">{body.length ? `${body.trim().split(/\s+/).length} words` : ""}</span>
-              <motion.button type="submit" className="btn btn-primary ll-send" disabled={!ready || busy}
-                whileTap={ready ? { scale: 0.97 } : undefined} transition={{ duration: 0.12, ease: EASE }}>
-                <motion.span className="ll-wax ll-wax-sm" aria-hidden="true"
-                  animate={busy ? { rotate: [0, -12, 12, 0] } : { rotate: 0 }} transition={busy ? { duration: 0.6, repeat: Infinity, ease: "easeInOut" } : { duration: 0.2 }}>
-                  {initial(name)}
-                </motion.span>
-                {busy ? "Sealing…" : later ? "Seal it" : "Seal & send"} <Send aria-hidden="true" />
-              </motion.button>
-            </div>
-            <AnimatePresence>
-              {err && (
-                <motion.p className="ll-err" role="alert" initial={{ opacity: 0, x: 0 }} animate={{ opacity: 1, x: [0, -8, 7, -4, 0] }} exit={{ opacity: 0 }}
-                  transition={{ duration: 0.38, ease: "easeInOut" }}>{err}</motion.p>
+          <div className="ll-actions">
+            <label className="ll-later">
+              <input type="checkbox" checked={later} onChange={(e) => setLater(e.target.checked)} />
+              <Lock aria-hidden="true" /> Keep it sealed until a date
+            </label>
+            <AnimatePresence initial={false}>
+              {later && (
+                <motion.input key="when" type="datetime-local" className="ll-when" value={openAt} onChange={(e) => setOpenAt(e.target.value)} aria-label="When it opens" required
+                  initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.3, ease: EASE }} />
               )}
             </AnimatePresence>
-          </motion.form>
-        ) : (
-          <SendScene key="sending" letter={sending} name={name} onDone={() => finish(sending)} />
-        )}
-      </AnimatePresence>
-    </div>
+            <motion.button type="submit" className="btn btn-primary ll-send" disabled={!ready || busy} whileTap={ready ? { scale: 0.97 } : undefined}>
+              <motion.span className="ll-seal ll-seal-sm" aria-hidden="true"
+                animate={busy ? { rotate: [0, -12, 12, 0] } : { rotate: 0 }} transition={busy ? { duration: 0.6, repeat: Infinity, ease: "easeInOut" } : { duration: 0.2 }}>
+                {initial(name)}
+              </motion.span>
+              {busy ? "Sealing…" : later ? "Seal it" : "Seal & send"} <Send aria-hidden="true" />
+            </motion.button>
+          </div>
+          <AnimatePresence>
+            {err && (
+              <motion.p className="ll-err" role="alert" initial={{ opacity: 0 }} animate={{ opacity: 1, x: [0, -8, 7, -4, 0] }} exit={{ opacity: 0 }}
+                transition={{ duration: 0.38, ease: "easeInOut" }}>{err}</motion.p>
+            )}
+          </AnimatePresence>
+        </motion.form>
+      ) : (
+        <SendScene key="sending" letter={sending} name={name} onDone={() => finish(sending)} />
+      )}
+    </AnimatePresence>
   );
 }
 
-/**
- * Sealing and sending, as one short scene (~2 s): the folded letter drops into an open envelope, the
- * flap closes, the wax seal is pressed with a ring of warmth, and the envelope lifts away on an arc.
- */
+/** Sealing and sending (~2 s): the letter drops into the envelope, the flap shuts, wax is pressed, away it goes. */
 function SendScene({ letter, name, onDone }: { letter: Letter; name: string; onDone: () => void }) {
   const [scope, animate] = useAnimate();
   useEffect(() => {
@@ -217,16 +304,12 @@ function SendScene({ letter, name, onDone }: { letter: Letter; name: string; onD
     (async () => {
       const $ = (s: string) => scope.current?.querySelector(s) as Element;
       await animate(scope.current, { opacity: [0, 1], y: [24, 0] }, { duration: 0.4, ease: ENTER });
-      // 1. the folded letter slips into the pocket
       await animate($(".ll-e3-paper"), { y: ["-115%", "8%"] }, { duration: 0.55, ease: EASE });
-      // 2. the flap swings shut (secondary: the shadow under it deepens)
       animate($(".ll-e3-shadow"), { opacity: [0, 0.5] }, { duration: 0.4, ease: EASE });
       await animate($(".ll-e3-flap"), { rotateX: [180, 0] }, { duration: 0.45, ease: EASE });
-      // 3. the seal is pressed: lands a touch big, squashes, settles; a warm ring spreads (ambient)
       animate($(".ll-e3-ring"), { scale: [0.4, 2.4], opacity: [0.55, 0] }, { duration: 0.7, ease: ENTER });
       await animate($(".ll-e3-seal"), { scale: [1.9, 0.88, 1], opacity: [0, 1, 1], rotate: [-14, 3, 0] }, { duration: 0.42, ease: ENTER, times: [0, 0.6, 1] });
       await wait(260);
-      // 4. anticipation, then away on an upward arc
       await animate(scope.current, { y: 6, scale: 0.98 }, { duration: 0.16, ease: EASE });
       await animate(scope.current, { x: [0, 60, 240], y: [6, -70, -150], rotate: [0, -6, 10], opacity: [1, 1, 0], scale: [0.98, 0.9, 0.7] },
         { duration: 0.6, ease: LEAVE, times: [0, 0.45, 1] });
@@ -241,67 +324,12 @@ function SendScene({ letter, name, onDone }: { letter: Letter; name: string; onD
       <div ref={scope} className="ll-e3" aria-hidden="true">
         <span className="ll-e3-back" />
         <span className="ll-e3-paper"><i /><i /><i /><i /></span>
-        <span className="ll-e3-front"><span className="ll-e3-to">To {letter.recipient}</span></span>
+        <span className="ll-e3-front"><span className="ll-e3-to">{letter.recipient}</span></span>
         <span className="ll-e3-shadow" />
         <span className="ll-e3-flap" style={{ transform: "rotateX(180deg)" }} />
         <span className="ll-e3-ring" />
-        <span className="ll-wax ll-e3-seal" style={{ opacity: 0 }}>{initial(name)}</span>
+        <span className="ll-seal ll-e3-seal" style={{ opacity: 0 }}>{initial(name)}</span>
       </div>
-    </div>
-  );
-}
-
-/* ─── The shelves of envelopes ────────────────────────────────────────── */
-
-/** An envelope: the name written across it, a postmark, and a wax seal with the writer's initial. */
-function Envelope({ letter: l, me, now }: { letter: Letter; me: string; now: number | null }) {
-  const mine = l.authorEmail === me;
-  const sealed = l.sealed && !(now !== null && l.openAt && Date.parse(l.openAt) <= now);
-  return (
-    <span className={`ll-env${sealed ? " is-sealed" : ""}`}>
-      <span className="ll-env-back" />
-      <span className="ll-env-front" />
-      <span className="ll-env-flap" />
-      <span className="ll-postmark">{now === null ? "MUMAA" : stampDay(l.createdAt)}</span>
-      <span className="ll-env-to">{mine ? `To ${l.recipient}` : `For ${l.recipient}`}</span>
-      <span className="ll-env-from">from {l.authorName}</span>
-      <span className="ll-wax">{initial(l.authorName)}</span>
-      {sealed && l.openAt && now !== null && (
-        <span className="ll-lock"><Lock aria-hidden="true" /> {daysUntil(l.openAt, now)} {daysUntil(l.openAt, now) === 1 ? "day" : "days"}</span>
-      )}
-    </span>
-  );
-}
-
-function Shelf({ title, letters, me, now, onOpen }: { title: string; letters: Letter[]; me: string; now: number | null; onOpen: (l: Letter) => void }) {
-  return (
-    <div className="ll-shelf">
-      <h3 className="entry-group-title">{title} <span>{letters.length}</span></h3>
-      <motion.ul className="ll-grid" layout>
-        <AnimatePresence initial={false}>
-          {letters.map((l, i) => {
-            const sealed = l.sealed && !(now !== null && l.openAt && Date.parse(l.openAt) <= now);
-            const mine = l.authorEmail === me;
-            const tilt = i % 2 ? 0.8 : -0.8;
-            return (
-              <motion.li key={l.id} layout
-                // Envelopes are dropped onto the table one after another, then settle at a slight angle.
-                initial={{ opacity: 0, y: -22, rotate: tilt * -4, scale: 0.96 }}
-                whileInView={{ opacity: 1, y: 0, rotate: tilt, scale: 1 }}
-                viewport={{ once: true, amount: 0.4 }}
-                exit={{ opacity: 0, scale: 0.9, y: 10, transition: { duration: 0.25, ease: LEAVE } }}
-                transition={{ ...PAPER, delay: Math.min(i, 6) * 0.06, opacity: { duration: 0.35, ease: EASE, delay: Math.min(i, 6) * 0.06 } }}>
-                <motion.button type="button" className="ll-card" onClick={() => onOpen(l)}
-                  whileHover={{ y: -5, rotate: -tilt }} whileTap={{ scale: 0.98 }} transition={{ duration: 0.35, ease: EASE }}
-                  aria-label={`${mine ? `Your letter to ${l.recipient}` : `Letter from ${l.authorName}`}${sealed ? ", still sealed" : ""}`}>
-                  <Envelope letter={l} me={me} now={now} />
-                  <span className="ll-card-meta">{now === null ? " " : sealed && l.openAt ? `Sealed until ${day(l.openAt)}` : `Sent ${day(l.createdAt)}`}</span>
-                </motion.button>
-              </motion.li>
-            );
-          })}
-        </AnimatePresence>
-      </motion.ul>
     </div>
   );
 }
@@ -310,17 +338,18 @@ function Shelf({ title, letters, me, now, onOpen }: { title: string; letters: Le
 
 function Reading({ letter: l, mine, onDeleted }: { letter: Letter; mine: boolean; onDeleted: () => void }) {
   const [busy, setBusy] = useState(false);
+  const [asking, setAsking] = useState(false);
   const reduce = useReducedMotion();
   const sealed = l.sealed || l.body === null;
   const [phase, setPhase] = useState<"envelope" | "letter">(sealed || reduce ? "letter" : "envelope");
   const toast = useToast();
   const remove = async () => {
-    if (!window.confirm("Take this letter back? It will be gone for both of you.")) return;
     setBusy(true);
-    const res = await fetch(`/api/letters?id=${encodeURIComponent(l.id)}`, { method: "DELETE" });
+    const res = await fetch(`/api/letters?id=${encodeURIComponent(l.id)}`, { method: "DELETE" }).catch(() => null);
     setBusy(false);
-    if (res.ok) { toast("Letter taken back"); onDeleted(); }
-    else toast(((await res.json().catch(() => ({}))) as { error?: string }).error ?? "That did not work.");
+    if (res?.ok) { toast("Letter deleted"); onDeleted(); return; }
+    setAsking(false);
+    toast(((await res?.json().catch(() => ({}))) as { error?: string } | undefined)?.error ?? "The letter could not be deleted.");
   };
   const paragraphs = (l.body ?? "").split(/\n{2,}/);
 
@@ -330,22 +359,20 @@ function Reading({ letter: l, mine, onDeleted }: { letter: Letter; mine: boolean
         <div className="ll-sealed">
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0, rotate: [0, 0, -2, 2, -1, 0] }}
             transition={{ duration: 0.9, ease: EASE, times: [0, 0.45, 0.6, 0.75, 0.9, 1] }}>
-            <Envelope letter={{ ...l, sealed: true }} me={mine ? l.authorEmail : ""} now={Date.now()} />
+            <EnvelopeArt name={l.recipient} wax={initial(l.authorName)} sealed />
           </motion.div>
-          <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: ENTER, delay: 0.25 }}>
-            This letter is sealed{l.openAt ? <> until <b>{day(l.openAt)}</b></> : ""}. Its words appear here the moment it opens.
-          </motion.p>
+          <p>This letter is sealed{l.openAt ? <> until <b>{day(l.openAt)}</b></> : ""}. Its words appear the moment it opens.</p>
         </div>
       ) : phase === "envelope" ? (
         <OpenScene letter={l} onOpened={() => setPhase("letter")} />
       ) : (
         <motion.article className="ll-paper is-reading"
-          initial={reduce ? false : { opacity: 0, y: 30, scaleY: 0.55 }} animate={{ opacity: 1, y: 0, scaleY: 1 }}
+          initial={reduce ? false : { opacity: 0, y: 30, scaleY: 0.6 }} animate={{ opacity: 1, y: 0, scaleY: 1 }}
           transition={{ ...PAPER, opacity: { duration: 0.3, ease: EASE } }} style={{ transformOrigin: "50% 0%" }}>
-          <span className="ll-stamp" aria-hidden="true"><Heart /></span>
+          <span className="ll-monogram" aria-hidden="true">{initial(l.authorName)}<i>&amp;</i>{initial(l.recipient)}</span>
           <motion.p className="ll-date" initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25, duration: 0.4 }}>{day(l.createdAt)}</motion.p>
           <motion.p className="ll-to" initial={reduce ? false : { opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.45, ease: ENTER }}>
-            <span>My dearest {l.recipient},</span>
+            My dearest {l.recipient},
           </motion.p>
           <div className="ll-body">
             {paragraphs.map((p, i) => (
@@ -355,34 +382,44 @@ function Reading({ letter: l, mine, onDeleted }: { letter: Letter; mine: boolean
               </motion.p>
             ))}
           </div>
-          <motion.p className="ll-sign" initial={reduce ? false : { opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}
+          <motion.div className="ll-sign" initial={reduce ? false : { opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 + Math.min(paragraphs.length, 5) * 0.09, duration: 0.6, ease: ENTER }}>
             <span>{l.closing},</span><span className="ll-signature">{l.authorName}</span>
-          </motion.p>
+          </motion.div>
         </motion.article>
       )}
-      {phase === "letter" && (mine ? (
-        <motion.button type="button" className="btn btn-ghost ll-remove" onClick={remove} disabled={busy}
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6, duration: 0.4 }}>
-          <Trash2 aria-hidden="true" /> Take it back
-        </motion.button>
-      ) : !sealed && (
-        <motion.p className="ll-from" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8, duration: 0.4 }}>
-          <Feather aria-hidden="true" /> Written for you by {l.authorName}
-        </motion.p>
-      ))}
+      {phase === "letter" && (
+        <motion.div className="ll-delete" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: sealed ? 0.2 : 0.6, duration: 0.4 }}>
+          <AnimatePresence mode="wait" initial={false}>
+            {!asking ? (
+              <motion.button key="ask" type="button" className="btn btn-ghost ll-remove" onClick={() => setAsking(true)}
+                initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.2, ease: EASE }}>
+                <Trash2 aria-hidden="true" /> Delete letter
+              </motion.button>
+            ) : (
+              <motion.div key="confirm" className="ll-confirm" role="alertdialog" aria-label="Delete this letter?"
+                initial={{ opacity: 0, y: 6, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 4 }} transition={{ duration: 0.28, ease: ENTER }}>
+                <p><b>Delete this letter?</b> It will be gone for both of you{mine ? "" : `, and ${l.authorName} won’t be able to see it either`}. This can’t be undone.</p>
+                <div className="ll-confirm-actions">
+                  <button type="button" className="btn btn-ghost" onClick={() => setAsking(false)} disabled={busy} autoFocus>Keep it</button>
+                  <button type="button" className="btn ll-danger" onClick={remove} disabled={busy}>
+                    <Trash2 aria-hidden="true" /> {busy ? "Deleting…" : "Delete"}
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      )}
     </div>
   );
 }
 
-/**
- * Opening a letter (~1.6 s): the seal lifts away, the flap swings open toward you, and the letter
- * rises out of the envelope before unfolding into the full page. Tapping skips ahead.
- */
+/** Opening (~1.6 s): the seal lifts, the flap swings open, the letter rises out. Tapping skips ahead. */
 function OpenScene({ letter, onOpened }: { letter: Letter; onOpened: () => void }) {
   const [scope, animate] = useAnimate();
   const done = useRef(false);
-  const finish = () => { if (!done.current) { done.current = true; onOpened(); } };
+  const finish = useCallback(() => { if (!done.current) { done.current = true; onOpened(); } }, [onOpened]);
   useEffect(() => {
     let live = true;
     (async () => {
@@ -397,18 +434,17 @@ function OpenScene({ letter, onOpened }: { letter: Letter; onOpened: () => void 
       if (live) finish();
     })();
     return () => { live = false; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [animate, scope]);
+  }, [animate, scope, finish]);
 
   return (
     <button type="button" className="ll-scene ll-scene-open" onClick={finish} aria-label="Open the letter">
       <div ref={scope} className="ll-e3">
         <span className="ll-e3-back" />
         <span className="ll-e3-paper" style={{ transform: "translateY(8%)" }}><i /><i /><i /><i /></span>
-        <span className="ll-e3-front"><span className="ll-e3-to">For {letter.recipient}</span></span>
+        <span className="ll-e3-front"><span className="ll-e3-to">{letter.recipient}</span></span>
         <span className="ll-e3-shadow" style={{ opacity: 0.5 }} />
         <span className="ll-e3-flap" />
-        <span className="ll-wax ll-e3-seal">{initial(letter.authorName)}</span>
+        <span className="ll-seal ll-e3-seal">{initial(letter.authorName)}</span>
       </div>
       <span className="ll-scene-hint">Tap to open</span>
     </button>

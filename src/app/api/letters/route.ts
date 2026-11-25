@@ -52,7 +52,8 @@ export async function DELETE(request: Request) {
   if (!/^[0-9a-f-]{36}$/i.test(id)) return NextResponse.json({ error: "Unknown letter." }, { status: 400 });
   try {
     const removed = await deleteLetter(id, current.email);
-    if (!removed) return NextResponse.json({ error: "Only the person who wrote a letter can take it back." }, { status: 403 });
+    // Before migration 0009 only the writer could delete; after it, either of you can.
+    if (!removed) return NextResponse.json({ error: "This letter could not be deleted. It may already be gone, or the database still needs migration 0009." }, { status: 404 });
     return NextResponse.json({ ok: true });
   } catch (error) {
     return fail(error, "The letter could not be removed.");
