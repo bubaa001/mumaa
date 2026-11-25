@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ToastProvider } from "./toast";
+import { ThemeToggle } from "./theme-toggle";
 
 const navigation = [
   { label: "Home", href: "/home", icon: House },
@@ -56,9 +57,12 @@ export function MummaaShell({ children }: { children: React.ReactNode }) {
               );
             })}
           </nav>
-          <form action="/api/auth/logout" method="post">
-            <button className="btn btn-ghost leave-btn" type="submit">Leave</button>
-          </form>
+          <div className="app-header-actions">
+            <ThemeToggle />
+            <form action="/api/auth/logout" method="post">
+              <button className="btn btn-ghost leave-btn" type="submit">Leave</button>
+            </form>
+          </div>
         </div>
       </header>
 

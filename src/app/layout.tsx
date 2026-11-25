@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
+import { THEME_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 
 const serif = Instrument_Serif({
@@ -25,14 +26,22 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#f5efe6",
+  // The browser bar matches the page in either theme.
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f5efe6" },
+    { media: "(prefers-color-scheme: dark)", color: "#16110f" },
+  ],
 };
 
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${serif.variable} ${sans.variable} ${mono.variable}`}>
+    // data-theme is set by the script below before the first paint, so the server HTML never has it.
+    <html lang="en" className={`${serif.variable} ${sans.variable} ${mono.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       <body>{children}</body>
     </html>
   );
