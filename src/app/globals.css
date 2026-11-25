@@ -4714,8 +4714,6 @@ button.inv-row:focus-visible { outline: 2px solid var(--on-night); outline-offse
   box-shadow: 0 1px 0 rgba(26, 20, 17, 0.05), 0 30px 60px -34px rgba(26, 20, 17, 0.55), 0 0 0 1px rgba(26, 20, 17, 0.05);
   font: 400 clamp(1.5rem, 4vw, 1.75rem)/var(--line-h) var(--font-hand), cursive;
 }
-.ll-enter { animation: ll-in 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; }
-@keyframes ll-in { from { opacity: 0; transform: translateY(18px) rotate(-0.8deg); } }
 .ll-stamp {
   position: absolute; top: 16px; right: 18px; display: grid; place-items: center; width: 46px; height: 54px;
   background: #fff7f2; border: 2px dashed rgba(180, 48, 42, 0.45); border-radius: 3px; transform: rotate(4deg);
@@ -4801,13 +4799,9 @@ button.inv-row:focus-visible { outline: 2px solid var(--on-night); outline-offse
 
 .ll-shelves { display: grid; gap: 26px; margin-top: 36px; }
 .ll-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 18px; margin: 12px 0 0; padding: 0; list-style: none; }
-.ll-grid > li { animation: ll-drop 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; animation-delay: calc(var(--i, 0) * 0.07s); }
-@keyframes ll-drop { from { opacity: 0; transform: translateY(-14px) rotate(calc(var(--tilt, 0deg) * -3)); } }
 .ll-card {
   display: grid; gap: 8px; width: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer;
-  transform: rotate(var(--tilt, 0deg)); transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
-.ll-card:hover, .ll-card:focus-visible { transform: rotate(0deg) translateY(-4px); }
 .ll-card:hover .ll-env:not(.is-sealed) .ll-env-flap, .ll-card:focus-visible .ll-env:not(.is-sealed) .ll-env-flap { transform: scaleY(0.72); }
 .ll-card:hover .ll-env:not(.is-sealed) .ll-wax { transform: translate(-50%, -78%); }
 .ll-card:focus-visible { outline: none; }
@@ -4837,4 +4831,77 @@ button.inv-row:focus-visible { outline: 2px solid var(--on-night); outline-offse
   .ll-postmark { top: 6px; right: 6px; padding: 4px 5px; font-size: 7px; }
   .ll-lock { top: 6px; left: 6px; padding: 3px 7px; font-size: 9px; }
 }
-@media (prefers-reduced-motion: reduce) { .ll-card { transform: none; } }
+
+/* ─── Love letters: motion layer ─── */
+/* Writing: the sheet lifts toward you while you write (secondary: the shadow deepens). */
+.ll-writing { transition: box-shadow 0.45s cubic-bezier(0.4, 0, 0.2, 1), translate 0.45s cubic-bezier(0.4, 0, 0.2, 1); }
+.ll-writing:focus-within {
+  translate: 0 -3px;
+  box-shadow: 0 1px 0 rgba(26, 20, 17, 0.05), 0 44px 80px -40px rgba(26, 20, 17, 0.6), 0 0 0 1px rgba(180, 48, 42, 0.12);
+}
+.ll-to input { transition: border-color 0.3s ease, background-size 0.45s cubic-bezier(0.4, 0, 0.2, 1); }
+/* Ambient: the heart stamp breathes; the lock on a sealed envelope glows softly. */
+.ll-stamp svg { animation: ll-breathe 3.2s ease-in-out infinite; transform-origin: center; }
+@keyframes ll-breathe { 50% { transform: scale(1.08); } }
+.ll-lock { animation: ll-glow 2.6s ease-in-out infinite; }
+@keyframes ll-glow { 50% { box-shadow: 0 3px 14px -1px rgba(180, 48, 42, 0.55); } }
+/* Wax catches the light as you pass over an envelope. */
+.ll-wax { overflow: hidden; }
+.ll-wax::after {
+  content: ""; position: absolute; inset: -40%; transform: translateX(-120%) rotate(25deg);
+  background: linear-gradient(90deg, transparent 35%, rgba(255, 235, 228, 0.55) 50%, transparent 65%);
+}
+.ll-card:hover .ll-wax::after { transition: transform 0.9s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(120%) rotate(25deg); }
+/* Hover: the flap lifts a little and the seal rises with it (the card itself lifts via motion). */
+.ll-env { perspective: 600px; }
+.ll-env-flap { transform-origin: 50% 0; transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+.ll-env .ll-wax { transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+.ll-card:hover .ll-env:not(.is-sealed) .ll-env-flap, .ll-card:focus-visible .ll-env:not(.is-sealed) .ll-env-flap { transform: rotateX(38deg); }
+.ll-card:hover .ll-env:not(.is-sealed) .ll-wax { transform: translate(-50%, -70%); }
+.ll-card:hover .ll-env.is-sealed .ll-lock { animation-duration: 0.9s; }
+.ll-card { will-change: transform; }
+
+/* The 3D envelope used for sealing and opening */
+.ll-scene { position: relative; display: grid; place-items: center; gap: 14px; width: 100%; min-height: 330px; padding: 40px 0 20px; border: 0; background: none; color: inherit; font: inherit; cursor: default; }
+.ll-scene-open { cursor: pointer; }
+.ll-scene-hint { font: 11px/1 var(--font-meta); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); animation: ll-hint 1.8s ease-in-out infinite; }
+@keyframes ll-hint { 50% { opacity: 0.45; } }
+.ll-e3 { position: relative; width: min(320px, 78vw); aspect-ratio: 1.62; perspective: 900px; transform-style: preserve-3d; }
+.ll-e3 > span { position: absolute; }
+.ll-e3-back { inset: 0; border-radius: 10px; background: linear-gradient(170deg, #d9c19c, #cdb38b); box-shadow: 0 30px 50px -30px rgba(26, 20, 17, 0.7); }
+.ll-e3-paper {
+  left: 7%; right: 7%; top: 6%; height: 88%; z-index: 1; display: grid; align-content: start; gap: 11%; padding: 14% 10% 0;
+  border-radius: 4px; background: linear-gradient(180deg, #fffefa, #f8efdf); box-shadow: 0 2px 8px -3px rgba(26, 20, 17, 0.3);
+}
+.ll-e3-paper i { display: block; height: 3px; border-radius: 2px; background: rgba(92, 120, 160, 0.28); }
+.ll-e3-paper i:nth-child(1) { width: 45%; background: rgba(180, 48, 42, 0.4); }
+.ll-e3-paper i:nth-child(3) { width: 82%; }
+.ll-e3-paper i:nth-child(4) { width: 60%; }
+.ll-e3-front {
+  inset: 0; z-index: 2; border-radius: 10px;
+  background:
+    linear-gradient(to top right, #f6ead6 49.6%, transparent 50%) left bottom / 50.5% 64% no-repeat,
+    linear-gradient(to top left, #f1e3cc 49.6%, transparent 50%) right bottom / 50.5% 64% no-repeat,
+    linear-gradient(180deg, transparent 52%, #f3e6d1 52%) 0 0 / 100% 100% no-repeat;
+  box-shadow: inset 0 0 0 1px rgba(26, 20, 17, 0.08);
+}
+.ll-e3-to { position: absolute; left: 0; right: 0; bottom: 12%; text-align: center; font: 600 clamp(1.4rem, 5vw, 1.8rem)/1 var(--font-hand), cursive; color: #3b2a22; }
+.ll-e3-shadow { left: 0; right: 0; top: 0; height: 60%; z-index: 3; opacity: 0; background: radial-gradient(60% 80% at 50% 0%, rgba(26, 20, 17, 0.25), transparent 70%); pointer-events: none; }
+.ll-e3-flap {
+  left: 0; right: 0; top: 0; height: 58%; z-index: 4; transform-origin: 50% 0; backface-visibility: visible;
+  background: linear-gradient(180deg, #ead8ba, #ddc5a0); clip-path: polygon(0 0, 100% 0, 50% 100%);
+  border-radius: 10px 10px 0 0; filter: drop-shadow(0 3px 3px rgba(26, 20, 17, 0.15));
+}
+.ll-e3-seal { left: 50%; top: 58%; z-index: 6; width: 54px; height: 54px; margin: -27px 0 0 -27px; font-size: 22px; }
+.ll-e3-ring {
+  left: 50%; top: 58%; z-index: 5; width: 54px; height: 54px; margin: -27px 0 0 -27px; border-radius: 50%;
+  border: 2px solid rgba(214, 90, 80, 0.7); opacity: 0; pointer-events: none;
+}
+/* Reading: paragraphs keep one ruled line between them. */
+.ll-para { margin: 0; white-space: pre-wrap; }
+.ll-para + .ll-para { margin-top: var(--line-h); }
+.ll-paper.is-reading .ll-body { white-space: normal; }
+@media (prefers-reduced-motion: reduce) {
+  .ll-writing:focus-within { translate: none; }
+  .ll-card:hover .ll-env-flap { transform: none !important; }
+}
