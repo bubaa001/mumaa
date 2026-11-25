@@ -13,10 +13,15 @@ export type AgentState = TraderMarket["verdict"];
 
 export type DeskView = "overview" | "agents" | "trades" | "rules" | "investors";
 export type DeskNav = { view: DeskView; agent: string | null; market: string | null };
+/**
+ * One question per tab. The ids are the old ones so saved links still open the right place:
+ * overview = Today (what is happening now), trades = Results (how it went over time),
+ * agents = Bots (each bot in detail), rules = News & rules.
+ */
 export const VIEWS: { id: DeskView; label: string; short?: string }[] = [
-  { id: "overview", label: "Overview" },
-  { id: "agents", label: "Agents" },
-  { id: "trades", label: "Trades" },
+  { id: "overview", label: "Today" },
+  { id: "trades", label: "Results" },
+  { id: "agents", label: "Bots" },
   { id: "rules", label: "News & rules", short: "News" },
   { id: "investors", label: "Investors" },   // founder only (see TradingDashboard)
 ];
@@ -234,6 +239,26 @@ export function when(iso: string, mounted: boolean, withDay = true) {
   return new Date(iso).toLocaleString("en-GB", {
     ...(withDay ? { weekday: "short" } : {}), day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
   });
+}
+
+/**
+ * The calendar day a time falls on, as "YYYY-MM-DD": in the viewer's own time once mounted (Tanzania
+ * for you), in UTC before that so the server and first paint agree.
+ */
+export function dayKey(iso: string | number, mounted: boolean) {
+  const d = new Date(iso);
+  if (!mounted) return d.toISOString().slice(0, 10);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/** "Today", "Yesterday", or "Mon 23 Nov" for a day key. */
+export function dayName(key: string, now: number | null, mounted: boolean) {
+  if (now !== null) {
+    if (key === dayKey(now, mounted)) return "Today";
+    if (key === dayKey(now - 86_400_000, mounted)) return "Yesterday";
+  }
+  const [y, m, d] = key.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
 }
 
 export const REASON: Record<string, string> = { target: "Hit target", stop: "Hit stop", closed: "Time / manual" };

@@ -5,19 +5,17 @@ import { ArrowRight } from "lucide-react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { PageHead } from "./mumaa-shell";
 import { AgentsView, AgentState as StateChip } from "./trading-agents";
-import { TradeHistory } from "./trading-history";
-import { Ranking } from "./trading-ranking";
+import { TodayTrades } from "./trading-today";
+import { ResultsView } from "./trading-results";
 import { SessionClock } from "./trading-sessions";
 import { Glossary, RightNow } from "./trading-plain";
-import { EquityLine, stamp, type Scrub } from "./trading-chart";
 import { ease } from "./motion";
 import { InvestorsSkeleton, InvestorsView } from "@/components/trading-investors";
-import { TrackRecordCard } from "@/components/trading-record";
-import { GrowthChart, lastSwitch, type CashFlow } from "@/components/trading-growth";
+import type { CashFlow } from "@/components/trading-growth";
 import type { Ledger } from "@/lib/investors";
 import { botName, type TraderPosition, type TraderPull, type TraderResult, type TraderState } from "@/lib/trader";
 import {
-  agentsFrom, ago, closedTrades, isView, money, pct, readyText, rText, signed, tally, VIEWS, when, type Agent, type DeskNav, type DeskView,
+  agentsFrom, ago, closedTrades, dayKey, isView, money, readyText, rText, signed, tally, VIEWS, when, type Agent, type DeskNav, type DeskView,
 } from "@/lib/trader-view";
 
 const POLL_MS = 5_000;
@@ -120,13 +118,12 @@ export function TradingDashboard({ initial, nav: initialNav, founder = false }: 
     );
   }
 
-  const tradesCount = s.positions.length + (data.history?.length || s.trades.length);
-  const counts: Partial<Record<DeskView, number>> = { agents: live.length, trades: tradesCount };
+  const counts: Partial<Record<DeskView, number>> = { agents: live.length };
 
   return (
     <DeskContext.Provider value={desk}>
       {head}
-      <DeskHero data={data} s={s} cash={cash} />
+      <DeskHero data={data} s={s} />
 
       <div className="desk-tabs" ref={tabsRef}>
         <div className="desk-tabs-inner" role="tablist" aria-label="Trading desk">
@@ -138,7 +135,7 @@ export function TradingDashboard({ initial, nav: initialNav, founder = false }: 
                 {active && <motion.span layoutId="desk-tab-pill" className="desk-tab-pill" transition={{ type: "spring", stiffness: 520, damping: 40 }} />}
                 <span className="desk-tab-label">{v.short ? <><span className="tab-long">{v.label}</span><span className="tab-short">{v.short}</span></> : v.label}</span>
                 {counts[v.id] !== undefined && <span className="desk-tab-count">{counts[v.id]}</span>}
-                {v.id === "trades" && s.positions.length > 0 && <span className="desk-tab-live" aria-label={`${s.positions.length} open`} />}
+                {v.id === "overview" && s.positions.length > 0 && <span className="desk-tab-live" aria-label={`${s.positions.length} open`} />}
               </button>
             );
           })}
@@ -146,9 +143,14 @@ export function TradingDashboard({ initial, nav: initialNav, founder = false }: 
       </div>
 
       <ViewFade id={nav.view}>
-        {nav.view === "overview" && <OverviewView data={data} s={s} agents={agents} />}
-        {nav.view === "agents" && <AgentsView agents={agents} s={s} data={data} agentId={nav.agent} marketId={nav.market} />}
-        {nav.view === "trades" && <TradesView data={data} s={s} agents={agents} />}
+        {nav.view === "overview" && <TodayView data={data} s={s} agents={agents} />}
+        {nav.view === "trades" && <ResultsView data={data} trades={closedTrades(s, data.history ?? [])} agents={agents} flows={cash.flows} startAt={cash.startAt} />}
+        {nav.view === "agents" && (
+          <>
+            <AgentsView agents={agents} s={s} data={data} agentId={nav.agent} marketId={nav.market} />
+            {s.probation && <Probation p={s.probation} />}
+          </>
+        )}
         {nav.view === "rules" && <RulesView s={s} />}
         {/* client-only: rendered after mount so it never hydrates over server HTML (it stuck on "Loading" when opened by link) */}
         {nav.view === "investors" && founder && (now !== null ? <InvestorsView mounted /> : <InvestorsSkeleton />)}
@@ -169,18 +171,19 @@ function ViewFade({ id, children }: { id: string; children: React.ReactNode }) {
 
 /* ─── Account header ─────────────────────────────────────────── */
 
-function DeskHero({ data, s, cash }: { data: TraderPull; s: TraderState; cash: Cash }) {
-  const { now, ccy } = useDesk();
+function DeskHero({ data, s }: { data: TraderPull; s: TraderState }) {
+  const { now, ccy, mounted } = useDesk();
   const age = now === null ? 0 : (now - Date.parse(data.updated_at ?? s.generated_at)) / 1000;
   const stale = age > STALE_S;
-  const all = tally(s.trades);
-  const day = s.generated_at.slice(0, 10);
-  const today = s.trades.filter((t) => t.closed.slice(0, 10) === day).reduce((sum, t) => sum + t.profit, 0);
+  const history = closedTrades(s, data.history ?? []);
+  // "Today" is your own calendar day once the page is running (the same day as the Today tab).
+  const day = dayKey(now ?? s.generated_at, mounted);
+  const done = history.filter((t) => dayKey(t.closed, mounted) === day);
+  const today = done.reduce((sum, t) => sum + t.profit, 0);
   const tone = (v: number) => (v > 0 ? "pos" : v < 0 ? "neg" : "");
-  const [scrub, setScrub] = useState<Scrub>(null);
 
   return (
-    <section className="desk-hero" aria-label="Account">
+    <section className="desk-hero desk-hero-compact" aria-label="Account">
       <div className="desk-status" role="status">
         <span className={`trade-dot ${stale ? "is-off" : "is-on"}`} aria-hidden="true" />
         <span>{stale ? "Reporter offline · " : "Live · "}updated {ago(data.updated_at, now)}</span>
@@ -193,28 +196,12 @@ function DeskHero({ data, s, cash }: { data: TraderPull; s: TraderState; cash: C
       <div className="desk-hero-grid">
         <div className="desk-equity">
           <span className="desk-label">Account value</span>
-          <p className="desk-equity-value" aria-live="off">{money(scrub ? scrub.p.e : s.account.equity)}<small>{ccy}</small></p>
-          <p className="desk-equity-sub">
-            {scrub ? (
-              <>
-                <span className={tone(scrub.change)}>{signed(scrub.change)} since the start</span>
-                <span>{stamp(scrub.p.t)}</span>
-              </>
-            ) : (
-              <>
-                <span>{usd(s.account.equity, ccy)}</span>
-              </>
-            )}
-          </p>
-          <div className="desk-spark">
-            <GrowthChart points={data.equity} flows={cash.flows} startAt={cash.startAt} onScrub={setScrub} ccy={ccy} />
-          </div>
+          <p className="desk-equity-value" aria-live="off">{money(s.account.equity)}<small>{ccy}</small></p>
+          <p className="desk-equity-sub"><span>{usd(s.account.equity, ccy)}</span></p>
         </div>
-        <dl className="desk-kpis">
+        <dl className="desk-kpis desk-kpis-2">
+          <div><dt>Made today</dt><dd className={tone(today)}>{signed(today)}</dd><small>{done.length ? `${done.length} closed · ${ccy}` : `none closed yet · ${ccy}`}</small></div>
           <div><dt>In open trades</dt><dd className={tone(s.account.profit)}>{signed(s.account.profit)}</dd><small>{s.positions.length ? `${s.positions.length} open now` : "none open"}</small></div>
-          <div><dt>Made today</dt><dd className={tone(today)}>{signed(today)}</dd><small>{ccy}</small></div>
-          <div><dt>Made recently</dt><dd className={tone(all.net)}>{signed(all.net)}</dd><small>from {all.n} finished trades</small></div>
-          <div><dt>Trades won</dt><dd>{pct(all.winRate)}</dd><small><span className="pos">{all.wins} won</span> · <span className="neg">{all.losses} lost</span></small></div>
         </dl>
       </div>
     </section>
@@ -255,12 +242,12 @@ function Probation({ p }: { p: NonNullable<TraderState["probation"]> }) {
   );
 }
 
-/* ─── Overview ──────────────────────────────────────────────── */
+/* ─── Today ─────────────────────────────────────────────────── */
 
-function OverviewView({ data, s, agents }: { data: TraderPull; s: TraderState; agents: Agent[] }) {
-  const { go, mounted, ccy, now } = useDesk();
+/** What is happening now: alerts, open trades, what closed today, the bots nearest a trade, sessions. */
+function TodayView({ data, s, agents }: { data: TraderPull; s: TraderState; agents: Agent[] }) {
+  const { go, mounted, now } = useDesk();
   const live = agents.filter((a) => a.state !== "stopped" || a.positions.length > 0);
-  const recent = closedTrades(s, data.history ?? []).slice(0, 5);
   const next = s.news.upcoming[0];
   const blocked = Object.keys(s.news.blocked);
 
@@ -275,15 +262,12 @@ function OverviewView({ data, s, agents }: { data: TraderPull; s: TraderState; a
 
       <RightNow s={s} agents={live} />
       <OpenTrades positions={s.positions} />
-
-      <SessionClock agents={live} limit={3} />
-
-      {s.probation && <Probation p={s.probation} />}
+      <TodayTrades trades={closedTrades(s, data.history ?? [])} agents={agents} />
 
       <section className="desk-section" aria-labelledby="ov-agents">
         <div className="desk-section-head">
           <h2 className="trade-h" id="ov-agents">Bots closest to a trade</h2>
-          <button type="button" className="desk-link" onClick={() => go({ view: "agents" })}>See all {live.length} <ArrowRight aria-hidden="true" /></button>
+          <button type="button" className="desk-link" onClick={() => go({ view: "agents" })}>All {live.length} bots <ArrowRight aria-hidden="true" /></button>
         </div>
         <div className="agent-tiles">
           {live.slice(0, 4).map((a) => (
@@ -297,7 +281,7 @@ function OverviewView({ data, s, agents }: { data: TraderPull; s: TraderState; a
               <span className="agent-tile-stats">
                 {a.done && now !== null ? (() => {
                   // A finished bot's number is money already banked today, not a trade still to come.
-                  const today = tally(a.trades.filter((t) => new Date(t.closed).toDateString() === new Date(now).toDateString())).net;
+                  const today = tally(a.trades.filter((t) => dayKey(t.closed, mounted) === dayKey(now, mounted))).net;
                   return <span><small>Made today</small><b className={today > 0 ? "pos" : today < 0 ? "neg" : ""}>{signed(today)}</b></span>;
                 })() : (
                   <span><small>Made</small><b className={a.record.net > 0 ? "pos" : a.record.net < 0 ? "neg" : ""}>{a.record.n ? signed(a.record.net) : "—"}</b></span>
@@ -310,32 +294,7 @@ function OverviewView({ data, s, agents }: { data: TraderPull; s: TraderState; a
         </div>
       </section>
 
-      <div className="desk-split">
-        <section className="trade-card" aria-labelledby="ov-equity">
-          <div className="trade-card-top"><h2 className="trade-h" id="ov-equity">Equity, this account</h2></div>
-          <EquityChart points={data.equity} />
-        </section>
-        <section className="trade-card" aria-labelledby="ov-recent">
-          <div className="trade-card-top">
-            <h2 className="trade-h" id="ov-recent">Latest trades</h2>
-            {recent.length > 0 && <button type="button" className="desk-link" onClick={() => go({ view: "trades" })}>All <ArrowRight aria-hidden="true" /></button>}
-          </div>
-          {recent.length === 0 ? <p className="trade-muted">No closed trades yet.</p> : (
-            <ul className="recent">
-              {recent.map((t, i) => (
-                <li key={i} className={t.profit >= 0 ? "won" : "lost"}>
-                  <span className="recent-main"><b>{t.symbol}</b> <small>{t.side} · {agents.find((a) => a.id === t.bot)?.name ?? t.bot}</small></span>
-                  <span className={`recent-pl ${t.profit >= 0 ? "pos" : "neg"}`}>{signed(t.profit)} <small>{ccy}</small></span>
-                  <span className="recent-when">{when(t.closed, mounted)}{t.r != null ? ` · ${rText(t.r)}` : ""}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      </div>
-
-      <TrackRecordCard />
-      <Glossary />
+      <SessionClock agents={live} limit={3} />
 
       {next && (
         <button type="button" className="desk-next" onClick={() => go({ view: "rules" })}>
@@ -361,25 +320,13 @@ export function ReadyMeter({ agent: a }: { agent: Agent }) {
   );
 }
 
-/* ─── Trades ────────────────────────────────────────────────── */
-
-function TradesView({ data, s, agents }: { data: TraderPull; s: TraderState; agents: Agent[] }) {
-  const closed = closedTrades(s, data.history ?? []);
-  return (
-    <>
-      <OpenTrades positions={s.positions} />
-      <Ranking trades={closed} agents={agents} />
-      <TradeHistory trades={closed} agents={agents} />
-    </>
-  );
-}
-
 /* ─── News & rules ──────────────────────────────────────────── */
 
 function RulesView({ s }: { s: TraderState }) {
   const { mounted, ccy } = useDesk();
   const a = s.account, r = s.settings;
   return (
+    <>
     <div className="desk-split">
       <section className="trade-card" aria-labelledby="ru-news">
         <div className="trade-card-top">
@@ -416,6 +363,8 @@ function RulesView({ s }: { s: TraderState }) {
         </dl>
       </section>
     </div>
+    <Glossary />
+    </>
   );
 }
 
@@ -452,23 +401,6 @@ export function OpenTrades({ positions, title = "Open trades" }: { positions: Tr
         })}
       </div>
     </section>
-  );
-}
-
-function EquityChart({ points: all }: { points: TraderPull["equity"] }) {
-  const { mounted } = useDesk();
-  const points = all.slice(lastSwitch(all));   // only this account (no demo history)
-  if (points.length < 2) return <p className="trade-muted">The equity curve appears once the reporter has run for a little while.</p>;
-  const ys = points.map((p) => p.e);
-  return (
-    <figure className="trade-chart">
-      <EquityLine points={points} height={180} />
-      <figcaption>
-        <span>{when(points[0].t, mounted, false)}</span>
-        <span>low {money(Math.min(...ys))} · high {money(Math.max(...ys))}</span>
-        <span>{when(points[points.length - 1].t, mounted, false)}</span>
-      </figcaption>
-    </figure>
   );
 }
 
