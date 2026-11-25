@@ -29,7 +29,7 @@ export type TraderMarket = {
 };
 /** Display names for each bot (each runs as its own agent with its own magic number). */
 export const BOT_NAMES: Record<string, string> = {
-  forex: "Forex bot", gold: "Gold bot", h4candle: "4H candle bot", orbgold: "Gold NY-open bot", jdubgold: "J-Dub gold bot", recovery: "Recovery bot", sosjpy: "Structure bot (fxalexg)", sdgold: "Supply & demand bot (Brad Goh)", mambagold: "NY breakout bot (MambaFx)", chfm15: "USDCHF London bot", crtndx: "CRT NAS100 bot", crossfx: "Forex crosses bot", cadx: "CAD crosses bot", rsi2fx: "RSI pullback bot",
+  forex: "Forex bot", gold: "Gold bot (probation)", h4candle: "4H candle bot", orbgold: "Gold NY-open bot (probation)", jdubgold: "J-Dub gold bot (probation)", recovery: "Recovery bot", sosjpy: "Structure bot (fxalexg)", sdgold: "Supply & demand gold bot (probation)", mambagold: "NY breakout bot (MambaFx)", chfm15: "USDCHF London bot", crtndx: "CRT NAS100 bot", crossfx: "Forex crosses bot", cadx: "CAD crosses bot", rsi2fx: "RSI pullback bot",
   // 24-25 Nov 2026: retrained agents and the gold agents (all passed the 3-year test)
   oil: "Oil mean-reversion bot", rtm4h: "4-hour mean-reversion bot", rsi4h: "4-hour RSI pullback bot",
   m15fx: "15-minute forex bot", m15rsi: "15-minute RSI bot", m5fx: "5-minute forex bot",
@@ -41,9 +41,13 @@ export const BOT_NAMES: Record<string, string> = {
 export const botName = (b: string) => BOT_NAMES[b] ?? b;
 export const TF_NAME: Record<string, string> = { M5: "5-minute", M15: "15-minute", H1: "hourly", H4: "4-hour" };
 export type TraderBot = {
-  running: boolean; markets: Record<string, string>; last_seen: string | null; log_age_s?: number;
+  running: boolean; probation?: boolean; markets: Record<string, string>; last_seen: string | null; log_age_s?: number;
   lines: string[];
   backtest?: { win_rate: number; avg_r: number; profit_factor: number; max_dd: number; trades_per_2w: number };
+};
+export type ProbationTally = {
+  trades: number; wins: number; profit: number;
+  best?: { bot: string; symbol: string; side: string; profit: number; r: number | null; closed: string } | null;
 };
 export type TraderState = {
   generated_at: string;
@@ -55,6 +59,11 @@ export type TraderState = {
   positions: TraderPosition[];
   trades: TraderTrade[];
   markets?: TraderMarket[];
+  /** Bots on probation: failed the 3-year test, kept on small with their own results (25 Nov - 21 Dec 2026). */
+  probation?: {
+    bots: string[]; start: string; until: string; max_open: number; lot: number;
+    per_bot: Record<string, ProbationTally & { open: number; before?: ProbationTally }>;
+  };
   news: { ok: boolean; error?: string; upcoming: { time: string; currency: string; title: string }[]; blocked: Record<string, string> };
 };
 export type TraderReplay = TraderTrade & {

@@ -164,7 +164,7 @@ export function MarketCard({ m, trades, currency }: { m: TraderMarket; trades: T
             <div><dt>Live P/L</dt><dd className={pnl >= 0 ? "pos" : "neg"}>{mine.length ? money(pnl) : "—"}</dd></div>
             <div><dt>Avg per trade</dt><dd>{rec ? `${rec.avg_r > 0 ? "+" : ""}${rec.avg_r}R` : "—"}</dd></div>
             <div><dt>Trades / month</dt><dd>{rec?.per_month ?? "—"}</dd></div>
-            <div><dt>Worst drawdown</dt><dd>{rec ? `${rec.max_dd}%` : "—"}</dd></div>
+            <div><dt>Worst drawdown</dt><dd>{rec && rec.max_dd != null ? `${rec.max_dd}%` : "—"}</dd></div>
             <div><dt>Won / lost live</dt><dd><span className="pos">{wins.length}</span> / <span className="neg">{losses.length}</span></dd></div>
             <div><dt>Unseen-data win rate</dt><dd>{rec ? `${rec.oos_win_rate}%` : "—"}</dd></div>
             <div><dt>Nearby settings profitable</dt><dd>{rec ? `${rec.robust_pct}%` : "—"}</dd></div>

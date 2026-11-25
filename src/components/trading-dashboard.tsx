@@ -15,7 +15,7 @@ import { InvestorsSkeleton, InvestorsView } from "@/components/trading-investors
 import { TrackRecordCard } from "@/components/trading-record";
 import { GrowthChart, lastSwitch, type CashFlow } from "@/components/trading-growth";
 import type { Ledger } from "@/lib/investors";
-import type { TraderPosition, TraderPull, TraderResult, TraderState } from "@/lib/trader";
+import { botName, type TraderPosition, type TraderPull, type TraderResult, type TraderState } from "@/lib/trader";
 import {
   agentsFrom, ago, closedTrades, isView, money, pct, readyText, rText, signed, tally, VIEWS, when, type Agent, type DeskNav, type DeskView,
 } from "@/lib/trader-view";
@@ -221,6 +221,40 @@ function DeskHero({ data, s, cash }: { data: TraderPull; s: TraderState; cash: C
   );
 }
 
+/* ─── Probation ─────────────────────────────────────────────── */
+
+/** The 4 old gold bots: failed the 3-year test, kept on at the smallest lot with their own scoreboard. */
+function Probation({ p }: { p: NonNullable<TraderState["probation"]> }) {
+  const all = p.per_bot.all ?? { trades: 0, wins: 0, profit: 0, open: 0 };
+  const won = (t: { trades: number; wins: number }) => (t.trades ? `${Math.round((t.wins / t.trades) * 100)}% won` : "no trades yet");
+  const bestText = (b?: { symbol: string; side: string; profit: number; closed: string; bot: string } | null) =>
+    b && b.profit > 0 ? `best ${signed(b.profit)} (${b.side} ${b.symbol}, ${new Date(b.closed).toLocaleDateString()})` : "";
+  return (
+    <section className="trade-card" aria-labelledby="ov-probation">
+      <h2 className="trade-h" id="ov-probation">On probation</h2>
+      <p className="trade-muted">
+        These gold bots failed the 3-year test (they lost money 2021–2024 and won in 2025–2026), so they trade apart from
+        the tested agents: {p.lot} lot, at most {p.max_open} of their trades open at once, kept separate from here on.
+        Review on {p.until}; after that they stop opening trades until a decision is made.
+      </p>
+      <dl className="rules">
+        <div><dt>On probation (since {p.start})</dt><dd className={all.profit > 0 ? "pos" : all.profit < 0 ? "neg" : ""}>{signed(all.profit)} · {all.trades} trades · {won(all)}</dd></div>
+        {all.before && <div><dt>Before probation (last 60 days)</dt><dd className={all.before.profit > 0 ? "pos" : all.before.profit < 0 ? "neg" : ""}>{signed(all.before.profit)} · {all.before.trades} trades · {won(all.before)}{all.before.best && all.before.best.profit > 0 ? ` · best ${signed(all.before.best.profit)} by ${botName(all.before.best.bot)}` : ""}</dd></div>}
+      </dl>
+      <h3 className="market-sub">Each bot</h3>
+      <dl className="rules">
+        {p.bots.map((b) => {
+          const r = p.per_bot[b] ?? { trades: 0, wins: 0, profit: 0, open: 0 };
+          const h = r.before;
+          const tot = { trades: r.trades + (h?.trades ?? 0), wins: r.wins + (h?.wins ?? 0), profit: r.profit + (h?.profit ?? 0) };
+          const best = [r.best, h?.best].filter((x) => !!x).sort((x, y) => (y!.profit - x!.profit))[0];
+          return <div key={b}><dt>{botName(b)}</dt><dd className={tot.profit > 0 ? "pos" : tot.profit < 0 ? "neg" : ""}>{signed(tot.profit)} · {tot.trades} trades · {won(tot)}{best ? ` · ${bestText(best)}` : ""}{r.open ? " · 1 open" : ""}</dd></div>;
+        })}
+      </dl>
+    </section>
+  );
+}
+
 /* ─── Overview ──────────────────────────────────────────────── */
 
 function OverviewView({ data, s, agents }: { data: TraderPull; s: TraderState; agents: Agent[] }) {
@@ -243,6 +277,8 @@ function OverviewView({ data, s, agents }: { data: TraderPull; s: TraderState; a
       <OpenTrades positions={s.positions} />
 
       <SessionClock agents={live} limit={3} />
+
+      {s.probation && <Probation p={s.probation} />}
 
       <section className="desk-section" aria-labelledby="ov-agents">
         <div className="desk-section-head">
